@@ -28,5 +28,5 @@ export {
 } from './primitives/segmented-control';
 export { SheetContent, SheetRoot } from './primitives/sheet';
 export { Slider } from './primitives/slider';
-export { ACHIEVEMENTS_TOASTER, Toaster } from './primitives/toast';
+export { ACHIEVEMENTS_TOASTER, toast, Toaster } from './primitives/toast';
 export { Toggle } from './primitives/toggle';

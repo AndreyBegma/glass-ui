@@ -16,7 +16,21 @@
     "./tokens.css": "./src/tokens.css",
     "./material.css": "./src/material.css",
     "./base.css": "./src/base.css",
-    "./motion.css": "./src/primitives/motion.css"
+    "./motion.css": "./src/primitives/motion.css",
+    "./cn": "./src/lib/cn.ts",
+    "./material-light": "./src/material-light.tsx",
+    "./button": "./src/primitives/button.tsx",
+    "./card": "./src/primitives/card.tsx",
+    "./chip": "./src/primitives/chip.tsx",
+    "./dialog": "./src/primitives/dialog.tsx",
+    "./field": "./src/primitives/field.tsx",
+    "./menu": "./src/primitives/menu.tsx",
+    "./scroll-hint-row": "./src/primitives/scroll-hint-row.tsx",
+    "./segmented-control": "./src/primitives/segmented-control.tsx",
+    "./sheet": "./src/primitives/sheet.tsx",
+    "./slider": "./src/primitives/slider.tsx",
+    "./toast": "./src/primitives/toast.tsx",
+    "./toggle": "./src/primitives/toggle.tsx"
   },
   "files": [
     "src"

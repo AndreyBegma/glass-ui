@@ -1,9 +1,19 @@
 /**
- * `glass-ui` — the export surface.
+ * `glass-ui` — the barrel.
  *
- * Explicit rather than `export *`, so that what leaves this package is a
- * decision each time and a reader can see the whole design system in one
- * screen.
+ * Convenience, not the recommended door. Every module is also reachable on its
+ * own subpath (`glass-ui/button`, `glass-ui/cn`), and that is what an
+ * application should import.
+ *
+ * The reason is not taste. A bundler tree-shakes this away, but a test runner
+ * evaluates it: importing `cn` through here loads every primitive, which loads
+ * sonner, which writes a stylesheet into `document.head` the moment it is
+ * imported — and in a test environment with no real DOM that throws before a
+ * single assertion runs. FEAT-20260831-501 broke fifteen of Luna Watch's tests
+ * exactly that way, in files that only ever wanted a class-name helper.
+ *
+ * Explicit rather than `export *`, so what leaves this package is a decision
+ * each time.
  */
 
 export { cn } from './lib/cn';

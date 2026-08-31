@@ -1,0 +1,144 @@
+/**
+ * glass-ui — the opinions that apply to a whole document.
+ *
+ * FEAT-20260831-501 moved this out of Luna Watch's `globals.css` verbatim, and
+ * it is a separate import from `tokens.css` and `material.css` on purpose:
+ * everything here reaches past a component and claims the page. An application
+ * that wants the tokens and the material without a 3px focus ring and a global
+ * reduced-motion override takes the first two and leaves this one.
+ *
+ * The depth effect below expects the application to put `id="main-content"` on
+ * the element that should go back when a sheet opens. That is a contract, and
+ * it is the only one this file has.
+ */
+
+html {
+  font-size: 16px;
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  /* Prevent horizontal overflow from broken layouts */
+  overflow-x: hidden;
+}
+
+/* FEAT-20260823-364 — the page goes back when something opens over it.
+ *
+ * This is the one piece of depth that is felt rather than seen. A sheet that
+ * arrives over a page that has not moved reads as a rectangle pasted on top; a
+ * sheet that arrives while the page shrinks slightly away reads as the page
+ * having gone behind it. iOS has done this since sheets existed, and it is the
+ * difference between two flat layers and a space with a front and a back.
+ *
+ * No JavaScript: Radix already marks the body while a modal surface holds the
+ * scroll lock, so the signal is free and always in sync with the thing that
+ * caused it.
+ *
+ * `transform` only — deliberately no `filter`. Dimming is already done by the
+ * scrim Radix renders, and a `brightness()` over the whole page is both a
+ * repaint of everything and a containing block for every fixed element inside
+ * it. A scale is a compositor transform and costs nothing.
+ *
+ * The rounding is what makes the scale legible. Without it the page just gets
+ * smaller; with it, it becomes a card that has been pushed back.
+ */
+#main-content {
+  transform-origin: top center;
+  transition:
+    transform var(--dur-sheet) var(--ease-sheet),
+    border-radius var(--dur-sheet) var(--ease-sheet);
+}
+
+body[data-scroll-locked] #main-content {
+  transform: scale(0.955);
+  border-radius: var(--radius-sheet);
+  overflow: hidden;
+}
+
+/* A page that cannot animate should not jump instead. */
+@media (prefers-reduced-motion: reduce) {
+  body[data-scroll-locked] #main-content {
+    transform: none;
+    border-radius: 0;
+  }
+}
+
+/* FEAT-20260823-362 — digits that sit in a column stay in a column: download
+   sizes, timecodes, episode numbers, every figure in the admin panel. */
+:where(table, time, output, .tabular) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tap highlight suppression on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* TV remote navigation — thick visible focus ring.
+ *
+ * FEAT-20260823-362 — this used to also set `border-radius: 6px`, which was
+ * meant to round the outline on square elements and instead re-shaped every
+ * focused element that had a radius of its own. It is unlayered CSS, so it beat
+ * the Tailwind utility unconditionally: a dialog at `rounded-sheet` collapsed
+ * to 6px corners the moment it took focus. Browsers already draw the outline
+ * following the element's own radius, so the declaration bought nothing and
+ * cost that. */
+:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+}
+
+/* Form elements manage their own focus style */
+textarea:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Hide scrollbar but keep scrollable */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Respect user's reduced-motion preference — disables all animations/transitions globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* FEAT-20260830-492 — an escape hatch for a transition that is not motion.
+     A colour or opacity fade acknowledging a state change is not what this
+     preference exists to suppress — a vote count that jumps instead of
+     counting, or a dismissed card that vanishes through a hole instead of
+     fading, is worse than the fade was. Everything that actually moves
+     (scale, translate, the `.lit` press) stays killed by the blanket rule
+     above; this opts a specific fade back in, at `--dur-fast` rather than
+     its usual duration. */
+  .motion-reduce-keep {
+    transition-duration: var(--dur-fast) !important;
+  }
+}
+
+/* FEAT-20260823-302 — the catalog rail's sections.
+   Suppressed by the reduced-motion block above. */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

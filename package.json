@@ -15,12 +15,17 @@
     ".": "./src/index.ts",
     "./tokens.css": "./src/tokens.css",
     "./material.css": "./src/material.css",
-    "./base.css": "./src/base.css"
+    "./base.css": "./src/base.css",
+    "./motion.css": "./src/primitives/motion.css"
   },
-  "files": ["src"],
-  "sideEffects": ["*.css"],
+  "files": [
+    "src"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
-    "lint": "biome check src",
+    "lint": "biome lint src",
     "test": "bun test src"
   },
   "dependencies": {

@@ -23,6 +23,7 @@ export { Card } from './primitives/card';
 export { Chip, ChipButton } from './primitives/chip';
 export { DialogContent, DialogRoot } from './primitives/dialog';
 export { EmptyState } from './patterns/empty-state';
+export { SectionUnavailable } from './patterns/section-unavailable';
 export {
   Field,
   Input,
@@ -39,6 +40,7 @@ export {
   MenuTrigger,
 } from './primitives/menu';
 export { ScrollHintRow } from './primitives/scroll-hint-row';
+export { Skeleton } from './primitives/skeleton';
 export {
   SegmentedControl,
   SegmentedControlItem,

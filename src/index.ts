@@ -22,7 +22,14 @@ export { Button, buttonClassName } from './primitives/button';
 export { Card } from './primitives/card';
 export { Chip, ChipButton } from './primitives/chip';
 export { DialogContent, DialogRoot } from './primitives/dialog';
-export { Input, SearchField, Select, Textarea } from './primitives/field';
+export { EmptyState } from './patterns/empty-state';
+export {
+  Field,
+  Input,
+  SearchField,
+  Select,
+  Textarea,
+} from './primitives/field';
 export {
   MenuContent,
   MenuItem,

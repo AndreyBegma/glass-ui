@@ -98,3 +98,59 @@ export function SearchField({
     </div>
   );
 }
+
+/**
+ * FEAT-20260831-002 — the surround: a label, one line of help, and an error.
+ *
+ * The three components above are the controls. This is the thing around them,
+ * and it is a genuinely separate concern — which is why Luna Watch got this far
+ * without one. A media centre has almost no forms; Denitsa has twenty-three,
+ * and every one of them was writing its own label markup.
+ *
+ * Brought in from Denitsa, with the focus ring taken out. Theirs drew an accent
+ * outline on the control; this package has no accent, and `base.css` already
+ * owns the focus ring for the whole document. A component that draws its own is
+ * the thing the rule exists to stop.
+ *
+ * `error` **replaces** `hint` rather than joining it. Two lines of small quiet
+ * text under one input is how a person reads neither.
+ */
+export function Field({
+  label,
+  hint,
+  error,
+  htmlFor,
+  required,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  /** When present, replaces the hint. */
+  error?: string;
+  htmlFor?: string;
+  required?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={htmlFor} className="text-ink-2 text-xs font-medium">
+        {label}
+        {required && (
+          <span className="text-danger ml-0.5" aria-hidden="true">
+            *
+          </span>
+        )}
+      </label>
+      {children}
+      {error ? (
+        // `role="alert"` so a screen reader hears it when it appears, rather
+        // than only if the user happens to move focus back over the field.
+        <span role="alert" className="text-danger text-xs">
+          {error}
+        </span>
+      ) : (
+        hint && <span className="text-ink-3 text-xs">{hint}</span>
+      )}
+    </div>
+  );
+}

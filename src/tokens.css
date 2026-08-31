@@ -1,0 +1,163 @@
+/**
+ * glass-ui — the token layer.
+ *
+ * FEAT-20260831-501 moved this out of Luna Watch's `globals.css` unchanged in
+ * values and unchanged in names. It is deliberately not a redesign: the same
+ * colours in the place where a redesign becomes one edit rather than a search
+ * across an application.
+ */
+
+/**
+ * Tailwind 4 has no content globs. It finds source files by scanning, rooted at
+ * the working directory of the build, and it excludes `node_modules`
+ * unconditionally — and this package is installed there. Without the
+ * declaration below, every utility used *only* inside this package would be
+ * absent from the served stylesheet. Not one component: the whole package. The
+ * ones that appeared to work would be the ones the application happened to use
+ * somewhere of its own.
+ *
+ * That failure is invisible from every angle a test looks from — the classes
+ * are in the source, so a source assertion passes — which is how it cost
+ * Denitsa three days as `BUG-20260828-007`.
+ *
+ * So the package carries its own scan surface: an application that imports the
+ * design system gets the classes that come with it and does not have to know
+ * any of the above. The path is relative to this file, so it survives the
+ * package moving. Verified against a real `node_modules` install, not a
+ * workspace symlink, before anything was moved here.
+ */
+@source ".";
+/* A spec file's strings are not classes anybody renders, and the test that
+   forbids a raw colour has to name one in its own prose. */
+@source not "./**/*.spec.ts";
+
+/* FEAT-20260823-362 — the design tokens.
+ *
+ * Before this block there were none. Every colour, radius, duration and font
+ * decision in the app was taken in place, inside a Tailwind class string, and
+ * the result was 11 greys for text, 17 surface values, two hues for every
+ * semantic meaning, five radii and no typeface at all. Not because anyone
+ * disagreed about the design — because there was nothing to disagree with.
+ *
+ * Tailwind 4 reads `@theme` and emits both the custom properties and the
+ * matching utilities, so `--color-ink` is usable as `text-ink` and as
+ * `var(--color-ink)`. Entries outside a known namespace — the `--glass-*` and
+ * `--dur-*` groups below — are emitted as plain custom properties, which is all
+ * they need to be.
+ *
+ * Tailwind's own palette is untouched, so every existing `zinc` and `violet`
+ * class keeps working. This block adds vocabulary; it does not restyle
+ * anything. The migration onto it happens in the pull requests after this one.
+ *
+ * `static`, deliberately. By default Tailwind emits only the theme variables it
+ * sees a utility for, so `--radius-surface` would resolve to nothing until the
+ * first `rounded-surface` appeared in a component — and any raw CSS reaching
+ * for `var(--radius-surface)` in the meantime would silently get an empty
+ * value. A token layer that is also read by hand-written CSS has to be present
+ * whether or not a utility happens to reference it yet.
+ */
+@theme static {
+  /* Ground. Cool near-black rather than `zinc`, because the glass tint below is
+     white and needs a ground with a blue bias to read as light rather than as
+     dirt. The difference from `zinc-950` is under a percent and deliberate. */
+  --color-ground: #09090c;
+  --color-surface: #101015;
+  --color-raised: #17171e;
+
+  /* Text, three levels and no fourth. Anything that wants a shade between
+     `ink-2` and `ink-3` wants one of them instead. */
+  --color-ink: #f2f2f6;
+  --color-ink-2: rgb(242 242 246 / 0.62);
+  --color-ink-3: rgb(242 242 246 / 0.38);
+
+  /* Semantic, one hue per meaning. `emerald`, `rose` and `yellow` were the
+     second spelling of these three and are retired. */
+  --color-ok: #5fd3a0;
+  --color-warn: #e3b341;
+  --color-danger: #ff6b60;
+
+  /* FEAT-20260830-492 — a hairline and a hover fill, named.
+     337 `border-white/N` and `bg-white/N` values existed because there was
+     nowhere else to put a hairline or a hover state. `--color-line-strong`
+     matches `--glass-edge` on purpose: a border sitting next to the glass
+     edge should read as the same weight, not a second opinion about it. */
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+  --color-hover: rgb(255 255 255 / 0.1);
+
+  /* The material. See the `glass` utility below for what each part does. */
+
+  /* The sheen — a white film that gives the panel a surface of its own. Small,
+     because it lightens, and lightening is the wrong direction over artwork. */
+  --glass-sheen: rgb(255 255 255 / 0.06);
+
+  /* The floor. A dark layer that guarantees the panel is never brighter than
+     this no matter what is behind it. Both of these are alpha over the ground,
+     so a dark backdrop still shows through; a bright one is capped. */
+  --glass-scrim: rgb(9 9 12 / 0.72);
+  --glass-scrim-strong: rgb(9 9 12 / 0.8);
+
+  /* The ceiling, and the part that makes this adaptive rather than fixed.
+     `brightness()` is multiplicative, so it scales with what is actually
+     behind: a white poster loses nearly half its luminance, a dark frame loses
+     almost nothing it had. A fixed overlay cannot do that — it darkens the dark
+     frame just as much and the material turns into a painted panel. */
+  --glass-brightness: 0.55;
+  --glass-brightness-strong: 0.5;
+
+  --glass-edge: rgb(255 255 255 / 0.14);
+  --glass-spec: rgb(255 255 255 / 0.2);
+  --glass-blur: 26px;
+
+  /* The whole filter as one value, so a rung can switch it off rather than
+     leave a zero-radius blur behind. A `backdrop-filter` that resolves to
+     `blur(0px)` still asks the browser to prepare a backdrop pass; `none` does
+     not. */
+  --glass-filter: blur(var(--glass-blur)) saturate(180%)
+    brightness(var(--glass-brightness));
+  --glass-filter-strong: blur(40px) saturate(180%)
+    brightness(var(--glass-brightness-strong));
+
+  /* Three radii. A card at 12, its badge at 6 and the button under it at 16 is
+     what having five looks like. */
+  --radius-control: 12px;
+  --radius-surface: 18px;
+  --radius-sheet: 28px;
+
+  /* FEAT-20260823-364 — the layers, named.
+   *
+   * There were ten z values in the app and no scheme behind them: `z-10`,
+   * `z-20`, `z-30`, `z-40`, `z-50`, and then `z-[60]`, `z-[70]`, `z-[100]`,
+   * `z-[9998]`, `z-[9999]` — each one chosen to beat whatever it collided with
+   * that day. That is not a hierarchy, it is a series of arguments won.
+   *
+   * These are the five layers the interface actually has. The gaps are wide on
+   * purpose: something can be slipped between two of them without another
+   * round of escalation.
+   */
+  --z-index-raised: 10; /* in-page: a badge over a poster, a sticky heading */
+  --z-index-chrome: 40; /* the header, the bottom capsule, the filter capsule */
+  --z-index-overlay: 60; /* sheets, dialogs, menus, and the scrim under them */
+  --z-index-transient: 80; /* toasts — outlive nothing, block nothing */
+  --z-index-top: 9999; /* the skip link, and anything that must beat all */
+
+  /* Motion. One curve — the one iOS sheets settle on — and three durations. */
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-sheet: 420ms;
+
+  /* Type. San Francisco where it exists, which is every Apple device this is
+     watched on, and the self-hosted Inter that `next/font` injects as
+     `--font-inter` everywhere else. Without this the app rendered in whatever
+     the browser defaulted to: fine on a Mac by accident, Arial on Windows. */
+  --font-sans:
+    "SF Pro Text", "SF Pro Display", var(--font-inter), system-ui,
+    -apple-system, "Segoe UI", sans-serif;
+}
+
+/* The page gutter. Shared because it is a measure of a reading column, not a
+   decision about a media centre. */
+:root {
+  --safe: clamp(1rem, 4vw, 5rem);
+}

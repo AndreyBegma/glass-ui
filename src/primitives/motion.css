@@ -1,0 +1,85 @@
+/* FEAT-20260830-490 — the keyframes the primitives animate with.
+ *
+ * A file of its own rather than another block in `globals.css`. These belong to
+ * three components and are imported by them, so a primitive that is deleted
+ * takes its motion with it, and a reader who opens `dialog.tsx` can find out
+ * what `lunaDialogIn` is without leaving the folder.
+ *
+ * The `luna` prefix is not decoration. `globals.css` already owns a `fadeIn`,
+ * and it carries a `translateY(-2px)` for the catalog rail's sections — a
+ * sensible entrance for a strip of content and the wrong one for a full-screen
+ * scrim, which would slide two pixels for no reason anybody could name. Two
+ * different animations cannot share one name in a global stylesheet, and the
+ * one that arrives second is the one that renames.
+ *
+ * Durations and curves are not written here. They come from the tokens at the
+ * call site — `animate-[lunaDialogIn_var(--dur-base)_…]` — so that the three
+ * durations stay in the one place the design system declares them.
+ */
+
+/* The scrim behind a dialog or a sheet. Opacity only: it covers the viewport,
+   and there is nothing for a transform to mean at that size. */
+@keyframes lunaFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes lunaFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* The modal. `translate(-50%, -50%)` is repeated in every frame because the
+   utilities that centre the panel write the same transform, and an animation
+   that omits it would drop the panel's top-left corner onto the middle of the
+   screen for the length of the animation.
+ *
+ * Not `scale(0)`: nothing in the world vanishes to a point, and 0.96 is close
+ * enough to read as the same object arriving. The exit goes the other way, to
+ * 0.98 — shallower and faster, because an exit is the system responding rather
+ * than the user deciding. */
+@keyframes lunaDialogIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes lunaDialogOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(0.98); }
+}
+
+/* The dropdown. The origin is not set here — it is
+   `var(--radix-dropdown-menu-content-transform-origin)` at the call site, which
+   Radix measures from the trigger. A menu that grows from its own centre has no
+   relationship to the control that opened it. */
+@keyframes lunaPopIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes lunaPopOut {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.96); }
+}
+
+/* A label that appears in place and is gone again in a second — the swipe
+   deck's "Liked". `@starting-style` gives it an entrance without a mounted
+   flag and a `useEffect` to set it.
+ *
+ * Written flat rather than nested inside the rule: both spellings are valid,
+ * and the flat one survives every tool in the pipeline without needing to be
+ * checked against each. */
+.luna-rise-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--dur-fast) ease-out,
+    transform var(--dur-fast) ease-out;
+}
+
+@starting-style {
+  .luna-rise-in {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}

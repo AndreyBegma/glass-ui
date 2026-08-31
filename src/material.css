@@ -1,0 +1,224 @@
+/**
+ * glass-ui — the material.
+ *
+ * FEAT-20260831-501 moved this out of Luna Watch's `globals.css` verbatim.
+ * Import it after `tokens.css`: every value below is read from a token, and the
+ * flat rung works by overriding four of them rather than by redefining a
+ * utility.
+ */
+
+/* FEAT-20260823-362 — the glass material.
+ *
+ * Five layers, and the blur is the least important of them:
+ *
+ *   1. `saturate` alongside the blur. This is what makes colour behind the
+ *      panel look alive instead of grey, and the app used it zero times.
+ *   2. `brightness` below 1. This is what makes the material *adaptive*, and it
+ *      is the part a fixed overlay cannot do. See the note below.
+ *   3. A dark scrim, as a floor under the brightness.
+ *   4. A white sheen, small, so the panel has a surface of its own.
+ *   5. The inset highlight and the drop shadow, which are what read as
+ *      thickness and as floating rather than as a painted rectangle.
+ *
+ * **Why brightness rather than a heavier tint.** The first version of this was a
+ * white tint over a blur, and it failed the moment it sat over something bright:
+ * the avatar menu opened over a yellow poster and its text became unreadable,
+ * because a white film over a bright frame is brighter still. Turning the tint
+ * black instead fixes that case and ruins the other one — a fixed dark overlay
+ * darkens a dark frame just as much, and the material stops being glass and
+ * becomes a painted panel.
+ *
+ * `brightness()` is multiplicative, so it scales with whatever is actually
+ * behind it. A white backdrop loses nearly half its luminance; a dark frame
+ * loses almost nothing it had. The scrim then sets a floor so the worst case is
+ * bounded rather than merely improved.
+ *
+ * The numbers are chosen against the worst case, a pure white backdrop:
+ * `glass` lands near 4:1 against `--color-ink` and `glass-strong` above 5:1.
+ * Anything that carries body text uses `glass-strong` for that reason.
+ *
+ * Two rules that are not expressible in CSS and have to be kept by hand:
+ *
+ *   - This belongs on chrome only — header, bottom bar, sheets, dialogs, menus,
+ *     overlays, player controls. Never on a card, a grid item or a row. Fifty
+ *     blurred surfaces on one screen is both the cheap-looking version of this
+ *     effect and the one that costs the TV its frame rate.
+ *   - It needs content behind it. On a flat ground it is invisible, and
+ *     `bg-raised` is the honest answer there.
+ */
+@utility glass {
+  background:
+    linear-gradient(var(--glass-sheen), var(--glass-sheen)), var(--glass-scrim);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-spec),
+    0 16px 40px rgb(0 0 0 / 0.45);
+}
+
+/* The same material with more presence, for surfaces that carry a whole
+   interaction rather than sitting behind one: sheets, dialogs, menus. Anything
+   with body text on it belongs here rather than on `glass`. */
+@utility glass-strong {
+  background:
+    linear-gradient(var(--glass-sheen), var(--glass-sheen)),
+    var(--glass-scrim-strong);
+  backdrop-filter: var(--glass-filter-strong);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-spec),
+    0 24px 60px rgb(0 0 0 / 0.55);
+}
+
+/* FEAT-20260823-364 — the material reacts to what is touching it.
+ *
+ * Two responses, and both are scoped to the moment rather than always on.
+ *
+ * `--lit` and the `--lx` / `--ly` pair are written by `MaterialLight` — one
+ * delegated listener for the whole app — while a pointer is over the surface, and the radial below is drawn there. It is the
+ * cheap end of what liquefy-ui runs a WebGL overlay shader to achieve — rim
+ * light, pointer glow, sheen — and it costs one gradient whose centre is two
+ * numbers. Nothing is attached until a pointer arrives, so a page full of glass
+ * is free until something is over one of them.
+ *
+ * The press response needs no JavaScript at all: `:active` is the browser
+ * telling us the same thing, and it is the half that works on a phone, where a
+ * highlight that follows a finger would be a highlight underneath a finger.
+ *
+ * Deliberately `::before` rather than `::after` — `Button` already spends its
+ * `::after` on the invisible 44px touch target, and quietly taking it back
+ * would break the thing that makes a 32px control usable with a thumb.
+ */
+@utility lit {
+  position: relative;
+  isolation: isolate;
+}
+
+.lit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--lit, 0);
+  transition: opacity var(--dur-base) ease-out;
+  background: radial-gradient(
+    14rem circle at var(--lx, 50%) var(--ly, 50%),
+    rgb(255 255 255 / 0.12),
+    transparent 62%
+  );
+}
+
+/* Pressed: the surface takes the weight and gives the light back. */
+.lit:active {
+  transform: scale(0.985);
+}
+
+.lit:active::before {
+  opacity: 1;
+  transition-duration: var(--dur-fast);
+}
+
+.lit {
+  transition: transform var(--dur-fast) var(--ease-sheet);
+}
+
+/* FEAT-20260823-364 — the rungs the material can be rendered on.
+ *
+ * Adapted from open-glass-ui, whose best idea is not any particular effect but
+ * the rule around them: rendering is an explicit choice, and `auto` resolves to
+ * plain CSS and **never silently escalates**. An interface that quietly upgrades
+ * itself to a more expensive renderer is an interface that quietly stops
+ * working on somebody's device.
+ *
+ * We have two rungs, and only two, because only two are real:
+ *
+ *   glass  — the default. Blur, saturation, an adaptive brightness cap, a scrim
+ *            floor, a specular edge. Cheap enough for anything with a GPU.
+ *   flat   — opaque surfaces, no blur, no filter at all. Everything stays
+ *            legible; only the material goes.
+ *
+ * There is deliberately no third rung. The obvious candidate is SVG
+ * `feDisplacementMap` inside `backdrop-filter` for real refraction, which is
+ * what liquefy-ui does and what makes their glass look like glass rather than
+ * like frost. It is Chromium-only, it costs a filter pass over a live backdrop,
+ * and this application's most important device is a television whose browser we
+ * have not been able to profile. Building the rung before we can measure it
+ * would be building the thing the escalation rule exists to prevent.
+ *
+ * Three ways onto the flat rung, in the order they should be trusted:
+ *
+ *   1. The reader asked their operating system for less transparency. This is
+ *      the one that matters and the one we did not have — it is an
+ *      accessibility setting, not a preference about taste, and people who turn
+ *      it on are usually telling us that translucency makes text hard to read.
+ *   2. `data-material="flat"` on the document, for a device we know cannot
+ *      afford the material — the television, if it ever turns out it cannot.
+ *   3. The browser has no `backdrop-filter` at all, which is the automatic
+ *      safety net below.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-scrim: var(--color-raised);
+    --glass-scrim-strong: var(--color-raised);
+    --glass-sheen: transparent;
+    --glass-filter: none;
+    --glass-filter-strong: none;
+  }
+}
+
+:root[data-material="flat"] {
+  --glass-scrim: var(--color-raised);
+  --glass-scrim-strong: var(--color-raised);
+  --glass-sheen: transparent;
+  --glass-filter: none;
+  --glass-filter-strong: none;
+}
+
+/* The pointer highlight is part of the material, so it goes with it. */
+@media (prefers-reduced-transparency: reduce) {
+  .lit::before {
+    display: none;
+  }
+}
+
+:root[data-material="flat"] .lit::before {
+  display: none;
+}
+
+/* FEAT-20260823-364 — asked for more contrast, give more contrast.
+ *
+ * The material's edge is a 14% white hairline, which is deliberately quiet.
+ * Somebody who has turned this on is telling us quiet is not working. */
+@media (prefers-contrast: more) {
+  :root {
+    --glass-edge: rgb(255 255 255 / 0.42);
+    --glass-spec: rgb(255 255 255 / 0.5);
+    --color-ink-2: rgb(242 242 246 / 0.82);
+    --color-ink-3: rgb(242 242 246 / 0.62);
+  }
+}
+
+/* Where `backdrop-filter` is not supported the panel must still be readable, so
+   it becomes an opaque surface rather than a transparent one — which, on a media
+   centre, is aimed squarely at the television.
+ *
+ * Note that the two utilities above declare `backdrop-filter` unprefixed and
+ * nothing else. Lightning CSS adds `-webkit-backdrop-filter` itself from the
+ * build targets; writing the prefixed pair by hand made it de-duplicate them
+ * down to the prefixed one alone, and the material silently lost its blur in
+ * Chrome. Let the build do the prefixing.
+ *
+ * Overriding the two scrim variables rather than redefining the utilities is
+ * what keeps this to one place: both utilities already read their floor from
+ * these, and an unsupported `backdrop-filter` declaration is ignored anyway. */
+@supports not (
+    (backdrop-filter: blur(1px)) or
+    (-webkit-backdrop-filter: blur(1px))
+  ) {
+  :root {
+    --glass-scrim: var(--color-raised);
+    --glass-scrim-strong: var(--color-raised);
+  }
+}

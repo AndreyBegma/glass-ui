@@ -1,0 +1,22 @@
+/* SPIKE — FEAT-20260831-501 phase 1. Replaced by the real token layer. */
+
+/**
+ * Tailwind 4 has no content globs; it finds source files by scanning, rooted at
+ * the working directory of the build, and it excludes `node_modules`
+ * unconditionally. This package is installed there, so every utility used only
+ * inside it would be absent from the served stylesheet — silently, with source
+ * assertions still passing.
+ *
+ * `@source` is declared here, beside the tokens, so the package carries its own
+ * scan surface: an application that imports the design system gets the classes
+ * that come with it and does not have to know any of the above. The path is
+ * relative to this file, so it survives the package moving.
+ */
+@source ".";
+/* A spec file's strings are not classes anybody renders, and a test that
+   forbids a raw colour names one in its own prose. */
+@source not "./**/*.spec.ts";
+
+@theme static {
+  --color-probe: #ff00ff;
+}

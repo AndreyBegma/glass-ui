@@ -38,7 +38,21 @@
     "./nav-rail": "./src/patterns/nav-rail.tsx",
     "./command-palette": "./src/patterns/command-palette.tsx",
     "./popover": "./src/patterns/popover.tsx",
-    "./use-command-palette-shortcut": "./src/hooks/use-command-palette-shortcut.ts"
+    "./use-command-palette-shortcut": "./src/hooks/use-command-palette-shortcut.ts",
+    "./tabs": "./src/primitives/tabs.tsx",
+    "./badge": "./src/primitives/badge.tsx",
+    "./progress": "./src/primitives/progress.tsx",
+    "./table": "./src/primitives/table.tsx",
+    "./checkbox": "./src/primitives/checkbox.tsx",
+    "./radio-group": "./src/primitives/radio-group.tsx",
+    "./disclosure": "./src/primitives/disclosure.tsx",
+    "./tooltip": "./src/primitives/tooltip.tsx",
+    "./avatar": "./src/primitives/avatar.tsx",
+    "./separator": "./src/primitives/separator.tsx",
+    "./number-input": "./src/primitives/number-input.tsx",
+    "./date-input": "./src/primitives/date-input.tsx",
+    "./auto-textarea": "./src/primitives/auto-textarea.tsx",
+    "./field-class-name": "./src/primitives/field-class-name.ts"
   },
   "files": [
     "src"
@@ -63,7 +77,8 @@
     "react-dom": "^19.0.0",
     "sonner": ">=2.0.0",
     "tailwindcss": "^4.0.0",
-    "@radix-ui/react-popover": ">=1.1.0"
+    "@radix-ui/react-popover": ">=1.1.0",
+    "@radix-ui/react-tooltip": ">=1.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",

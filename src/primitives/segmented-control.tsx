@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import type { ReactNode } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 import { cn } from '../lib/cn';
 
 /**
@@ -26,6 +26,9 @@ import { cn } from '../lib/cn';
  * requires. `role` is a passthrough for exactly that case: given one, the
  * wrapper drops from `<ul>` to a `<div>` carrying it, so the children read as
  * direct descendants of whatever owns them (`menu.tsx`'s `MenuRadioGroup`).
+ * `SegmentedControlItem` follows the wrapper down that same passthrough — a
+ * `<div>` wrapper renders `<div>` items rather than an orphan `<li>` with no
+ * `<ul>` around it (issue #13).
  */
 interface SegmentedControlProps {
   children: ReactNode;
@@ -35,6 +38,8 @@ interface SegmentedControlProps {
   role?: string;
 }
 
+const SegmentedControlContext = createContext(false);
+
 export function SegmentedControl({
   children,
   className,
@@ -43,13 +48,15 @@ export function SegmentedControl({
 }: SegmentedControlProps) {
   const Wrapper = role ? 'div' : 'ul';
   return (
-    <Wrapper
-      role={role}
-      className={cn('flex gap-1 rounded-control bg-surface p-1', className)}
-      {...props}
-    >
-      {children}
-    </Wrapper>
+    <SegmentedControlContext.Provider value={!!role}>
+      <Wrapper
+        role={role}
+        className={cn('flex gap-1 rounded-control bg-surface p-1', className)}
+        {...props}
+      >
+        {children}
+      </Wrapper>
+    </SegmentedControlContext.Provider>
   );
 }
 
@@ -61,8 +68,10 @@ interface SegmentedControlItemProps {
 
 export function SegmentedControlItem({ active, layoutId, children }: SegmentedControlItemProps) {
   const reduced = useReducedMotion();
+  const listless = useContext(SegmentedControlContext);
+  const Item = listless ? 'div' : 'li';
   return (
-    <li className="relative min-w-0 flex-1">
+    <Item className="relative min-w-0 flex-1">
       {active ? (
         <motion.span
           layoutId={layoutId}
@@ -73,6 +82,6 @@ export function SegmentedControlItem({ active, layoutId, children }: SegmentedCo
         />
       ) : null}
       {children}
-    </li>
+    </Item>
   );
 }

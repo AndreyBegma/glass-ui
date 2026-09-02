@@ -60,3 +60,67 @@ transpile it — in Next, `transpilePackages: ['glass-ui']`.
 `lucide-react` is a peer dependency on a permissive range on purpose: its icon
 names have moved between major versions, and an application should be able to
 upgrade its icons without waiting for this package.
+
+## The shell patterns
+
+Four components that draw an application's chrome, and one hook. They are in
+the package rather than in an application because `E-92` settles that the
+shell's *parts* are shared even though its *information architecture* is not:
+Luna Watch has four places to be and Denitsa has twenty-one, and both draw them
+with the same capsule, the same rail and the same palette.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
+| `glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. |
+| `glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
+| `glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
+| `glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
+| `glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
+
+Three rules run through all of them, and each one is the answer to something
+that went wrong before the pattern existed.
+
+**The pattern draws the chrome; the consumer draws the anchor.** No routed
+`Link` is imported here — `BottomCapsule` and `NavRail` take one `link`
+function and call it for every item that carries an `href`. An item with no
+`href` renders a `button`. This is `SegmentedControlItem`'s contract, scaled
+past one item. A package that imported `next/link` would be a package for
+exactly one application.
+
+**They hold no state.** Which tab is selected, whether the overflow sheet is
+open, whether the palette is open, whether the action's surface is up — all of
+it is the consumer's, because all of it is a fact about routing and panels
+rather than about a bar. It is also what makes the morph work: the action
+circle has to unmount at the exact moment the sheet carrying its `layoutId`
+mounts, and only the thing that owns both can promise that.
+
+**Exactly one element carries a `layoutId` at a time.** Two is the single case
+Motion cannot resolve — it crossfades, which looks exactly like no animation
+having been written, and it fails silently. `BottomCapsule` enforces it: while
+the `More` sheet is open, `More` holds the selection and the tabs do not.
+
+`CommandPalette` knows nothing about content. It takes one function from a
+query to groups and calls it; ranking, debouncing, budgets and which sources
+are consulted are all product decisions and all the consumer's. A promise puts
+the list into a pending state that draws `Skeleton` rows, and a result that
+arrives after a newer one is dropped.
+
+`Popover` is **not** a menu. A menu is a list of commands and Radix gives it
+roving focus, type-ahead and `role="menuitem"`; a popover is a panel whose
+content has structure of its own — a heading, a list, an action, an empty
+state. If the content is a list of commands, `MenuContent` is the right
+component. It is also non-modal by default, for the reason `MenuRoot` is:
+Radix's `modal` locks the page's scroll, and the scroll lock is the mark
+`base.css` reads to push the page back behind a sheet.
+
+### Render tests
+
+The package's first. `bun test` gains a DOM through `bunfig.toml`'s preload of
+`src/test-setup.ts` (happy-dom, plus the handful of browser APIs Radix calls
+unconditionally). One `*.test.tsx` per pattern covers the behaviour the
+specification asks for: the capsule travelling, the action circle unmounting,
+group headings and the collapsed rail's names, ⌘K, filtering, arrow roving,
+Enter, Escape and focus return, and the popover's four dismissal paths.
+
+The primitives are not back-filled; they arrive with their own row.

@@ -84,9 +84,19 @@ body[data-scroll-locked] #main-content {
  * the Tailwind utility unconditionally: a dialog at `rounded-sheet` collapsed
  * to 6px corners the moment it took focus. Browsers already draw the outline
  * following the element's own radius, so the declaration bought nothing and
- * cost that. */
+ * cost that.
+ *
+ * FEAT-20260902-004 — the colour is `--color-focus` rather than `#fff`, which
+ * is the same ring in dark and a visible one in light. A white outline on a
+ * white ground is not a quiet focus ring, it is no focus ring, and this is a
+ * ring somebody navigates a television with. The width and the offset are
+ * untouched: 3px is what makes it findable across a room, and the 4px offset
+ * is what keeps it off the element's own edge.
+ *
+ * The light value is `--color-ink`'s colour rather than the token itself, and
+ * deliberately so — see the note in `tokens.css`. */
 :focus-visible {
-  outline: 3px solid #fff;
+  outline: 3px solid var(--color-focus);
   outline-offset: 4px;
 }
 

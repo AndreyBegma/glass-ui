@@ -101,3 +101,117 @@ describe('the palette is spelled once', () => {
     );
   });
 });
+
+/**
+ * FEAT-20260902-004 — a colour that exists in one theme only.
+ *
+ * This is the assertion Denitsa's `packages/ui/src/tokens.spec.ts` has carried
+ * since A0d, moved to where the tokens now live. The bug it catches is
+ * specific and it is not hypothetical: a token added to the dark set and
+ * forgotten in the light one does not disappear, it **falls back to the dark
+ * value** — a near-black surface on a white page, or worse, white text on it.
+ * And it fails in one direction only, so whoever added it sees nothing wrong
+ * unless they happened to be working in the theme they forgot.
+ *
+ * Three things are asserted, and the third is the one that is easy to leave
+ * out: the two light blocks must be *identical*, not merely both present. They
+ * are the system default and the explicit toggle, and a value that drifts
+ * between them is a page that changes appearance when somebody flips a switch
+ * to the setting they were already on.
+ */
+
+/** The tokens `tokens.css` declares in the dark set and deliberately does not
+ *  repeat in light. `--glass-blur` is a distance and does not change with the
+ *  theme; the two filters are composed out of it and `--glass-brightness`, so
+ *  they flip themselves when the brightness does. Copying them would put
+ *  `saturate(180%)` in three places — and a value in three places is a value
+ *  that will one day be two values, which is a drift no "declared in both
+ *  sets" assertion could ever see, because both sets would still declare it.
+ *  Their *absence* is asserted below rather than tolerated, so that a future
+ *  reader who trips over the exclusion cannot quietly satisfy it by copying. */
+const DERIVED = ['--glass-blur', '--glass-filter', '--glass-filter-strong'];
+
+const TOKENS = readFileSync(join(SRC, 'tokens.css'), 'utf8').replace(
+  /\/\*[\s\S]*?\*\//g,
+  ' ',
+);
+
+/** The body of the rule whose selector starts at `marker`, braces matched. */
+function block(marker: string): string {
+  const at = TOKENS.indexOf(marker);
+  if (at < 0) throw new Error(`tokens.css no longer contains \`${marker}\``);
+  const open = TOKENS.indexOf('{', at);
+  let depth = 0;
+  for (let i = open; i < TOKENS.length; i++) {
+    if (TOKENS[i] === '{') depth++;
+    else if (TOKENS[i] === '}' && --depth === 0)
+      return TOKENS.slice(open + 1, i);
+  }
+  throw new Error(`unbalanced braces after \`${marker}\``);
+}
+
+/** Every custom property a block declares, in source order, as `name: value`. */
+function declarations(body: string): string[] {
+  return [...body.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)].map(
+    (m) => `${m[1]}: ${m[2].replace(/\s+/g, ' ').trim()}`,
+  );
+}
+
+const named = (decls: string[], prefix: string) =>
+  decls.map((d) => d.split(':')[0]).filter((n) => n.startsWith(prefix));
+
+const DARK = declarations(block('@theme static'));
+const SYSTEM = block(':root:where(:not([data-theme="dark"]))');
+const EXPLICIT = block(':root:where([data-theme="light"])');
+
+describe('both themes carry the same palette', () => {
+  test('the dark set is the one with no selector, and it is not empty', () => {
+    expect(named(DARK, '--color-').length).toBeGreaterThan(10);
+    expect(named(DARK, '--glass-').length).toBeGreaterThan(5);
+  });
+
+  test.each([
+    ['the system default', SYSTEM],
+    ['the explicit toggle', EXPLICIT],
+  ])('%s defines every colour the dark set does, and no other', (_n, body) => {
+    const light = declarations(body);
+    expect(named(light, '--color-').sort()).toEqual(
+      named(DARK, '--color-').sort(),
+    );
+  });
+
+  test.each([
+    ['the system default', SYSTEM],
+    ['the explicit toggle', EXPLICIT],
+  ])('%s flips every glass token that is not derived', (_n, body) => {
+    const light = declarations(body);
+    expect(named(light, '--glass-').sort()).toEqual(
+      named(DARK, '--glass-')
+        .filter((n) => !DERIVED.includes(n))
+        .sort(),
+    );
+  });
+
+  test.each([
+    ['the system default', SYSTEM],
+    ['the explicit toggle', EXPLICIT],
+  ])('%s leaves the derived tokens to the dark set', (_n, body) => {
+    const darkNames = DARK.map((d) => d.split(':')[0]);
+    for (const token of DERIVED) {
+      expect(darkNames).toContain(token);
+      expect(body).not.toContain(`${token}:`);
+    }
+  });
+
+  test('the two light blocks are the same block twice', () => {
+    expect(declarations(EXPLICIT)).toEqual(declarations(SYSTEM));
+  });
+
+  test('both light blocks hand the browser its own furniture', () => {
+    // Without `color-scheme` a light page gets dark scrollbars, a dark date
+    // picker and dark autofill, and the application cannot fix it from outside.
+    expect(SYSTEM).toContain('color-scheme: light');
+    expect(EXPLICIT).toContain('color-scheme: light');
+    expect(block(':root').includes('color-scheme: dark')).toBe(true);
+  });
+});

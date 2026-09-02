@@ -5,6 +5,14 @@
  * values and unchanged in names. It is deliberately not a redesign: the same
  * colours in the place where a redesign becomes one edit rather than a search
  * across an application.
+ *
+ * FEAT-20260902-004 gave it a second set of values. Dark is still the set with
+ * no selector, so an application that never says anything gets exactly what it
+ * got before this change; light is the same token names under two selectors at
+ * the bottom of this file. Nothing was renamed and nothing was added to the
+ * dark set except the four tokens that had to exist before a colour could be
+ * flipped at all — see `--color-focus`, `--glass-shadow` and `--glass-lit`
+ * below, each of which holds the value it was hard-coded to elsewhere.
  */
 
 /**
@@ -85,6 +93,15 @@
   --color-line-strong: rgb(255 255 255 / 0.14);
   --color-hover: rgb(255 255 255 / 0.1);
 
+  /* FEAT-20260902-004 — the focus ring, named.
+     It was `#fff` written into `base.css`, which is the one place a colour was
+     spelled outside this file and the two lines of `material.css`. On a white
+     ground a white ring is not a quiet ring, it is no ring: the value has to
+     be able to change with the theme, and a value that changes with the theme
+     is a token. Deliberately not `--color-ink`: a focus ring is not text, and
+     tying them would mean the dark ring quietly became `#f2f2f6`. */
+  --color-focus: #ffffff;
+
   /* The material. See the `glass` utility below for what each part does. */
 
   /* The sheen — a white film that gives the panel a surface of its own. Small,
@@ -108,6 +125,17 @@
   --glass-edge: rgb(255 255 255 / 0.14);
   --glass-spec: rgb(255 255 255 / 0.2);
   --glass-blur: 26px;
+
+  /* FEAT-20260902-004 — the shadow's colour, and the pointer highlight's,
+     named for the same reason the four layers above already were.
+     Both were literals inside `material.css`: `rgb(0 0 0 / 0.45)` under the
+     two utilities and `rgb(255 255 255 / 0.12)` inside `.lit::before`. The
+     values here are those literals to the digit, so the dark material renders
+     byte for byte as it did. Only the geometry stayed behind — `0 16px 40px`
+     is a distance, not a colour, and it does not change with the theme. */
+  --glass-shadow: rgb(0 0 0 / 0.45);
+  --glass-shadow-strong: rgb(0 0 0 / 0.55);
+  --glass-lit: rgb(255 255 255 / 0.12);
 
   /* The whole filter as one value, so a rung can switch it off rather than
      leave a zero-radius blur behind. A `backdrop-filter` that resolves to
@@ -157,7 +185,211 @@
 }
 
 /* The page gutter. Shared because it is a measure of a reading column, not a
-   decision about a media centre. */
+   decision about a media centre.
+
+   `color-scheme` is here rather than in `base.css` because it is a property of
+   the theme rather than an opinion about the page: it is what makes the
+   browser's own furniture — scrollbars, form controls, autofill, the caret —
+   agree with the palette. Without it a light page renders dark scrollbars and
+   a dark date picker, and the application cannot fix that without knowing to.
+   It sits *above* the light blocks on purpose; see the cascade note there. */
 :root {
   --safe: clamp(1rem, 4vw, 5rem);
+  color-scheme: dark;
 }
+
+/* FEAT-20260902-004 — the light set.
+ *
+ * Everything below is the same token names with a second set of values, and
+ * `material.css` is not touched by any of it: the light material is these ten
+ * `--glass-*` lines and nothing else. What the two selectors are for:
+ *
+ *   - the media block is the system default, guarded so that somebody who has
+ *     explicitly chosen dark keeps dark on a light desktop;
+ *   - the attribute block is the explicit choice, and it comes second so that
+ *     it wins the tie.
+ *
+ * Dark has no block of its own. It is the values above, with no selector, so a
+ * consumer that never sets `data-theme` is untouched by this file's second
+ * half — which was the point of the exercise.
+ *
+ * **Why `:where()`, and please do not take it off.** Written plainly, as
+ * `:root[data-theme="light"]`, these blocks weigh (0,2,0) and beat the `flat`
+ * rung in `material.css`, which is `:root` at (0,1,0). The consequence is not
+ * cosmetic: in light, `prefers-reduced-transparency: reduce` and
+ * `data-material="flat"` would silently stop working, and the material would
+ * refuse to switch off for exactly the readers who asked it to. `:where()`
+ * holds both blocks at (0,1,0), so the rungs keep winning on source order —
+ * `material.css` is imported after this file, as its header already requires —
+ * and every rung block over there stays as it was. It also keeps the package
+ * polite: an application overriding a token at plain `:root` still wins.
+ *
+ * The two blocks are byte-identical and `tokens.spec.ts` asserts it. A drift
+ * between them fails in one direction only — the toggle, or the system
+ * default, but never both — which is exactly how it survives a review.
+ *
+ * **Where the values come from.** Denitsa's shipped light palette
+ * (`packages/ui/src/tokens.css`) is the only light set either product has
+ * ever had, so it is the starting point, and then each level is pinned to the
+ * contrast the *dark* set measures against its own ground — because "the
+ * second level of text" has to mean the same thing in both themes or it means
+ * nothing. Measured on the four-band probe, 2026-09-02:
+ *
+ *   level    light on #ffffff    dark on #09090c
+ *   ink            17.72:1            17.81:1
+ *   ink-2           7.02:1             7.04:1
+ *   ink-3           3.18:1             3.25:1
+ *
+ * Two of those are deliberate departures from Denitsa's values, and they are
+ * the honest edges of this set rather than an oversight:
+ *
+ *   `--color-ink-3` is alpha 0.48, not Denitsa's `#a1a1aa`. That colour
+ *   measures 2.56:1 on white where the dark set's third rung measures 3.25:1;
+ *   shipped as-is, the third level of text would be visibly weaker in light
+ *   than in dark for no reason anybody decided.
+ *
+ *   `--color-ink-2` is alpha 0.72, not `#52525b` (which is alpha 0.75, 7.73:1).
+ *   The difference is one step of grey that nobody will see; the agreement
+ *   between the two themes is the part worth having.
+ *
+ * **The hairlines.** `--color-line` and `--color-hover` keep the dark set's
+ * alphas and only turn over in colour, because at that weight the same number
+ * really does draw the same hairline: 8% black on white measures 1.196:1 and
+ * 8% white on near-black measures 1.178:1. (Denitsa's `#e4e4e7` is 10.6%
+ * black, near enough that the agreement with dark wins.)
+ *
+ * `--color-line-strong` is the exception, at 0.18 rather than 0.14, and it is
+ * the one value here that was decided by looking rather than by arithmetic.
+ * It is tied to `--glass-edge` — the dark set ties them so that a border
+ * sitting beside the glass edge reads as the same weight rather than as a
+ * second opinion about it — and the edge has to do its work on the band where
+ * the panel and the backdrop are nearest each other. In dark that band is the
+ * near-black frame; in light it is white paper. Measured on the probe at 0.14
+ * the light edge came to 1.508:1 against that backdrop where dark's came to
+ * 1.637:1, which is a hairline doing visibly less work for no reason anybody
+ * chose. At 0.18 it measures 1.671:1, and against its own panel 1.530:1
+ * against dark's 1.548:1 — the same hairline, both ways round.
+ */
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])) {
+    color-scheme: light;
+
+    --color-ground: #ffffff;
+    --color-surface: #fafafa;
+    --color-raised: #f4f4f5;
+
+    --color-ink: #18181b;
+    --color-ink-2: rgb(24 24 27 / 0.72);
+    --color-ink-3: rgb(24 24 27 / 0.48);
+
+    /* `ok` has never had a light value — Denitsa ships `warn` and `danger` and
+       has never needed a success colour. It is designed here: the same mint
+       family as the dark `#5fd3a0` (hue 158° against its 154°), pitched to sit
+       *between* `warn` and `danger` rather than above them, so that the three
+       semantic hues read as one set rather than as three separate decisions.
+       On white: ok 4.90:1, warn 5.02:1, danger 4.83:1. */
+    --color-ok: #0a8156;
+    --color-warn: #b45309;
+    --color-danger: #dc2626;
+
+    --color-line: rgb(0 0 0 / 0.08);
+    --color-line-strong: rgb(0 0 0 / 0.18);
+    --color-hover: rgb(0 0 0 / 0.1);
+
+    --color-focus: #18181b;
+
+    /* The material, with its five layers pointing the other way.
+
+       The scrim is the theme's own ground at the same two alphas, and it is a
+       **floor** here where it is a ceiling in dark: on a light ground the
+       failure case is a panel that goes too dark to read black text on, not
+       one that goes too bright.
+
+       The brightness values are the reciprocals of the dark pair — 1/0.55 is
+       1.82, 1/0.5 is 2.0 — so the filter moves the backdrop the same distance,
+       in the other direction. Over a near-black frame it does almost nothing,
+       exactly as `brightness(0.55)` does almost nothing to a near-black frame
+       in dark; the scrim is what bounds that case in both themes.
+
+       The specular is dark. A white highlight along the top edge of a panel
+       that is already near-white is not a quiet highlight, it is no highlight,
+       and the layer's job — saying where the panel's edge is — is the part
+       worth keeping. */
+    --glass-sheen: rgb(0 0 0 / 0.06);
+    --glass-scrim: rgb(255 255 255 / 0.72);
+    --glass-scrim-strong: rgb(255 255 255 / 0.8);
+    --glass-brightness: 1.8;
+    --glass-brightness-strong: 2;
+    --glass-edge: rgb(0 0 0 / 0.18);
+    --glass-spec: rgb(0 0 0 / 0.2);
+    --glass-shadow: rgb(0 0 0 / 0.14);
+    --glass-shadow-strong: rgb(0 0 0 / 0.18);
+    --glass-lit: rgb(0 0 0 / 0.07);
+  }
+}
+
+:root:where([data-theme="light"]) {
+  color-scheme: light;
+
+  --color-ground: #ffffff;
+  --color-surface: #fafafa;
+  --color-raised: #f4f4f5;
+
+  --color-ink: #18181b;
+  --color-ink-2: rgb(24 24 27 / 0.72);
+  --color-ink-3: rgb(24 24 27 / 0.48);
+
+  /* `ok` has never had a light value — Denitsa ships `warn` and `danger` and
+     has never needed a success colour. It is designed here: the same mint
+     family as the dark `#5fd3a0` (hue 158° against its 154°), pitched to sit
+     *between* `warn` and `danger` rather than above them, so that the three
+     semantic hues read as one set rather than as three separate decisions.
+     On white: ok 4.90:1, warn 5.02:1, danger 4.83:1. */
+  --color-ok: #0a8156;
+  --color-warn: #b45309;
+  --color-danger: #dc2626;
+
+  --color-line: rgb(0 0 0 / 0.08);
+  --color-line-strong: rgb(0 0 0 / 0.18);
+  --color-hover: rgb(0 0 0 / 0.1);
+
+  --color-focus: #18181b;
+
+  /* The material, with its five layers pointing the other way.
+
+     The scrim is the theme's own ground at the same two alphas, and it is a
+     **floor** here where it is a ceiling in dark: on a light ground the
+     failure case is a panel that goes too dark to read black text on, not
+     one that goes too bright.
+
+     The brightness values are the reciprocals of the dark pair — 1/0.55 is
+     1.82, 1/0.5 is 2.0 — so the filter moves the backdrop the same distance,
+     in the other direction. Over a near-black frame it does almost nothing,
+     exactly as `brightness(0.55)` does almost nothing to a near-black frame
+     in dark; the scrim is what bounds that case in both themes.
+
+     The specular is dark. A white highlight along the top edge of a panel
+     that is already near-white is not a quiet highlight, it is no highlight,
+     and the layer's job — saying where the panel's edge is — is the part
+     worth keeping. */
+  --glass-sheen: rgb(0 0 0 / 0.06);
+  --glass-scrim: rgb(255 255 255 / 0.72);
+  --glass-scrim-strong: rgb(255 255 255 / 0.8);
+  --glass-brightness: 1.8;
+  --glass-brightness-strong: 2;
+  --glass-edge: rgb(0 0 0 / 0.18);
+  --glass-spec: rgb(0 0 0 / 0.2);
+  --glass-shadow: rgb(0 0 0 / 0.14);
+  --glass-shadow-strong: rgb(0 0 0 / 0.18);
+  --glass-lit: rgb(0 0 0 / 0.07);
+}
+
+/* Three `--glass-*` tokens are deliberately **not** in the light blocks, and
+   `tokens.spec.ts` asserts their absence rather than merely tolerating it.
+   `--glass-blur` is a distance and is the same in both themes; `--glass-filter`
+   and `--glass-filter-strong` are composed out of `--glass-blur` and
+   `--glass-brightness`, so they flip themselves the moment the brightness
+   above does. Copying them into the light blocks would put `saturate(180%)` in
+   three places, and a value in three places is a value that will one day be
+   two values — a drift no assertion about "declared in both sets" could see,
+   because both sets would still declare it. */

@@ -33,9 +33,31 @@
  * loses almost nothing it had. The scrim then sets a floor so the worst case is
  * bounded rather than merely improved.
  *
- * The numbers are chosen against the worst case, a pure white backdrop:
- * `glass` lands near 4:1 against `--color-ink` and `glass-strong` above 5:1.
- * Anything that carries body text uses `glass-strong` for that reason.
+ * **The measurement.** FEAT-20260902-004, 2026-09-02. Both utilities over the
+ * four-band probe — white, a saturated yellow, mid grey, a near-black frame —
+ * in both themes, sampled out of a browser screenshot rather than computed, so
+ * these are the composite the reader actually sees: the backdrop, the filter,
+ * the scrim and the sheen, in that order. `--color-ink` against the panel:
+ *
+ *              dark              light
+ *              glass  strong     glass  strong
+ *   white      10.16  12.14      15.55  15.55
+ *   yellow     11.05  12.75      14.99  15.13
+ *   grey       13.35  14.22      14.59  15.55
+ *   near-black 16.03  16.03       8.64  10.37
+ *
+ * The worst case changes ends with the theme, which is the whole argument for
+ * having a second material rather than a second palette: dark is worst over
+ * white paper, light is worst over a black frame, and neither goes near the
+ * 4:1 on `glass` and 5:1 on `glass-strong` that the row is gated on.
+ *
+ * This replaces an older estimate — "near 4:1 for `glass`, above 5:1 for
+ * `glass-strong`" — which `glass-material.md` carries as `[Inferred]` and
+ * which this comment repeated. It was computed rather than measured and it is
+ * low by a factor of about two and a half. The gate it was written to justify
+ * is met either way, and body text still belongs on `glass-strong` for the
+ * reason it always did: over the one band that is hard for each theme,
+ * `glass-strong` has two to three points of contrast on `glass`.
  *
  * Two rules that are not expressible in CSS and have to be kept by hand:
  *
@@ -53,7 +75,7 @@
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-spec),
-    0 16px 40px rgb(0 0 0 / 0.45);
+    0 16px 40px var(--glass-shadow);
 }
 
 /* The same material with more presence, for surfaces that carry a whole
@@ -67,7 +89,7 @@
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-spec),
-    0 24px 60px rgb(0 0 0 / 0.55);
+    0 24px 60px var(--glass-shadow-strong);
 }
 
 /* FEAT-20260823-364 — the material reacts to what is touching it.
@@ -105,7 +127,7 @@
   transition: opacity var(--dur-base) ease-out;
   background: radial-gradient(
     14rem circle at var(--lx, 50%) var(--ly, 50%),
-    rgb(255 255 255 / 0.12),
+    var(--glass-lit),
     transparent 62%
   );
 }
@@ -157,7 +179,19 @@
  *      afford the material — the television, if it ever turns out it cannot.
  *   3. The browser has no `backdrop-filter` at all, which is the automatic
  *      safety net below.
- */
+ *
+ * FEAT-20260902-004 — all three routes work in light without a second copy,
+ * because all three are written in terms of `--color-raised`, which is itself
+ * a token that flips. In light the rung resolves to an opaque `#f4f4f5` panel,
+ * no sheen, no filter and no pointer highlight, carrying the light theme's 14%
+ * black hairline; in dark it is the `#17171e` it always was.
+ *
+ * That is only true while these blocks keep beating the theme blocks in
+ * `tokens.css`, and they weigh (0,1,0) against the theme's (0,1,0), so it is
+ * source order that settles it: this file is imported after `tokens.css`. The
+ * theme blocks are written with `:where()` to hold themselves at that weight
+ * deliberately — the note over there says what breaks if anybody takes it off,
+ * and it is this. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --glass-scrim: var(--color-raised);
@@ -197,6 +231,44 @@
     --glass-spec: rgb(255 255 255 / 0.5);
     --color-ink-2: rgb(242 242 246 / 0.82);
     --color-ink-3: rgb(242 242 246 / 0.62);
+  }
+}
+
+/* FEAT-20260902-004 — and the same answer in light, which needs its own block.
+ *
+ * The four values above are white alphas. Under the light set they would be a
+ * white edge on a near-white panel and white text on a white page: the block
+ * would still apply, still win, and do nothing at all — the failure mode where
+ * an accessibility setting is honoured on paper and ignored on screen.
+ *
+ * The alphas are chosen the way the base set's were, by landing the same
+ * measured contrast the dark set's boost lands: `--color-ink-2` at 0.88 is
+ * 12.47:1 on white against dark's 11.93:1, and `--color-ink-3` at 0.72 is
+ * 7.02:1 against dark's 7.04:1 — which is to say the third level of text, for
+ * a reader who has asked for more contrast, is promoted to what the second
+ * level normally is. The edge and the specular keep the dark block's alphas;
+ * only the colour turns over.
+ *
+ * Two blocks rather than one, and `:where()`, for the same reasons `tokens.css`
+ * gives: the media query is the system default, guarded so an explicit dark
+ * choice keeps dark, and the attribute block follows it to win the tie. Both
+ * sit at (0,1,0) after the block above, so they beat it on source order and
+ * are still beaten by nothing that matters. */
+@media (prefers-contrast: more) and (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])) {
+    --glass-edge: rgb(0 0 0 / 0.42);
+    --glass-spec: rgb(0 0 0 / 0.5);
+    --color-ink-2: rgb(24 24 27 / 0.88);
+    --color-ink-3: rgb(24 24 27 / 0.72);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root:where([data-theme="light"]) {
+    --glass-edge: rgb(0 0 0 / 0.42);
+    --glass-spec: rgb(0 0 0 / 0.5);
+    --color-ink-2: rgb(24 24 27 / 0.88);
+    --color-ink-3: rgb(24 24 27 / 0.72);
   }
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import type { ComponentProps, FormEvent } from 'react';
+import type { ComponentProps } from 'react';
 import { cn } from '../lib/cn';
 import { Textarea } from './field';
 
@@ -48,7 +48,7 @@ export function AutoTextarea({
       rows={1}
       className={cn('resize-none overflow-y-auto', className)}
       style={{ ...style, maxHeight }}
-      onInput={(event: FormEvent<HTMLTextAreaElement>) => {
+      onInput={(event) => {
         resize(event.currentTarget, maxHeight);
         onInput?.(event);
       }}

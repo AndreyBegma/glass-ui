@@ -136,9 +136,9 @@ and closed by this pull request. Each package answer:
 - `Badge`'s `dot` variant paints the solid semantic token, not a 14 % tint;
   `NavRail`'s unavailable marker is `Badge dot` rather than its own span.
 - `SegmentedControl` takes a `role` passthrough, dropping its own `<ul>` for
-  a `<div>` carrying that role; `menu.tsx` gains `MenuRadioGroup` /
-  `MenuRadioItem` on Radix's `RadioGroup`/`RadioItem`, so a one-of-many row
-  inside a menu roves and reads correctly.
+  a `<div>` carrying that role, and the items follow the wrapper; `menu.tsx`
+  gains `MenuRadioGroup` / `MenuRadioItem` on Radix's `RadioGroup`/`RadioItem`,
+  so a one-of-many row inside a menu roves and reads correctly.
 - `SheetContent` takes a `pad` prop (`md` default, `none` for a body that
   carries its own row padding) — the `Card` `pad` shape.
 - `Checkbox` takes `children` as a rich label and a `description` slot; the

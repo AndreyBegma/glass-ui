@@ -182,12 +182,7 @@ describe('NavRail', () => {
       expect(shut.querySelector('span.sr-only')?.textContent).toBe('Inbox');
     });
 
-    /**
-     * The interim for `Tooltip`, which `u1-tier2` ships in this same row and
-     * which had not merged when this was written. When it does, this assertion
-     * becomes a tooltip assertion.
-     */
-    test('the visible name falls back to `title`', () => {
+    test('the visible name is a `Tooltip`, opened on focus', async () => {
       render(
         <NavRail
           aria-label="Sections"
@@ -196,9 +191,14 @@ describe('NavRail', () => {
           groups={groups('inbox')}
         />,
       );
-      expect(
-        screen.getByRole('link', { name: 'Inbox' }).getAttribute('title'),
-      ).toBe('Inbox');
+      const inbox = screen.getByRole('link', { name: 'Inbox' });
+      expect(inbox.getAttribute('title')).toBeNull();
+      expect(screen.queryByRole('tooltip')).toBeNull();
+
+      fireEvent.focus(inbox);
+
+      const tip = await screen.findByRole('tooltip');
+      expect(tip.textContent).toBe('Inbox');
     });
 
     test('the group headings go, and a hairline takes their place', () => {

@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { tv, type VariantProps } from 'tailwind-variants';
 import { cn } from '../lib/cn';
 
 /**
@@ -13,16 +14,45 @@ import { cn } from '../lib/cn';
  * habits") — turning `value`/`max` into a percentage is copy, and copy is the
  * consumer's, per this package's own rule against a primitive guessing at
  * product language.
+ *
+ * `tone`, issue #11 item 6 (`u4-b`, 2026-09-02): the bar was always `bg-ink`,
+ * so a metric past its limit had nowhere to say so on the primitive itself —
+ * only in the `label` sentence above it. `neutral | ok | warn | danger` is
+ * `Badge`'s own set; `neutral` is today's `bg-ink`, byte-identical.
  */
-type ProgressProps = Omit<ComponentProps<'div'>, 'className' | 'children'> & {
-  className?: string;
-  value: number;
-  max?: number;
-  label: string;
-  hint?: string;
-};
+const fill = tv({
+  base: 'h-full rounded-full transition-[width] duration-(--dur-base)',
+  variants: {
+    tone: {
+      neutral: 'bg-ink',
+      ok: 'bg-ok',
+      warn: 'bg-warn',
+      danger: 'bg-danger',
+    },
+  },
+  defaultVariants: {
+    tone: 'neutral',
+  },
+});
 
-export function Progress({ value, max = 100, label, hint, className, ...props }: ProgressProps) {
+type ProgressProps = Omit<ComponentProps<'div'>, 'className' | 'children'> &
+  VariantProps<typeof fill> & {
+    className?: string;
+    value: number;
+    max?: number;
+    label: string;
+    hint?: string;
+  };
+
+export function Progress({
+  value,
+  max = 100,
+  label,
+  hint,
+  tone,
+  className,
+  ...props
+}: ProgressProps) {
   const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
@@ -39,10 +69,7 @@ export function Progress({ value, max = 100, label, hint, className, ...props }:
         className="h-1.5 w-full overflow-hidden rounded-full bg-hover"
         {...props}
       >
-        <div
-          className="h-full rounded-full bg-ink transition-[width] duration-(--dur-base)"
-          style={{ width: `${pct}%` }}
-        />
+        <div className={fill({ tone })} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

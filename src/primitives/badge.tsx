@@ -14,6 +14,12 @@ import { cn } from '../lib/cn';
  * Positioning is the caller's: this renders in flow, and a caller pins it
  * with `className` (`absolute -top-1 -right-1`, as the bell and the sidebar
  * both need) rather than the primitive guessing where "the corner" is.
+ *
+ * The `dot` variant paints the solid semantic token, not the counting badge's
+ * 14 % tint — issue #11 item 2 (`u3-shell`, 2026-09-02): a status dot at
+ * `size-2.5` on a 14 % wash is very nearly invisible. The counting badge
+ * keeps the tint; it carries a number, so it does not depend on colour alone
+ * to be seen.
  */
 const badge = tv({
   base: 'inline-flex items-center justify-center whitespace-nowrap font-semibold leading-none tabular-nums',
@@ -29,6 +35,11 @@ const badge = tv({
       false: 'h-[18px] min-w-[18px] rounded-full px-1 text-[10px]',
     },
   },
+  compoundVariants: [
+    { tone: 'ok', dot: true, class: 'bg-ok' },
+    { tone: 'warn', dot: true, class: 'bg-warn' },
+    { tone: 'danger', dot: true, class: 'bg-danger' },
+  ],
   defaultVariants: {
     tone: 'neutral',
     dot: false,

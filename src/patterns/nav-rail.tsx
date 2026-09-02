@@ -4,6 +4,8 @@ import type { LucideIcon } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { type ReactNode, useId } from 'react';
 import { cn } from '../lib/cn';
+import { Badge } from '../primitives/badge';
+import { Tooltip } from '../primitives/tooltip';
 import type { NavLinkRender } from './nav-link';
 
 /**
@@ -66,13 +68,9 @@ export interface NavRailProps {
    * collapsed rail is exactly as reachable by keyboard and by reader as an open
    * one — the labels go for the eye, not for the tree.
    *
-   * **The visible name is a `title` attribute, and that is a placeholder.** The
-   * specification calls for `Tooltip`, which `u1-tier2` ships in this same
-   * row and which had not merged when this was written (`develop` at
-   * `25405ea`). `title` is the honest interim: it is native, it needs no
-   * dependency, and it is legible — it is also slow to appear and invisible to
-   * touch, which is why it is not the answer. Swap it for `Tooltip` and delete
-   * this paragraph.
+   * The visible name is `Tooltip` (glass-ui#10), opened on hover and on
+   * keyboard focus — issue #11 item 1 (`u3-shell`, 2026-09-02): a native
+   * `title=` does not open on focus and is invisible to touch.
    */
   collapsed?: boolean;
   /** Above the groups: a wordmark, a collapse toggle. Drawn once. */
@@ -179,9 +177,11 @@ export function NavRail({
                         {item.unavailable && collapsed ? (
                           // Collapsed there is no label to sit beside, so the
                           // dot rides the glyph.
-                          <span
+                          <Badge
+                            dot
+                            tone="warn"
                             aria-hidden="true"
-                            className="bg-warn absolute -right-1 -top-1 size-1.5 rounded-full"
+                            className="absolute -right-1 -top-1 size-1.5"
                           />
                         ) : null}
                       </span>
@@ -197,9 +197,11 @@ export function NavRail({
                       {item.unavailable ? (
                         <>
                           {collapsed ? null : (
-                            <span
+                            <Badge
+                              dot
+                              tone="warn"
                               aria-hidden="true"
-                              className="bg-warn relative size-1.5 shrink-0 rounded-full"
+                              className="relative size-1.5 shrink-0"
                             />
                           )}
                           {/*
@@ -213,26 +215,33 @@ export function NavRail({
                     </>
                   );
 
+                  const anchor =
+                    item.href && link ? (
+                      link({
+                        href: item.href,
+                        className: itemClassName,
+                        'aria-current': item.active ? 'page' : undefined,
+                        children: inner,
+                      })
+                    ) : (
+                      <button
+                        type="button"
+                        aria-current={item.active ? 'page' : undefined}
+                        onClick={item.onSelect}
+                        className={itemClassName}
+                      >
+                        {inner}
+                      </button>
+                    );
+
                   return (
                     <li key={item.id} className="relative">
-                      {item.href && link ? (
-                        link({
-                          href: item.href,
-                          className: itemClassName,
-                          title: collapsed ? item.label : undefined,
-                          'aria-current': item.active ? 'page' : undefined,
-                          children: inner,
-                        })
+                      {collapsed ? (
+                        <Tooltip content={item.label} side="right">
+                          {anchor}
+                        </Tooltip>
                       ) : (
-                        <button
-                          type="button"
-                          title={collapsed ? item.label : undefined}
-                          aria-current={item.active ? 'page' : undefined}
-                          onClick={item.onSelect}
-                          className={itemClassName}
-                        >
-                          {inner}
-                        </button>
+                        anchor
                       )}
                     </li>
                   );

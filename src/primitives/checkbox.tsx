@@ -2,7 +2,7 @@
 
 import { Check, Minus } from 'lucide-react';
 import { useEffect, useId, useRef } from 'react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { cn } from '../lib/cn';
 
 /**
@@ -25,17 +25,31 @@ import { cn } from '../lib/cn';
  * string fails the raw-colour gate. `ring-ink/35` is the token-built
  * equivalent — `--color-ink` is itself near-white, so the ring reads the same
  * on the dark ground this package ships today.
+ *
+ * `children` and `description`, issue #11 item 5 (`u4-b`, 2026-09-02): a
+ * plain-string `label` cannot be Denitsa's onboarding `PendingRow` — a
+ * proposal summary plus an `Affected` address list, the whole thing the
+ * clickable target. `children`, given, replaces `label` inside the `<label>`
+ * (the way `Field` wraps a control); `description` is a second, richer slot
+ * below it for exactly that kind of block. `label` and `hint` keep working
+ * unchanged for every call site that only ever needed a string.
  */
 type CheckboxProps = Omit<ComponentProps<'input'>, 'type' | 'className'> & {
   className?: string;
-  label: string;
+  label?: string;
+  /** A rich label, in place of the plain-string `label`. */
+  children?: ReactNode;
   hint?: string;
+  /** Below the label, richer than `hint`. */
+  description?: ReactNode;
   indeterminate?: boolean;
 };
 
 export function Checkbox({
   label,
+  children,
   hint,
+  description,
   indeterminate = false,
   id,
   className,
@@ -76,8 +90,11 @@ export function Checkbox({
         />
       </span>
       <label htmlFor={inputId} className="flex flex-col gap-0.5 text-sm text-ink">
-        {label}
+        {children ?? label}
         {hint ? <span className="text-xs text-ink-3">{hint}</span> : null}
+        {description ? (
+          <span className="text-xs text-ink-3">{description}</span>
+        ) : null}
       </label>
     </div>
   );

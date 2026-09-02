@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { tv } from 'tailwind-variants';
 import { cn } from '../lib/cn';
 
 /**
@@ -134,6 +135,8 @@ interface SheetProps {
    * for a source that unmounts in the same commit.
    */
   morphFrom?: string;
+  /** `none` for a body that carries its own row padding. `md` is today's `px-6`. */
+  pad?: 'none' | 'md';
 }
 
 /**
@@ -154,6 +157,26 @@ const DISMISS_VELOCITY = 0.11;
 /** Fraction of the sheet's own height that dismisses however slowly it got there. */
 const DISMISS_TRAVEL = 0.35;
 
+/**
+ * FEAT-20260902-004 — the `Card` `pad` shape, issue #11 item 4 (`u3-shell`,
+ * 2026-09-02): `px-6` on the body with no way to opt out lands a second
+ * inset on top of a body that carries its own row padding (Denitsa's
+ * `AskPanelBody`, `px-4` — 40px on a phone). `none` hands the body's edges
+ * to the child entirely; `md` is today's spacing, unchanged.
+ */
+const sheetBody = tv({
+  base: 'min-h-0 flex-1 overflow-y-auto',
+  variants: {
+    pad: {
+      md: 'px-6 pb-4 pt-4',
+      none: '',
+    },
+  },
+  defaultVariants: {
+    pad: 'md',
+  },
+});
+
 export function SheetContent({
   title,
   hideTitle = false,
@@ -163,6 +186,7 @@ export function SheetContent({
   footer,
   className,
   morphFrom,
+  pad = 'md',
 }: SheetProps) {
   const reduced = useReducedMotion();
   const state = useContext(SheetStateContext);
@@ -416,9 +440,7 @@ export function SheetContent({
             <div className="shrink-0">{heading}</div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4 pt-4">
-            {children}
-          </div>
+          <div className={sheetBody({ pad })}>{children}</div>
 
           {footer ? (
             <div className="shrink-0 border-t border-line px-6 pb-2 pt-3">

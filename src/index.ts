@@ -35,6 +35,8 @@ export {
   MenuContent,
   MenuItem,
   MenuLabel,
+  MenuRadioGroup,
+  MenuRadioItem,
   MenuRoot,
   MenuSeparator,
   MenuTrigger,

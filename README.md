@@ -124,3 +124,24 @@ group headings and the collapsed rail's names, ⌘K, filtering, arrow roving,
 Enter, Escape and focus return, and the popover's four dismissal paths.
 
 The primitives are not back-filled; they arrive with their own row.
+
+## Fixes from the second consumer
+
+Six contracts Denitsa's shell hit and worked around consumer-side, filed as
+[#11](https://github.com/AndreyBegma/glass-ui/issues/11) (`FEAT-20260902-004`)
+and closed by this pull request. Each package answer:
+
+- `NavRail`'s collapsed items name themselves through `Tooltip`, not a native
+  `title=`.
+- `Badge`'s `dot` variant paints the solid semantic token, not a 14 % tint;
+  `NavRail`'s unavailable marker is `Badge dot` rather than its own span.
+- `SegmentedControl` takes a `role` passthrough, dropping its own `<ul>` for
+  a `<div>` carrying that role; `menu.tsx` gains `MenuRadioGroup` /
+  `MenuRadioItem` on Radix's `RadioGroup`/`RadioItem`, so a one-of-many row
+  inside a menu roves and reads correctly.
+- `SheetContent` takes a `pad` prop (`md` default, `none` for a body that
+  carries its own row padding) — the `Card` `pad` shape.
+- `Checkbox` takes `children` as a rich label and a `description` slot; the
+  plain-string `label` keeps working.
+- `Progress` takes a `tone: neutral | ok | warn | danger` — the `Badge` set —
+  on its fill; `neutral` is today's `bg-ink`.

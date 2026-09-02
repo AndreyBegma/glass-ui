@@ -18,18 +18,38 @@ import { cn } from '../lib/cn';
  * in-page state — is left to the caller as `children`, because a primitive
  * in `ui/` importing the app's routed `Link` would point the dependency the
  * wrong way.
+ *
+ * FEAT-20260902-004 — issue #11 item 3 (`u3-shell`, 2026-09-02): the default
+ * `<ul>` is right for a stand-alone control but wrong nested inside
+ * `role="menu"` — a `<ul>`'s own implicit list role sits between the menu and
+ * `menuitemradio` children, which breaks the ownership `role="menu"`
+ * requires. `role` is a passthrough for exactly that case: given one, the
+ * wrapper drops from `<ul>` to a `<div>` carrying it, so the children read as
+ * direct descendants of whatever owns them (`menu.tsx`'s `MenuRadioGroup`).
  */
 interface SegmentedControlProps {
   children: ReactNode;
   className?: string;
   'aria-label'?: string;
+  /** Renders a `<div>` in this role instead of the default `<ul>`. */
+  role?: string;
 }
 
-export function SegmentedControl({ children, className, ...props }: SegmentedControlProps) {
+export function SegmentedControl({
+  children,
+  className,
+  role,
+  ...props
+}: SegmentedControlProps) {
+  const Wrapper = role ? 'div' : 'ul';
   return (
-    <ul className={cn('flex gap-1 rounded-control bg-surface p-1', className)} {...props}>
+    <Wrapper
+      role={role}
+      className={cn('flex gap-1 rounded-control bg-surface p-1', className)}
+      {...props}
+    >
       {children}
-    </ul>
+    </Wrapper>
   );
 }
 

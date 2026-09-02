@@ -128,6 +128,45 @@ export function MenuSeparator({ className }: { className?: string }) {
   return <RadixMenu.Separator className={cn('my-1.5 h-px bg-hover', className)} />;
 }
 
+/**
+ * FEAT-20260902-004 — a one-of-many row, first-class, from issue #11 item 3
+ * (`u3-shell`, 2026-09-02).
+ *
+ * A `SegmentedControl` with hand-rolled `role="menuitemradio"` and
+ * `aria-checked` was Denitsa's consumer-side fix, and it did not work: Radix's
+ * roving focus and arrow-key handling inside `[role="menu"]` walk its own
+ * Collection, which only elements registered through Radix's `RadioGroup` /
+ * `RadioItem` join. A plain `button` wearing the right ARIA attributes reads
+ * correctly to a screen reader and is still invisible to Tab and the arrows.
+ * `MenuRadioGroup` / `MenuRadioItem` are that `RadioGroup` / `RadioItem`,
+ * styled like `MenuItem` — `aria-checked` and the roving both come from
+ * Radix, not from here.
+ */
+export const MenuRadioGroup = RadixMenu.RadioGroup;
+
+type MenuRadioItemProps = Omit<
+  ComponentProps<typeof RadixMenu.RadioItem>,
+  'className'
+> & {
+  className?: string;
+};
+
+export function MenuRadioItem({ className, ...props }: MenuRadioItemProps) {
+  return (
+    <RadixMenu.RadioItem
+      className={cn(
+        'lit flex cursor-default select-none items-center gap-2.5 rounded-control px-3 py-2.5 text-sm',
+        'outline-none transition-colors duration-(--dur-fast)',
+        'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
+        'data-[state=checked]:text-ink',
+        'data-disabled:opacity-40 data-disabled:pointer-events-none',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 type MenuLabelProps = Omit<ComponentProps<typeof RadixMenu.Label>, 'className'> & {
   className?: string;
 };

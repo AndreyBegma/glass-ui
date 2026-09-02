@@ -18,4 +18,17 @@ describe('Progress', () => {
     const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
     expect(fill.style.width).toBe('100%');
   });
+
+  test('defaults to `neutral`, today\'s `bg-ink`', () => {
+    render(<Progress value={5} max={10} label="usage" />);
+    const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
+    expect(fill.className.split(' ')).toContain('bg-ink');
+  });
+
+  test('`tone` paints the same set `Badge` carries', () => {
+    render(<Progress value={10} max={10} label="usage" tone="danger" />);
+    const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
+    expect(fill.className.split(' ')).toContain('bg-danger');
+    expect(fill.className.split(' ')).not.toContain('bg-ink');
+  });
 });

@@ -87,3 +87,25 @@ export {
   PopoverRoot,
   PopoverTrigger,
 } from './patterns/popover';
+
+/**
+ * FEAT-20260902-004 — the Tier-2 primitives, one file each, against `U4`'s
+ * mapping table. Appended after the shell patterns for the same reason those
+ * are appended after everything before them: this block and the one above it
+ * were built in parallel worktrees, and keeping additions at the end is what
+ * lets a merge conflict resolve as "keep both" rather than a judgment call.
+ */
+export { Tabs, TabsItem } from './primitives/tabs';
+export { Badge } from './primitives/badge';
+export { Progress } from './primitives/progress';
+export { Table, TableCell, TableHead, TableRow } from './primitives/table';
+export { Checkbox } from './primitives/checkbox';
+export { Radio, RadioGroup } from './primitives/radio-group';
+export { Disclosure } from './primitives/disclosure';
+export { Tooltip } from './primitives/tooltip';
+export { Avatar } from './primitives/avatar';
+export { Separator } from './primitives/separator';
+export { NumberInput } from './primitives/number-input';
+export { DateInput } from './primitives/date-input';
+export { AutoTextarea } from './primitives/auto-textarea';
+export { fieldClassName } from './primitives/field-class-name';

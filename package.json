@@ -33,7 +33,12 @@
     "./toggle": "./src/primitives/toggle.tsx",
     "./empty-state": "./src/patterns/empty-state.tsx",
     "./section-unavailable": "./src/patterns/section-unavailable.tsx",
-    "./skeleton": "./src/primitives/skeleton.tsx"
+    "./skeleton": "./src/primitives/skeleton.tsx",
+    "./bottom-capsule": "./src/patterns/bottom-capsule.tsx",
+    "./nav-rail": "./src/patterns/nav-rail.tsx",
+    "./command-palette": "./src/patterns/command-palette.tsx",
+    "./popover": "./src/patterns/popover.tsx",
+    "./use-command-palette-shortcut": "./src/hooks/use-command-palette-shortcut.ts"
   },
   "files": [
     "src"
@@ -57,11 +62,16 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sonner": ">=2.0.0",
-    "tailwindcss": "^4.0.0"
+    "tailwindcss": "^4.0.0",
+    "@radix-ui/react-popover": ">=1.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
     "@types/react": "^19.1.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "@happy-dom/global-registrator": "^20.13.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/bun": "^1.4.0"
   }
 }

@@ -49,3 +49,41 @@ export { SheetContent, SheetRoot } from './primitives/sheet';
 export { Slider } from './primitives/slider';
 export { ACHIEVEMENTS_TOASTER, toast, Toaster } from './primitives/toast';
 export { Toggle } from './primitives/toggle';
+
+/**
+ * FEAT-20260902-004 — the shell patterns (`E-92`).
+ *
+ * Appended rather than filed alphabetically, and deliberately: `u1-tier2` is
+ * appending to this same block in its own worktree, and two writers keeping
+ * their additions at the end is what makes the merge a conflict either side can
+ * resolve by keeping both. Sorting this list is a separate pull request, on a
+ * day when nobody else is in it.
+ */
+export { useCommandPaletteShortcut } from './hooks/use-command-palette-shortcut';
+export {
+  BottomCapsule,
+  type BottomCapsuleAction,
+  type BottomCapsuleMore,
+  type BottomCapsuleProps,
+  type BottomCapsuleTab,
+} from './patterns/bottom-capsule';
+export {
+  CommandPalette,
+  type CommandPaletteGroup,
+  type CommandPaletteItem,
+  type CommandPaletteProps,
+} from './patterns/command-palette';
+export type { NavLinkRender } from './patterns/nav-link';
+export {
+  NavRail,
+  type NavRailGroup,
+  type NavRailItem,
+  type NavRailProps,
+} from './patterns/nav-rail';
+export {
+  PopoverAnchor,
+  PopoverContent,
+  type PopoverContentProps,
+  PopoverRoot,
+  PopoverTrigger,
+} from './patterns/popover';

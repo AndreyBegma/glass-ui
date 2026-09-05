@@ -23,10 +23,29 @@ primitive rather than writing a one-off. The point of the layer is that the next
 change costs one file.
 
 **Use tokens, never a raw colour.** `bg-ground` `bg-surface` `bg-raised`,
-`text-ink` `text-ink-2` `text-ink-3`, `ok` `warn` `danger`, `rounded-control`
-`rounded-surface` `rounded-sheet`. No hex, no `rgb()`, no `zinc-*`,
-`violet-*`, `emerald-*`, `rose-*`, `yellow-*` or `blue-*`. This is enforced by a
-test, not by review.
+`bg-canvas` `bg-paper`, `text-ink` `text-ink-2` `text-ink-3`, `ok` `warn`
+`danger`, `rounded-control` `rounded-surface` `rounded-sheet`. No hex, no
+`rgb()`, no `zinc-*`, `violet-*`, `emerald-*`, `rose-*`, `yellow-*` or
+`blue-*`. This is enforced by a test, not by review.
+
+**A document is not a rung on the surface ladder.** `ground`, `surface` and
+`raised` say how far a panel sits from the back of the window. A page is a
+different kind of thing — a sheet with an edge, lying on a desk — and an editor
+built out of `raised` on `ground` never quite reads as one. Two tokens say it
+instead:
+
+| Token | Role | Light | Dark |
+|---|---|---|---|
+| `canvas` | What a page lies on — the desk, not a panel. | `#ececef` | `#09090c` |
+| `paper` | The page itself. Body text goes on this. | `#ffffff` | `#1a1a21` |
+
+Each theme grounds one end of the pair, which is the symmetry and not an
+oversight: in light the page *is* the ground and the desk is darkened behind
+it; in dark the desk is the ground and the page is lifted off it. Both lift it
+by about the same amount — ΔL\* 6.53 in light, 7.02 in dark — so a document
+carries the same weight in either theme. `ink` on `paper` measures 17.72:1 in
+light and 15.50:1 in dark, and `tokens.spec.ts` holds that above 12:1 in every
+value set.
 
 **New chrome is glass. Cards, grid items and rows are not.** Header, bottom bar,
 sheets, dialogs, menus, overlays and player controls use `glass` or

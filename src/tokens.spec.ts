@@ -215,3 +215,96 @@ describe('both themes carry the same palette', () => {
     expect(block(':root').includes('color-scheme: dark')).toBe(true);
   });
 });
+
+/**
+ * FEAT-20260905-001 — the page tokens, by value and not only by name.
+ *
+ * The block above already refuses a token that exists in one theme and not the
+ * other, and it does that the moment a name lands in the dark set. What it
+ * cannot see is a *value* — `--color-paper` present in all three sets and
+ * quietly retuned in one of them passes every assertion up there, because
+ * every set still declares it.
+ *
+ * These two are the pair where that matters most. `--color-paper`'s dark value
+ * is the one number in this file that was decided by looking at a screen
+ * rather than by arithmetic — `Q40` carries it as a default with a trigger, so
+ * it is a value somebody is *expected* to come back and argue with one day.
+ * Pinning it here means that argument arrives as a failing test with the
+ * decision's name on it, rather than as a diff nobody reads twice.
+ */
+const PAGE_TOKENS = {
+  dark: ['--color-canvas: #09090c', '--color-paper: #1a1a21'],
+  light: ['--color-canvas: #ececef', '--color-paper: #ffffff'],
+};
+
+describe('the page tokens carry the values C34 decided', () => {
+  test('the dark set: the canvas is the ground, the page is lifted off it', () => {
+    for (const declaration of PAGE_TOKENS.dark) {
+      expect(DARK).toContain(declaration);
+    }
+  });
+
+  test.each([
+    ['the system default', SYSTEM],
+    ['the explicit toggle', EXPLICIT],
+  ])('%s: the page is the ground, the canvas is darkened behind it', (_n, body) => {
+    for (const declaration of PAGE_TOKENS.light) {
+      expect(declarations(body)).toContain(declaration);
+    }
+  });
+});
+
+/**
+ * FEAT-20260905-001 — body text on a page stays readable, in every value set.
+ *
+ * The assertions above pin today's four hex values, which is the right guard
+ * against an accidental edit and the wrong one against a deliberate change:
+ * whoever `Q40`'s trigger eventually sends back here to retune the dark page
+ * will update those constants as part of the job, and should. This is the
+ * constraint that must survive them doing it.
+ *
+ * `ink` on `paper` at 12:1 is well past the 4.5:1 WCAG asks of body text, and
+ * that is the point — a document is the one surface in this system that is
+ * read for an hour at a time rather than glanced at, and the value it is read
+ * on was set by eye. A floor this far above the legal one is what makes it
+ * safe to have set it by eye.
+ */
+
+/** WCAG 2.x relative luminance of an `#rrggbb`. */
+function luminance(hex: string): number {
+  const h = hex.replace('#', '');
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const c = Number.parseInt(h.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrast(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** The value a set gives a token, as written. Opaque hex only — every token
+ *  this file measures is one, and a contrast ratio against a translucent
+ *  colour is a ratio against whatever happens to be behind it, which is not a
+ *  thing a stylesheet can be asked. */
+function value(decls: string[], token: string): string {
+  const found = decls.find((d) => d.startsWith(`${token}:`));
+  if (!found) throw new Error(`no \`${token}\` in this set`);
+  const hex = found.slice(token.length + 1).trim();
+  if (!/^#[0-9a-f]{6}$/i.test(hex))
+    throw new Error(`\`${token}\` is \`${hex}\`, which is not an opaque hex`);
+  return hex;
+}
+
+describe('a page can be read', () => {
+  test.each([
+    ['the dark set', DARK],
+    ['the system default', declarations(SYSTEM)],
+    ['the explicit toggle', declarations(EXPLICIT)],
+  ])('%s: ink on paper clears 12:1', (_n, decls) => {
+    const ratio = contrast(value(decls, '--color-ink'), value(decls, '--color-paper'));
+    expect(ratio).toBeGreaterThanOrEqual(12);
+  });
+});

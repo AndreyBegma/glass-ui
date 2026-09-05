@@ -72,6 +72,37 @@
   --color-surface: #101015;
   --color-raised: #17171e;
 
+  /* FEAT-20260905-001 — the page, and the thing it lies on.
+   *
+   * `ground`/`surface`/`raised` are a ladder of *chrome*: how far a panel is
+   * from the back of the window. A document is not a rung on it. It is a sheet
+   * of paper with an edge, lying on a desk, and the desk is not "the ground
+   * one step down" — it is a different kind of thing, which is why an editor
+   * built out of `raised` on `ground` never quite looks like a page.
+   *
+   * So: two names, one meaning each. `canvas` is what a page lies on; `paper`
+   * is the page.
+   *
+   * Each theme grounds one end of the pair, and that is a symmetry rather than
+   * a coincidence to be tidied away. In dark the desk is the ground itself
+   * (`#09090c`, `--color-ground` to the digit) and the page is lifted off it;
+   * in light the page is the ground (`#ffffff`) and the desk is darkened
+   * behind it. Written as a literal here and not as `var(--color-ground)`:
+   * `@theme` entries that reference each other emit a utility whose value is a
+   * `var()` of a `var()`, and the light blocks have to break the reference
+   * anyway — one spelling in three places beats two spellings in three places.
+   *
+   * The dark `paper` is the one value in this pair that is a judgement rather
+   * than arithmetic, and `Q40` records it as the default with its trigger.
+   * Measured: `ink` `#f2f2f6` on it is 15.50:1, well past the 12:1 this had to
+   * clear, and it sits ΔL* 7.02 above `canvas` where light's page sits 6.53
+   * above its own — the two themes lift the page by the same amount. Against
+   * `raised` it is ΔL* 1.52, which is above it but by the narrowest step in
+   * the ladder; the two rungs are different kinds of thing and rarely touch,
+   * and if that ever stops being true this is the number that moves. */
+  --color-canvas: #09090c;
+  --color-paper: #1a1a21;
+
   /* Text, three levels and no fourth. Anything that wants a shade between
      `ink-2` and `ink-3` wants one of them instead. */
   --color-ink: #f2f2f6;
@@ -278,6 +309,14 @@
     --color-surface: #fafafa;
     --color-raised: #f4f4f5;
 
+    /* The page and its desk, the other way round — see the dark set for what
+       the pair is for. Here the page *is* the ground and the desk is darkened
+       behind it, which is the arrangement paper has had on a desk for rather
+       longer than either theme. `#ececef` is a shade under `raised`, so a page
+       reads as lying on the canvas rather than as one more panel on it. */
+    --color-canvas: #ececef;
+    --color-paper: #ffffff;
+
     --color-ink: #18181b;
     --color-ink-2: rgb(24 24 27 / 0.72);
     --color-ink-3: rgb(24 24 27 / 0.48);
@@ -334,6 +373,14 @@
   --color-ground: #ffffff;
   --color-surface: #fafafa;
   --color-raised: #f4f4f5;
+
+  /* The page and its desk, the other way round — see the dark set for what
+     the pair is for. Here the page *is* the ground and the desk is darkened
+     behind it, which is the arrangement paper has had on a desk for rather
+     longer than either theme. `#ececef` is a shade under `raised`, so a page
+     reads as lying on the canvas rather than as one more panel on it. */
+  --color-canvas: #ececef;
+  --color-paper: #ffffff;
 
   --color-ink: #18181b;
   --color-ink-2: rgb(24 24 27 / 0.72);

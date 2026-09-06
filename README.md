@@ -60,7 +60,9 @@ screen is already competing for attention. Colour comes from the content.
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
 `base.css` puts a 3px white outline on `:focus-visible`, sized to be read across
 a room from a television. Every hand-written ring that preceded it was thinner
-and dimmer.
+and dimmer. Form elements and `contenteditable` editors are the only exemption
+— they draw their own focus indicator (a caret, or a consumer's selected-node
+state), and `base.css` already exempts them.
 
 **Hit area and visual size are separate.** `Button` carries an invisible `after:`
 pseudo-element that extends the touch target to 44px and disappears on a fine

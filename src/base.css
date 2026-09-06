@@ -107,6 +107,12 @@ select:focus-visible {
   outline: none;
 }
 
+/* The caret is a text editor's focus indicator; consumers draw their own
+   selected-node state. */
+[contenteditable="true"]:focus-visible {
+  outline: none;
+}
+
 /* Hide scrollbar but keep scrollable */
 .scrollbar-hide {
   -ms-overflow-style: none;

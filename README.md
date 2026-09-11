@@ -163,7 +163,6 @@ with the same capsule, the same rail and the same palette.
 | `glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
 | `glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
 | `glass-ui/tree` | `Tree` — the WAI-ARIA tree: nested rows, controlled expansion and selection, one tab stop, arrows / Home / End / type-ahead, a per-row actions slot, and drag-to-reorder that is off until `enableReorder` says otherwise. |
-| `glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
 
 Three rules run through all of them, and each one is the answer to something
 that went wrong before the pattern existed.
@@ -212,26 +211,6 @@ Enter, Escape and focus return, and the popover's four dismissal paths.
 
 The primitives are not back-filled; they arrive with their own row.
 
-## The data primitives
-
-`E-104`, `V3`. Two of the four controls a list of records needs and the
-package did not have — `Toolbar`, above, is the third; `Board` is the fourth
-and arrives from its own slot.
-
-| Import | What it is |
-|---|---|
-| `glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
-| `glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
-
-**`Combobox`'s keyboard model is `CommandPalette`'s, not `MenuContent`'s.**
-Inside a listbox the keyboard stays on the field and moves the highlight
-through `aria-activedescendant`; a `Menu` gives its rows roving focus and
-`role="menuitem"`, which would give a screen reader two places to be at once.
-The popup is a plain listbox for the same reason `CommandPalette`'s is, and
-the highlight is clamped to the list that is actually rendered so
-`aria-activedescendant` never names a row that has disappeared underneath it
-(`BUG-20260823-306`, the same guard, applied a second time).
-
 ## Fixes from the second consumer
 
 Six contracts Denitsa's shell hit and worked around consumer-side, filed as
@@ -252,3 +231,128 @@ and closed by this pull request. Each package answer:
   plain-string `label` keeps working.
 - `Progress` takes a `tone: neutral | ok | warn | danger` — the `Badge` set —
   on its fill; `neutral` is today's `bg-ink`.
+
+## The workspace patterns
+
+`E-104` makes Denitsa a workspace, and a workspace needs a two-level shell and
+the parts a dense list of objects is worked with. Seven components, none of
+which had an ancestor in this package (`V2`). `E-92`'s line holds: these are
+*parts*; the layout that arranges them is the application's.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/app-rail` | `AppRail` — the strip of applications above the rail: icon-only, always visible, the active item carrying the accent. |
+| `glass-ui/side-panel` | `SidePanel` — a collapsible, resizable column with its width and collapse state persisted; `useSidePanel()` for a consumer's own control. |
+| `glass-ui/breadcrumb` | `Breadcrumb` — the trail, with a measured collapsing middle behind an overflow `Menu` and the last item as the page. |
+| `glass-ui/row-actions` | `RowActions` and `rowActionsHost` — a row's affordances, revealed on hover, focus-within, selection, and always on a coarse pointer. |
+| `glass-ui/context-menu` | `ContextMenuRoot` / `Trigger` / `Content` / `Item` / `Separator` / `Label` / `RadioGroup` / `RadioItem` — the right-click menu on `Menu`'s exported styling. |
+| `glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. |
+
+Five rules, each the answer to something that was already going wrong.
+
+**The accent's first place is `AppRail`'s active item, and only under the
+desk.** The glyph reads `--color-accent` and the capsule `--color-accent-soft`,
+each through a `var()` whose fallback is the sofa's look for the same place —
+`NavRail`'s `bg-hover` capsule and `ink`. Under `data-scale="desk"` it is the
+accent; under nothing it is exactly `NavRail`. That is not a fifth use: it is
+the same place, drawn the way that profile already draws it. Note that the
+accent tokens are declared under the desk selector rather than in `@theme`, so
+Tailwind emits no `bg-accent-*` utility for them — every read is an arbitrary
+`var()`, as the density scale already is.
+
+**Unavailable is marked, still navigable, never hidden — one level up.**
+`AppRail` keeps `NavRail`'s rule to the letter (`E-50`): a `warn` dot on the
+glyph, the consumer's phrase after the label for a reader, and the item keeps
+its `href`. This is the first time a failing service is legible at a glance
+rather than as one dimmed row in a list of twenty-three, and `V4` inherits it
+from here.
+
+**Revealing is a visual state, never a DOM state.** `RowActions` is
+`opacity-0` until the row is hovered, focused within, selected (the prop, or
+`aria-selected` on the row) or the pointer is coarse — and it is *never*
+`hidden`, `invisible`, `sr-only` or `aria-hidden`. The buttons are in the
+accessibility tree at all times, Tab lands on them, and a phone sees them
+always, because a hover-only affordance on a phone is an affordance that does
+not exist. The row wears `rowActionsHost`; the cluster cannot select its own
+parent.
+
+**Every right-click action has a visible affordance.** `ContextMenuContent`
+and `RowActions` take the same `actions` list, so a row built from one list
+offers the same commands under the pointer as in its cluster — a property of
+the shape rather than a promise about it. A consumer composing
+`ContextMenuItem`s by hand keeps the obligation by hand, and a reviewer checks
+it. Shift+F10 and the Menu key fire the same `contextmenu` event a mouse does,
+so the keyboard opens it with nothing added.
+
+**Collapsing to zero is not possible.** `SidePanel`'s `minWidth` is a prop;
+dragging past half of it produces the strip, which carries the expand button
+and never goes away, and the handle — the WAI-ARIA window splitter: arrows,
+Home, End, Enter — stays with it, so a keyboard has the same way back a
+pointer does. The panel owns and persists `{ width, collapsed }` under a
+required `storageKey`; it does not own its contents and does not know what an
+application is.
+
+`Breadcrumb` measures rather than counts: the list is `overflow-hidden`, a
+layout effect folds one more middle item while `scrollWidth` exceeds
+`clientWidth`, and a `ResizeObserver` unfolds on resize. The trail lives in a
+column whose width a `SidePanel` decides, so a breakpoint would be measuring
+the wrong thing. The first and last items never fold; the last is
+`aria-current="page"` and not a link whether or not it was given an `href`.
+
+## The data primitives
+
+`V3`. `V2` gives the shell its parts; this row gives the *contents* theirs —
+the controls a list of records needs and the package did not have.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
+| `glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
+| `glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
+| `glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
+
+Three rules, and the first is the acceptance criterion the specification
+says gets dropped.
+
+**The keyboard path is not drag.** Every card carries a `RowActions` cluster
+with one `Menu` trigger — in the DOM and the tab order at all times, revealed
+for the eye on hover, focus-within and a coarse pointer — and the menu moves
+the card: up, down, top, bottom, and one item per other column. A drop and a
+menu item are two *intents* to one pure reducer, `resolveBoardMove`; both are
+normalised there and both reach `onMove` through the same exit, so the two
+paths cannot produce different moves, and the test file asserts they do not.
+The result is read by an `aria-live` region after every move, whichever input
+produced it, and focus follows the card into its new column.
+
+**Cards are not glass.** The card is `Card raised`'s surface and the variant
+is not a prop. The rule above — new chrome is glass; cards, grid items and
+rows are not — is the one a board is most likely to break, because a column
+of translucent cards is the screenshot everybody wants and the frame rate
+nobody does. A test walks every card and everything inside it. The card's
+menu is glass, because it is a menu.
+
+**It holds no state that is a fact about the data.** `columns` is controlled
+and `onMove` reports `{ id, fromColumnId, toColumnId, index }`, where `index`
+is the position the card takes **after** it has left where it was —
+`TreeReorder`'s convention — so a move that changes nothing is never
+reported. `labels` is optional with English defaults, and the defaults are
+for this package's own tests: Denitsa's consumers pass every one of them.
+
+**`Toolbar` holds no state about the collection either.** What a view *means*,
+which filters are active, what the trailing action does are all the
+application's — `Toolbar` is layout and slots, the same contract `BottomCapsule`
+and `NavRail` keep for the shell.
+
+**`Combobox`'s keyboard model is `CommandPalette`'s, not `MenuContent`'s.**
+Inside a listbox the keyboard stays on the field and moves the highlight
+through `aria-activedescendant`; a `Menu` gives its rows roving focus and
+`role="menuitem"`, which would give a screen reader two places to be at once.
+The popup is a plain listbox for the same reason `CommandPalette`'s is, and
+the highlight is clamped to the list that is actually rendered so
+`aria-activedescendant` never names a row that has disappeared underneath it
+(`BUG-20260823-306`, the same guard, applied a second time).
+
+**`InlineEdit`'s row height is identical in both states, asserted in a test.**
+One class, `h-[var(--size-field)]`, shared byte-for-byte by the display button
+and the edit input — that is the whole difficulty, and the reason this is a
+component rather than a pattern repeated per screen.

@@ -127,10 +127,71 @@ export {
 } from './patterns/tree';
 
 /**
+ * FEAT-20260911-002 — the other six workspace patterns, from `v2-patterns`.
+ * Appended after `Tree`'s block for the reason that block gives: the two were
+ * built in parallel worktrees, and the merge kept both.
+ */
+export { AppRail, type AppRailItem, type AppRailProps } from './patterns/app-rail';
+export {
+  SidePanel,
+  type SidePanelLabels,
+  type SidePanelProps,
+  type SidePanelState,
+  useSidePanel,
+} from './patterns/side-panel';
+export {
+  Breadcrumb,
+  type BreadcrumbItem,
+  type BreadcrumbProps,
+} from './patterns/breadcrumb';
+export {
+  type RowAction,
+  RowActions,
+  type RowActionsProps,
+  rowActionsHost,
+} from './patterns/row-actions';
+export {
+  type ContextMenuAction,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuRoot,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from './primitives/context-menu';
+export {
+  isApplePlatform,
+  KeyHint,
+  type KeyHintProps,
+  resolveKeys,
+} from './patterns/key-hint';
+
+/**
+ * FEAT-20260911-003 — the board (`E-104`, `V3` decisions 4 and 5). Appended
+ * for the reason every block above is: `v3-controls` is adding its three to
+ * this same file in its own worktree, and both sides keeping their lines at
+ * the end is what makes the merge "keep both".
+ */
+export {
+  applyBoardMove,
+  Board,
+  type BoardCardItem,
+  type BoardColumn,
+  type BoardLabels,
+  type BoardMove,
+  type BoardMoveCommand,
+  type BoardMoveIntent,
+  type BoardProps,
+  resolveBoardMove,
+} from './patterns/board';
+
+/**
  * FEAT-20260911-003 — the data primitives (`E-104`, `V3`). Appended, for the
- * reason every block above it is: `v3-board` is adding `Board` to this same
- * file in its own worktree, and both sides keeping their lines at the end is
- * what makes the merge "keep both".
+ * reason every block above it is: `v3-board` added `Board` to this same file
+ * in its own worktree, and both sides keeping their lines at the end is what
+ * makes the merge "keep both".
  */
 export { Combobox, type ComboboxOption, type ComboboxProps } from './primitives/combobox';
 export { InlineEdit } from './primitives/inline-edit';

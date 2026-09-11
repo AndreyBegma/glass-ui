@@ -39,12 +39,13 @@ interface TabsItemProps {
   current: boolean;
   layoutId: string;
   children: ReactNode;
+  className?: string;
 }
 
-export function TabsItem({ current, layoutId, children }: TabsItemProps) {
+export function TabsItem({ current, layoutId, children, className }: TabsItemProps) {
   const reduced = useReducedMotion();
   return (
-    <li className="relative min-w-0 flex-1">
+    <li className={cn('relative min-w-0 flex-1', className)}>
       {current ? (
         <motion.span
           layoutId={layoutId}

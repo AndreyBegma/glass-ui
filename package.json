@@ -52,7 +52,8 @@
     "./number-input": "./src/primitives/number-input.tsx",
     "./date-input": "./src/primitives/date-input.tsx",
     "./auto-textarea": "./src/primitives/auto-textarea.tsx",
-    "./field-class-name": "./src/primitives/field-class-name.ts"
+    "./field-class-name": "./src/primitives/field-class-name.ts",
+    "./tree": "./src/patterns/tree.tsx"
   },
   "files": [
     "src"

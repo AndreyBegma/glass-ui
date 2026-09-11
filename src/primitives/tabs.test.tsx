@@ -26,4 +26,33 @@ describe('Tabs', () => {
     expect(items[0]?.querySelector('.bg-raised')).not.toBeNull();
     expect(items[1]?.querySelector('.bg-raised')).toBeNull();
   });
+
+  test('an item with no className keeps the default markup', () => {
+    render(
+      <Tabs aria-label="Sections">
+        <TabsItem current={false} layoutId="tabs-test-default">
+          <a href="/a">A</a>
+        </TabsItem>
+      </Tabs>,
+    );
+
+    const item = screen.getByRole('listitem');
+    expect(item.className).toBe('relative min-w-0 flex-1');
+  });
+
+  test('a className on TabsItem reaches the li, overriding flex-1 so the item keeps its width', () => {
+    render(
+      <Tabs aria-label="Sections">
+        <TabsItem current={false} layoutId="tabs-test-shrink" className="shrink-0 flex-none whitespace-nowrap">
+          <a href="/a">A</a>
+        </TabsItem>
+      </Tabs>,
+    );
+
+    const item = screen.getByRole('listitem');
+    expect(item.className).toContain('min-w-0');
+    expect(item.className).toContain('flex-none');
+    expect(item.className).toContain('whitespace-nowrap');
+    expect(item.className).not.toContain('flex-1');
+  });
 });

@@ -111,3 +111,47 @@ export { NumberInput } from './primitives/number-input';
 export { DateInput } from './primitives/date-input';
 export { AutoTextarea } from './primitives/auto-textarea';
 export { fieldClassName } from './primitives/field-class-name';
+
+/**
+ * FEAT-20260911-002 — the workspace patterns (`V2`, `E-104`). Appended, for
+ * the reason the two blocks above are: `v2-tree` is appending `Tree` to this
+ * same file in its own worktree, and two writers keeping their additions at
+ * the end is what makes the merge a conflict either side resolves by keeping
+ * both.
+ */
+export { AppRail, type AppRailItem, type AppRailProps } from './patterns/app-rail';
+export {
+  SidePanel,
+  type SidePanelLabels,
+  type SidePanelProps,
+  type SidePanelState,
+  useSidePanel,
+} from './patterns/side-panel';
+export {
+  Breadcrumb,
+  type BreadcrumbItem,
+  type BreadcrumbProps,
+} from './patterns/breadcrumb';
+export {
+  type RowAction,
+  RowActions,
+  type RowActionsProps,
+  rowActionsHost,
+} from './patterns/row-actions';
+export {
+  type ContextMenuAction,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuRoot,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from './primitives/context-menu';
+export {
+  isApplePlatform,
+  KeyHint,
+  type KeyHintProps,
+  resolveKeys,
+} from './patterns/key-hint';

@@ -167,3 +167,22 @@ export {
   type KeyHintProps,
   resolveKeys,
 } from './patterns/key-hint';
+
+/**
+ * FEAT-20260911-003 — the board (`E-104`, `V3` decisions 4 and 5). Appended
+ * for the reason every block above is: `v3-controls` is adding its three to
+ * this same file in its own worktree, and both sides keeping their lines at
+ * the end is what makes the merge "keep both".
+ */
+export {
+  applyBoardMove,
+  Board,
+  type BoardCardItem,
+  type BoardColumn,
+  type BoardLabels,
+  type BoardMove,
+  type BoardMoveCommand,
+  type BoardMoveIntent,
+  type BoardProps,
+  resolveBoardMove,
+} from './patterns/board';

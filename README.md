@@ -298,3 +298,40 @@ layout effect folds one more middle item while `scrollWidth` exceeds
 column whose width a `SidePanel` decides, so a breakpoint would be measuring
 the wrong thing. The first and last items never fold; the last is
 `aria-current="page"` and not a link whether or not it was given an `href`.
+
+## The data primitives
+
+`V3`. `V2` gives the shell its parts; this row gives the *contents* theirs —
+the controls a list of records needs and the package did not have. The board
+is here; `Toolbar`, `Combobox` and `InlineEdit` arrive from their own slot.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
+
+Three rules, and the first is the acceptance criterion the specification
+says gets dropped.
+
+**The keyboard path is not drag.** Every card carries a `RowActions` cluster
+with one `Menu` trigger — in the DOM and the tab order at all times, revealed
+for the eye on hover, focus-within and a coarse pointer — and the menu moves
+the card: up, down, top, bottom, and one item per other column. A drop and a
+menu item are two *intents* to one pure reducer, `resolveBoardMove`; both are
+normalised there and both reach `onMove` through the same exit, so the two
+paths cannot produce different moves, and the test file asserts they do not.
+The result is read by an `aria-live` region after every move, whichever input
+produced it, and focus follows the card into its new column.
+
+**Cards are not glass.** The card is `Card raised`'s surface and the variant
+is not a prop. The rule above — new chrome is glass; cards, grid items and
+rows are not — is the one a board is most likely to break, because a column
+of translucent cards is the screenshot everybody wants and the frame rate
+nobody does. A test walks every card and everything inside it. The card's
+menu is glass, because it is a menu.
+
+**It holds no state that is a fact about the data.** `columns` is controlled
+and `onMove` reports `{ id, fromColumnId, toColumnId, index }`, where `index`
+is the position the card takes **after** it has left where it was —
+`TreeReorder`'s convention — so a move that changes nothing is never
+reported. `labels` is optional with English defaults, and the defaults are
+for this package's own tests: Denitsa's consumers pass every one of them.

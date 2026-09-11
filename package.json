@@ -59,7 +59,8 @@
     "./breadcrumb": "./src/patterns/breadcrumb.tsx",
     "./row-actions": "./src/patterns/row-actions.tsx",
     "./context-menu": "./src/primitives/context-menu.tsx",
-    "./key-hint": "./src/patterns/key-hint.tsx"
+    "./key-hint": "./src/patterns/key-hint.tsx",
+    "./board": "./src/patterns/board.tsx"
   },
   "files": [
     "src"

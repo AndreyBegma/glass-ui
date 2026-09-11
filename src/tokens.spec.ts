@@ -475,6 +475,34 @@ describe('the desk profile changes exactly what it says it changes', () => {
     // toggle, or the system default, but never both — and so survives review.
     expect(declarations(DESK_EXPLICIT)).toEqual(declarations(DESK_SYSTEM));
   });
+
+  /**
+   * Source order is load-bearing here, and it is the one property of this file
+   * that a diff makes invisible: every block below weighs (0,1,0), so which
+   * one wins is decided purely by which comes last. Move the desk rung above
+   * the light pair — a plausible tidy-up, since it reads as "the new section"
+   * — and a light desk page takes the *white* hairlines and draws them on
+   * white paper. Nothing else in the file changes and no other test notices.
+   *
+   * The comment above the blocks says so. This makes it fail a build instead.
+   */
+  test('the desk blocks come after the light pair, which is what makes them win', () => {
+    const order = [
+      ':root:where(:not([data-theme="dark"]))',
+      ':root:where([data-theme="light"])',
+      ':root:where([data-scale="desk"])',
+      ':root:where(:not([data-theme="dark"])[data-scale="desk"])',
+      ':root:where([data-theme="light"][data-scale="desk"])',
+    ].map((selector) => {
+      const at = TOKENS.indexOf(selector);
+      if (at < 0) throw new Error(`tokens.css no longer contains \`${selector}\``);
+      return { selector, at };
+    });
+
+    expect(order.map((o) => o.selector)).toEqual(
+      [...order].sort((a, b) => a.at - b.at).map((o) => o.selector),
+    );
+  });
 });
 
 /**

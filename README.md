@@ -338,6 +338,8 @@ is the position the card takes **after** it has left where it was —
 reported. `labels` is optional with English defaults, and the defaults are
 for this package's own tests: Denitsa's consumers pass every one of them.
 
+Three more, one per remaining component.
+
 **`Toolbar` holds no state about the collection either.** What a view *means*,
 which filters are active, what the trailing action does are all the
 application's — `Toolbar` is layout and slots, the same contract `BottomCapsule`

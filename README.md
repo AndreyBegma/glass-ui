@@ -8,7 +8,7 @@ decline the third:
 
 | Import | What it is |
 |---|---|
-| `glass-ui/tokens.css` | The palette, the radius, motion and type scales, and the z-index ladder. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
+| `glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
 | `glass-ui/material.css` | `glass`, `glass-strong` and `lit`, and every fallback they need. |
 | `glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
 | `glass-ui` | The primitives and `cn`. |
@@ -27,6 +27,11 @@ change costs one file.
 `danger`, `rounded-control` `rounded-surface` `rounded-sheet`. No hex, no
 `rgb()`, no `zinc-*`, `violet-*`, `emerald-*`, `rose-*`, `yellow-*` or
 `blue-*`. This is enforced by a test, not by review.
+
+The accent tokens are the one part of the palette that is conditional — they
+exist only under `data-scale="desk"`, and the rule about where they may be used
+is below. `--size-*` is not a Tailwind namespace, so the density scale is read
+as `h-[var(--size-row)]` rather than as a utility.
 
 **A document is not a rung on the surface ladder.** `ground`, `surface` and
 `raised` say how far a panel sits from the back of the window. A page is a
@@ -55,7 +60,66 @@ two hundred glass tiles on one page is why this rule is written down.
 
 **The primary action is white** (`bg-ink text-ground`). The system was built for
 an interface that sits on top of other people's artwork, where every poster on
-screen is already competing for attention. Colour comes from the content.
+screen is already competing for attention. Colour comes from the content. Under
+the desk profile it is the accent instead — see the two rules below.
+
+**Three axes, each unset by default.** The document carries `data-theme`,
+`data-material` and `data-scale`, and every one of them does nothing until an
+application sets it. That is not politeness, it is how two products share one
+token layer without either being able to move the other.
+
+| Attribute | Unset | Set | What it changes |
+|---|---|---|---|
+| `data-theme` | follows the system | `light` / `dark` | the palette |
+| `data-material` | glass | `flat` | the material, and nothing else |
+| `data-scale` | the sofa | `desk` | radii, motion, hairlines, density, and the accent |
+
+`data-scale="desk"` is Denitsa's. Luna Watch never sets it and is therefore
+untouched by everything under it — structurally, not by agreement.
+`tokens.spec.ts` holds every token in the base set to its value at `3d1c78e`
+and holds the desk profile to exactly the list it is allowed to change, so both
+halves of that claim fail a build rather than a review.
+
+What the desk profile is for: this system was designed to be read across a room
+from a television, and Denitsa is read at 60cm. A radius that gives a card a
+silhouette at four metres reads as a toy at arm's length; a 420ms sheet that
+feels considered from a sofa is a wait at a desk. Radii go 6/8/12, durations
+100/150/260, hairlines get heavier and hover gets lighter, and the density
+scale drops a row from 40px to 32.
+
+**The accent is desk-only, and it has four places.** `--color-accent`,
+`--color-accent-ink` and `--color-accent-soft` are defined under
+`data-scale="desk"` and are **undefined everywhere else** — a component that
+reads one outside the desk profile gets nothing, loudly, which is deliberate.
+The four places, and there is no fifth:
+
+| Where | Which token |
+|---|---|
+| The active navigation item | `--color-accent`, or `--color-accent-soft` behind it |
+| A selection — a chosen row, a picked option | `--color-accent-soft` |
+| The primary action's fill | `--color-accent`, label in `--color-accent-ink` |
+| A link | `--color-accent` |
+
+It is not a decorative colour. It does not go on a chart, a badge, an icon that
+is merely present, an empty state, or a border that wants to look important.
+`--color-ok`, `--color-warn` and `--color-danger` keep their meanings and the
+accent does not join them — **an accent is not a semantic**, and a colour that
+means both "primary" and "this one is fine" means neither.
+
+`--color-accent-ink` flips with the theme and is near-black in dark. That is
+not a slip: in dark, "white text on the accent" and "the accent readable on
+`--color-raised`" cannot both be true of any colour of any hue, so the accent
+sits where `ink` already sits in each theme — a bright fill with dark text in
+dark, a dark fill with white text in light. Never write anything on the accent
+in a colour of your own choosing; `--color-accent-ink` is the only one measured
+against it.
+
+**Hit area, visual size and the density scale are three different things.**
+`--size-row` (40px, a list row), `--size-control` (40px, a button),
+`--size-field` (44px, an input) and `--size-nav` (40px, a rail item) are the
+values the components already produce, named so the desk profile can move them
+— it takes them to 32/28/28/28. `--size-tap` is 44px in both profiles and is
+not one of them; see the next rule.
 
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
 `base.css` puts a 3px white outline on `:focus-visible`, sized to be read across

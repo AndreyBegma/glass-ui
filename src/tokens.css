@@ -183,6 +183,52 @@
   --radius-surface: 18px;
   --radius-sheet: 28px;
 
+  /* FEAT-20260911-001 — the density scale, named.
+   *
+   * Before this there was none: every control and row height was written where
+   * it was used, which is fine until a second product wants the same interface
+   * at a different distance. The desk profile at the bottom of this file is
+   * that second product, and a scale with one rung is not a scale — so naming
+   * the sofa values is half of this row rather than a tidy-up beside it.
+   *
+   * These five are **not** a redesign. Each one is the value the components
+   * already produce today, so an application that adopts the token renders
+   * exactly as it did — which is the whole reason Luna Watch can be handed this
+   * version without being in the wave that wrote it.
+   *
+   * Where each number comes from, so the next reader does not have to go and
+   * measure it again:
+   *
+   *   --size-row     `px-3 py-2.5` on a `text-sm` line box — 10 + 20 + 10.
+   *                  `Table`'s cell (`table.tsx`), `MenuItem` (`menu.tsx`).
+   *   --size-control `Button size="md"`, `h-10` (`button.tsx`).
+   *   --size-field   `Input` / `Select` / `SearchInput`, `h-11` (`field.tsx`).
+   *   --size-nav     `NavRail`'s item, `py-2.5` on the same line box.
+   *   --size-tap     `Button`'s invisible `after:h-11` target (`button.tsx`).
+   *
+   * Two tokens for a control and a field, not one, because today they are 40
+   * and 44 and a single name would have to lie about one of them. A form field
+   * is taller than a toolbar button on purpose — it is a target you aim at and
+   * then type into.
+   *
+   * `--size-tap` is the odd one and stays odd: it is a *hit* area, not a visual
+   * size, it is already 44px for the reason the README gives, and the desk
+   * profile leaves it alone. A finger is the same size at either distance.
+   *
+   * `Button`'s `sm` (32px) and `lg` (48px) are deliberately **not** here. The
+   * scale names the default rung; the other two stay component-local until
+   * something actually needs them from outside. That is a decision, not an
+   * omission.
+   *
+   * `--size-*` is not one of Tailwind's theme namespaces, so these emit as
+   * plain custom properties the way `--glass-*` and `--dur-*` do. Read them as
+   * `h-[var(--size-row)]`. */
+  --size-row: 40px;
+  --size-control: 40px;
+  --size-field: 44px;
+  --size-nav: 40px;
+  --size-tap: 44px;
+
   /* FEAT-20260823-364 — the layers, named.
    *
    * There were ten z values in the app and no scheme behind them: `z-10`,
@@ -440,3 +486,219 @@
    three places, and a value in three places is a value that will one day be
    two values — a drift no assertion about "declared in both sets" could see,
    because both sets would still declare it. */
+
+/* FEAT-20260911-001 — the desk profile. `E-104`.
+ *
+ * A fourth axis, beside `data-theme` and `data-material`. Denitsa is a
+ * workspace read at 60cm; Luna Watch is a media centre operated from a sofa,
+ * and every value above this line is the sofa's. They have shared this file
+ * since `E-92` and the sharing was the right call — what was wrong was
+ * pretending one set of distances serves both.
+ *
+ * **`desk` is unset by default, and that is the whole of Luna's protection.**
+ * Not a promise in a document: an application that never writes the attribute
+ * cannot be reached by anything below, because nothing below matches it.
+ * `tokens.spec.ts` holds every token above to its value at `3d1c78e` so that
+ * stays true under edit rather than under intention.
+ *
+ * **This adds no mechanism.** It is the light theme's shape — an attribute
+ * block, a media-guarded system block, `:where()` so source order settles ties
+ * — applied to a third question. If that shape is unfamiliar, the note above
+ * the light blocks explains what breaks without it.
+ *
+ * **Why `:where()` here too, and the same please-do-not.** Written plainly,
+ * `:root[data-scale="desk"]` weighs (0,2,0) and would beat the light blocks at
+ * (0,1,0) — so a light desk page would take the *white* hairlines below and
+ * draw them on white paper. That is not a hypothetical; it is the exact failure
+ * the light blocks' `:where()` was added to prevent, arriving a second time
+ * through a new door. At (0,1,0) all three blocks below settle on source order
+ * like everything else in this file, and the package stays polite: an
+ * application overriding a token at plain `:root` still wins.
+ *
+ * Which means **order is load-bearing**: the plain block sets the dark values,
+ * and the two light-desk blocks after it turn the theme-dependent half back
+ * over. Moving either above the light pair silently breaks light.
+ *
+ * `material.css` is untouched by all of this. Its rungs override `--glass-*`
+ * only, nothing here is a `--glass-*`, and it is still imported after this
+ * file — so `flat` keeps winning exactly as it does today, in both themes and
+ * at either distance.
+ */
+:root:where([data-scale="desk"]) {
+  /* Radii. The sofa values exist because a card seen across a room needs a
+     silhouette that survives the distance; at 60cm the same corner reads as a
+     toy. Three radii stay three radii — the argument above against a fourth is
+     about the scale, not about the distance. */
+  --radius-control: 6px;
+  --radius-surface: 8px;
+  --radius-sheet: 12px;
+
+  /* Motion. The curve is right and is not touched; the distances are not. A
+     pointer is not a remote control — at a desk the animation is a thing the
+     reader is waiting to finish, and 420ms of sheet is a wait. */
+  --dur-fast: 100ms;
+  --dur-base: 150ms;
+  --dur-sheet: 260ms;
+
+  /* Hairlines heavier, hover lighter, and they move in opposite directions for
+     opposite reasons. On a dense opaque workspace the border carries structure
+     that the glass edge used to carry, so it has to be findable; a 10% hover
+     fill running down a list of forty rows under a moving pointer is a strobe.
+
+     Measured on `--color-raised`, the band where a hairline has the least to
+     work with: line 1.322:1 against the sofa rung's 1.250:1, line-strong
+     1.757:1 against 1.510:1, hover 1.171:1 against 1.322:1. */
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.18);
+  --color-hover: rgb(255 255 255 / 0.06);
+
+  /* Density. The sofa values are named above; these are the desk's. A row at
+     32 and a control at 28 is what a workspace looks like when the reader is
+     close enough to aim a pointer at it.
+
+     `--size-tap` is deliberately absent, and `tokens.spec.ts` asserts the
+     absence rather than tolerating it. It is a hit area rather than a visual
+     size and a finger is the same size at either distance; overriding it here
+     would be this row quietly undoing the rule the README states. */
+  --size-row: 32px;
+  --size-control: 28px;
+  --size-field: 28px;
+  --size-nav: 28px;
+
+  /* FEAT-20260911-001 — the accent returns, desk-only.
+   *
+   * `E-92` retired it and this does not un-retire it. Above this line there is
+   * still no accent of any kind: the primary action is `bg-ink text-ground`,
+   * links are ink with an underline, and a media centre laid over other
+   * people's artwork takes its colour from the artwork. That was right and it
+   * stays right — for a media centre. A workspace has no artwork to take
+   * colour from, and twenty-one places to be with nothing but weight to tell
+   * the current one apart.
+   *
+   * So the accent exists only under this attribute, and `--color-accent` is
+   * **undefined** anywhere else — deliberately, so a component that reaches
+   * for it outside the desk profile gets nothing and shows it, rather than a
+   * fallback that hides the mistake until somebody sees the wrong colour.
+   *
+   * A cold blue-violet, from `design.md`'s "cool blues and violets going warm
+   * at the edge". The warm edge stays traded. Hue 247.2°, which is well clear
+   * of Notion's ~208° blue on purpose: the brief is "like Notion, not a copy
+   * of Notion".
+   *
+   * **Why the ink flips and the fill does not go the way you would expect.**
+   * In dark these two gates are mutually exclusive, for every colour of every
+   * hue: white text on the accent needs its luminance at or below 0.1833, and
+   * 4.5:1 against `--color-raised` needs it at or above 0.2150. There is no
+   * overlap. So dark takes a *bright* violet with near-black ink, and light
+   * takes a dark violet with white ink — which is not a compromise, it is
+   * exactly where `bg-ink text-ground` already lands in each theme. The accent
+   * sits in the system rather than beside it.
+   *
+   * `#6C5CE0` was the starting point and did not survive the measurement: it
+   * reads 3.60:1 on `--color-raised`, against the 4.5:1 this is gated on.
+   * `#806FFC` is the smallest lift along the same hue that clears it.
+   *
+   * **The measurement.** 2026-09-11. Sampled out of a headless Chrome
+   * screenshot rather than computed — the same method `material.css` used for
+   * the glass, and here it is also the check that the cascade above actually
+   * resolves, since an unresolved `var()` samples as the ground behind it.
+   * See the table below the light blocks for the numbers as sampled.
+   *
+   * `--color-accent-soft` is the selected-row tint. Alpha rather than a hex so
+   * it works over `ground`, `surface` and `raised` alike; at 14% dark and 12%
+   * light it reads 1.18:1 / 1.20:1 against the row beneath — the weight
+   * `--color-hover` already works at — and leaves `--color-ink` above 13:1 on
+   * every ground. It is a tint, not a fill: nothing is ever written on it in
+   * `--color-accent-ink`. */
+  --color-accent: #806ffc;
+  --color-accent-ink: #09090c;
+  --color-accent-soft: rgb(128 111 252 / 0.14);
+}
+
+/* The theme-dependent half, turned back over. Same two selectors as the light
+   palette above and for the same two reasons: the media block is the system
+   default, guarded so an explicit dark choice keeps dark, and the attribute
+   block follows it to win the tie. Both are the desk selector with the theme
+   condition folded into the same `:where()`, so they stay at (0,1,0).
+
+   The radii, the durations and the density are not repeated: a corner radius
+   and a row height are distances and do not know what colour the page is.
+
+   The two blocks are byte-identical and `tokens.spec.ts` asserts it, for the
+   reason it asserts it of the light pair — a drift between them fails in one
+   direction only, so it survives a review. */
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])[data-scale="desk"]) {
+    /* Black at the alphas the light block already uses as its ratio to dark:
+       1.0 for `line` and `hover`, 0.18/0.14 for `line-strong`. Checked the way
+       the light palette checks its own — on `--color-raised`, these land
+       1.248:1 / 1.728:1 / 1.145:1 against dark's 1.322 / 1.757 / 1.171, inside
+       the tolerance that set already ships (1.521 against 1.510). */
+    --color-line: rgb(0 0 0 / 0.1);
+    --color-line-strong: rgb(0 0 0 / 0.23);
+    --color-hover: rgb(0 0 0 / 0.06);
+
+    --color-accent: #5b4bd1;
+    --color-accent-ink: #ffffff;
+    --color-accent-soft: rgb(91 75 209 / 0.12);
+  }
+}
+
+:root:where([data-theme="light"][data-scale="desk"]) {
+  /* Black at the alphas the light block already uses as its ratio to dark:
+     1.0 for `line` and `hover`, 0.18/0.14 for `line-strong`. Checked the way
+     the light palette checks its own — on `--color-raised`, these land
+     1.248:1 / 1.728:1 / 1.145:1 against dark's 1.322 / 1.757 / 1.171, inside
+     the tolerance that set already ships (1.521 against 1.510). */
+  --color-line: rgb(0 0 0 / 0.1);
+  --color-line-strong: rgb(0 0 0 / 0.23);
+  --color-hover: rgb(0 0 0 / 0.06);
+
+  --color-accent: #5b4bd1;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: rgb(91 75 209 / 0.12);
+}
+
+/* FEAT-20260911-001 — the accent, measured. 2026-09-11.
+ *
+ * Sampled out of a headless Chrome screenshot (152.0.7977.64) of a probe page
+ * built from this file compiled through Tailwind — so these are pixels drawn
+ * after the whole cascade resolved, not values computed from the source. That
+ * distinction is the point: an accent that lost a specificity fight, or a
+ * `var()` that resolved to nothing, samples as the ground behind it and shows
+ * up here as a ratio of 1.00:1 rather than as a table that looks fine.
+ *
+ * Three bands per theme — `--color-ground`, `--color-surface`, `--color-raised`
+ * — with the accent painted on each, `--color-accent-ink` painted on the
+ * accent, and `--color-accent-soft` painted on the ground beside it.
+ *
+ *                      dark (#806FFC / #09090C)    light (#5B4BD1 / #FFFFFF)
+ *                      accent   ink    ink/soft    accent   ink    ink/soft
+ *   on ground           5.30    5.30    15.63       6.23    6.23    14.81
+ *   on surface          5.06    5.30    14.61       5.97    6.23    14.15
+ *   on raised           4.75    5.30    13.56       5.67    6.23    13.51
+ *
+ * `accent` is `--color-accent` against that band — gated at 4.5:1, because a
+ * link is body text and a link is one of the four places this colour is
+ * allowed. `ink` is `--color-accent-ink` on the accent, gated at 4.5:1 for the
+ * same reason: the primary action's label is body text too. `ink/soft` is
+ * `--color-ink` over the selected-row tint, which is not gated — it is here
+ * because a tint that quietly ate seven points of contrast would be worth
+ * knowing about, and it does not.
+ *
+ * Worst case is dark on `--color-raised` at 4.75:1. That is the one to watch
+ * and the one the arithmetic predicted: see the note above the dark values for
+ * why dark has the least room, and why it is the theme whose ink is black.
+ *
+ * The sampled numbers agreed with the computed ones to the last digit in all
+ * eighteen cells, which is expected — every colour in this table is opaque, so
+ * there is nothing for a compositor to disagree about. The screenshot was run
+ * anyway, because agreeing is the evidence that the cascade resolved. The
+ * glass measurement in `material.css` is the case where they genuinely differ,
+ * and that is the case this method was borrowed from.
+ *
+ * Also verified on the same render, and not by eye: the system-default light
+ * block and the explicit-toggle light block sample byte-identically across all
+ * three bands, and the compiled stylesheet has no unresolved `var()` outside
+ * `--lit` / `--lx` / `--ly`, which `material.css` writes at runtime and gives
+ * fallbacks to. */

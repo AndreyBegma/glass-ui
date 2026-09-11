@@ -125,3 +125,45 @@ export {
   type TreeProps,
   type TreeReorder,
 } from './patterns/tree';
+
+/**
+ * FEAT-20260911-002 — the other six workspace patterns, from `v2-patterns`.
+ * Appended after `Tree`'s block for the reason that block gives: the two were
+ * built in parallel worktrees, and the merge kept both.
+ */
+export { AppRail, type AppRailItem, type AppRailProps } from './patterns/app-rail';
+export {
+  SidePanel,
+  type SidePanelLabels,
+  type SidePanelProps,
+  type SidePanelState,
+  useSidePanel,
+} from './patterns/side-panel';
+export {
+  Breadcrumb,
+  type BreadcrumbItem,
+  type BreadcrumbProps,
+} from './patterns/breadcrumb';
+export {
+  type RowAction,
+  RowActions,
+  type RowActionsProps,
+  rowActionsHost,
+} from './patterns/row-actions';
+export {
+  type ContextMenuAction,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuRoot,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from './primitives/context-menu';
+export {
+  isApplePlatform,
+  KeyHint,
+  type KeyHintProps,
+  resolveKeys,
+} from './patterns/key-hint';

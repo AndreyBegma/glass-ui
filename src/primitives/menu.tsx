@@ -46,6 +46,54 @@ export function MenuRoot({
 }
 export const MenuTrigger = RadixMenu.Trigger;
 
+/**
+ * FEAT-20260911-002 — the styling, named, so `ContextMenu` can wear it.
+ *
+ * Radix ships the dropdown menu and the context menu as two packages over one
+ * `react-menu` core, and `context-menu.tsx` is the second styled as the first.
+ * The strings live here and are imported there — not copied — because a copy
+ * is two menus that agree today, and `V2` decision 6 says a right-click menu
+ * and a dropdown menu must not be able to drift apart. The components below
+ * are unchanged; they read the same strings they always did.
+ *
+ * `MENU_CONTENT_CLASS` leaves out the transform-origin and the two animations,
+ * which are the same idea under two variable names (`--radix-dropdown-menu-…`
+ * and `--radix-context-menu-…`) and are written at each call site beside the
+ * variable they read.
+ */
+export const MENU_CONTENT_CLASS =
+  'glass-strong z-overlay min-w-52 overflow-hidden rounded-surface p-1.5';
+
+const MENU_ITEM_BASE_CLASS = [
+  'lit flex cursor-default select-none items-center gap-2.5 rounded-control px-3 py-2.5 text-sm',
+  'outline-none transition-colors duration-(--dur-fast)',
+].join(' ');
+
+export const MENU_ITEM_CLASS: Record<'default' | 'danger', string> = {
+  default: [
+    MENU_ITEM_BASE_CLASS,
+    'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
+    'data-disabled:opacity-40 data-disabled:pointer-events-none',
+  ].join(' '),
+  danger: [
+    MENU_ITEM_BASE_CLASS,
+    'text-danger data-highlighted:bg-danger/15',
+    'data-disabled:opacity-40 data-disabled:pointer-events-none',
+  ].join(' '),
+};
+
+export const MENU_RADIO_ITEM_CLASS = [
+  MENU_ITEM_BASE_CLASS,
+  'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
+  'data-[state=checked]:text-ink',
+  'data-disabled:opacity-40 data-disabled:pointer-events-none',
+].join(' ');
+
+export const MENU_SEPARATOR_CLASS = 'my-1.5 h-px bg-hover';
+
+export const MENU_LABEL_CLASS =
+  'px-3 pb-1 pt-2 text-[11px] uppercase tracking-wider text-ink-3';
+
 type MenuContentProps = Omit<
   ComponentProps<typeof RadixMenu.Content>,
   'className'
@@ -75,7 +123,7 @@ export function MenuContent({
       <RadixMenu.Content
         sideOffset={sideOffset}
         className={cn(
-          'glass-strong z-overlay min-w-52 overflow-hidden rounded-surface p-1.5',
+          MENU_CONTENT_CLASS,
           // FEAT-20260830-490 — it grows out of the control that opened it.
           //
           // Radix already measures where the trigger is relative to the menu
@@ -107,25 +155,17 @@ type MenuItemProps = Omit<ComponentProps<typeof RadixMenu.Item>, 'className'> & 
 export function MenuItem({ className, tone = 'default', ...props }: MenuItemProps) {
   return (
     <RadixMenu.Item
-      className={cn(
-        'lit flex cursor-default select-none items-center gap-2.5 rounded-control px-3 py-2.5 text-sm',
-        'outline-none transition-colors duration-(--dur-fast)',
-        // Radix marks the item under the pointer *and* the item the keyboard is
-        // on with the same attribute, so one rule covers both and the mouse and
-        // the remote never disagree about what is selected.
-        tone === 'danger'
-          ? 'text-danger data-highlighted:bg-danger/15'
-          : 'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
-        'data-disabled:opacity-40 data-disabled:pointer-events-none',
-        className,
-      )}
+      // Radix marks the item under the pointer *and* the item the keyboard is
+      // on with the same attribute, so one rule covers both and the mouse and
+      // the remote never disagree about what is selected.
+      className={cn(MENU_ITEM_CLASS[tone], className)}
       {...props}
     />
   );
 }
 
 export function MenuSeparator({ className }: { className?: string }) {
-  return <RadixMenu.Separator className={cn('my-1.5 h-px bg-hover', className)} />;
+  return <RadixMenu.Separator className={cn(MENU_SEPARATOR_CLASS, className)} />;
 }
 
 /**
@@ -154,14 +194,7 @@ type MenuRadioItemProps = Omit<
 export function MenuRadioItem({ className, ...props }: MenuRadioItemProps) {
   return (
     <RadixMenu.RadioItem
-      className={cn(
-        'lit flex cursor-default select-none items-center gap-2.5 rounded-control px-3 py-2.5 text-sm',
-        'outline-none transition-colors duration-(--dur-fast)',
-        'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
-        'data-[state=checked]:text-ink',
-        'data-disabled:opacity-40 data-disabled:pointer-events-none',
-        className,
-      )}
+      className={cn(MENU_RADIO_ITEM_CLASS, className)}
       {...props}
     />
   );
@@ -174,7 +207,7 @@ type MenuLabelProps = Omit<ComponentProps<typeof RadixMenu.Label>, 'className'> 
 export function MenuLabel({ className, ...props }: MenuLabelProps) {
   return (
     <RadixMenu.Label
-      className={cn('px-3 pb-1 pt-2 text-[11px] uppercase tracking-wider text-ink-3', className)}
+      className={cn(MENU_LABEL_CLASS, className)}
       {...props}
     />
   );

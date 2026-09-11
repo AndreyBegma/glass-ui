@@ -53,7 +53,13 @@
     "./date-input": "./src/primitives/date-input.tsx",
     "./auto-textarea": "./src/primitives/auto-textarea.tsx",
     "./field-class-name": "./src/primitives/field-class-name.ts",
-    "./tree": "./src/patterns/tree.tsx"
+    "./tree": "./src/patterns/tree.tsx",
+    "./app-rail": "./src/patterns/app-rail.tsx",
+    "./side-panel": "./src/patterns/side-panel.tsx",
+    "./breadcrumb": "./src/patterns/breadcrumb.tsx",
+    "./row-actions": "./src/patterns/row-actions.tsx",
+    "./context-menu": "./src/primitives/context-menu.tsx",
+    "./key-hint": "./src/patterns/key-hint.tsx"
   },
   "files": [
     "src"
@@ -79,7 +85,8 @@
     "sonner": ">=2.0.0",
     "tailwindcss": "^4.0.0",
     "@radix-ui/react-popover": ">=1.1.0",
-    "@radix-ui/react-tooltip": ">=1.1.0"
+    "@radix-ui/react-tooltip": ">=1.1.0",
+    "@radix-ui/react-context-menu": ">=2.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",

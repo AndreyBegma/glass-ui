@@ -231,3 +231,70 @@ and closed by this pull request. Each package answer:
   plain-string `label` keeps working.
 - `Progress` takes a `tone: neutral | ok | warn | danger` — the `Badge` set —
   on its fill; `neutral` is today's `bg-ink`.
+
+## The workspace patterns
+
+`E-104` makes Denitsa a workspace, and a workspace needs a two-level shell and
+the parts a dense list of objects is worked with. Seven components, none of
+which had an ancestor in this package (`V2`). `E-92`'s line holds: these are
+*parts*; the layout that arranges them is the application's.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/app-rail` | `AppRail` — the strip of applications above the rail: icon-only, always visible, the active item carrying the accent. |
+| `glass-ui/side-panel` | `SidePanel` — a collapsible, resizable column with its width and collapse state persisted; `useSidePanel()` for a consumer's own control. |
+| `glass-ui/breadcrumb` | `Breadcrumb` — the trail, with a measured collapsing middle behind an overflow `Menu` and the last item as the page. |
+| `glass-ui/row-actions` | `RowActions` and `rowActionsHost` — a row's affordances, revealed on hover, focus-within, selection, and always on a coarse pointer. |
+| `glass-ui/context-menu` | `ContextMenuRoot` / `Trigger` / `Content` / `Item` / `Separator` / `Label` / `RadioGroup` / `RadioItem` — the right-click menu on `Menu`'s exported styling. |
+| `glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. |
+
+Five rules, each the answer to something that was already going wrong.
+
+**The accent's first place is `AppRail`'s active item, and only under the
+desk.** The glyph reads `--color-accent` and the capsule `--color-accent-soft`,
+each through a `var()` whose fallback is the sofa's look for the same place —
+`NavRail`'s `bg-hover` capsule and `ink`. Under `data-scale="desk"` it is the
+accent; under nothing it is exactly `NavRail`. That is not a fifth use: it is
+the same place, drawn the way that profile already draws it. Note that the
+accent tokens are declared under the desk selector rather than in `@theme`, so
+Tailwind emits no `bg-accent-*` utility for them — every read is an arbitrary
+`var()`, as the density scale already is.
+
+**Unavailable is marked, still navigable, never hidden — one level up.**
+`AppRail` keeps `NavRail`'s rule to the letter (`E-50`): a `warn` dot on the
+glyph, the consumer's phrase after the label for a reader, and the item keeps
+its `href`. This is the first time a failing service is legible at a glance
+rather than as one dimmed row in a list of twenty-three, and `V4` inherits it
+from here.
+
+**Revealing is a visual state, never a DOM state.** `RowActions` is
+`opacity-0` until the row is hovered, focused within, selected (the prop, or
+`aria-selected` on the row) or the pointer is coarse — and it is *never*
+`hidden`, `invisible`, `sr-only` or `aria-hidden`. The buttons are in the
+accessibility tree at all times, Tab lands on them, and a phone sees them
+always, because a hover-only affordance on a phone is an affordance that does
+not exist. The row wears `rowActionsHost`; the cluster cannot select its own
+parent.
+
+**Every right-click action has a visible affordance.** `ContextMenuContent`
+and `RowActions` take the same `actions` list, so a row built from one list
+offers the same commands under the pointer as in its cluster — a property of
+the shape rather than a promise about it. A consumer composing
+`ContextMenuItem`s by hand keeps the obligation by hand, and a reviewer checks
+it. Shift+F10 and the Menu key fire the same `contextmenu` event a mouse does,
+so the keyboard opens it with nothing added.
+
+**Collapsing to zero is not possible.** `SidePanel`'s `minWidth` is a prop;
+dragging past half of it produces the strip, which carries the expand button
+and never goes away, and the handle — the WAI-ARIA window splitter: arrows,
+Home, End, Enter — stays with it, so a keyboard has the same way back a
+pointer does. The panel owns and persists `{ width, collapsed }` under a
+required `storageKey`; it does not own its contents and does not know what an
+application is.
+
+`Breadcrumb` measures rather than counts: the list is `overflow-hidden`, a
+layout effect folds one more middle item while `scrollWidth` exceeds
+`clientWidth`, and a `ResizeObserver` unfolds on resize. The trail lives in a
+column whose width a `SidePanel` decides, so a breakpoint would be measuring
+the wrong thing. The first and last items never fold; the last is
+`aria-current="page"` and not a link whether or not it was given an `href`.

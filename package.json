@@ -53,6 +53,7 @@
     "./date-input": "./src/primitives/date-input.tsx",
     "./auto-textarea": "./src/primitives/auto-textarea.tsx",
     "./field-class-name": "./src/primitives/field-class-name.ts",
+    "./tree": "./src/patterns/tree.tsx",
     "./app-rail": "./src/patterns/app-rail.tsx",
     "./side-panel": "./src/patterns/side-panel.tsx",
     "./breadcrumb": "./src/patterns/breadcrumb.tsx",

@@ -113,11 +113,23 @@ export { AutoTextarea } from './primitives/auto-textarea';
 export { fieldClassName } from './primitives/field-class-name';
 
 /**
- * FEAT-20260911-002 — the workspace patterns (`V2`, `E-104`). Appended, for
- * the reason the two blocks above are: `v2-tree` is appending `Tree` to this
- * same file in its own worktree, and two writers keeping their additions at
- * the end is what makes the merge a conflict either side resolves by keeping
- * both.
+ * FEAT-20260911-002 — the workspace patterns (`E-104`, `V2`). Appended, for
+ * the reason the two blocks above are: `v2-patterns` is adding its six to
+ * this same file in its own worktree, and both sides keeping their lines at
+ * the end is what makes the merge "keep both".
+ */
+export {
+  Tree,
+  type TreeItem,
+  type TreeLinkRender,
+  type TreeProps,
+  type TreeReorder,
+} from './patterns/tree';
+
+/**
+ * FEAT-20260911-002 — the other six workspace patterns, from `v2-patterns`.
+ * Appended after `Tree`'s block for the reason that block gives: the two were
+ * built in parallel worktrees, and the merge kept both.
  */
 export { AppRail, type AppRailItem, type AppRailProps } from './patterns/app-rail';
 export {

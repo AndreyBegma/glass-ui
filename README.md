@@ -162,6 +162,7 @@ with the same capsule, the same rail and the same palette.
 | `glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
 | `glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
 | `glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
+| `glass-ui/tree` | `Tree` — the WAI-ARIA tree: nested rows, controlled expansion and selection, one tab stop, arrows / Home / End / type-ahead, a per-row actions slot, and drag-to-reorder that is off until `enableReorder` says otherwise. |
 
 Three rules run through all of them, and each one is the answer to something
 that went wrong before the pattern existed.

@@ -111,3 +111,17 @@ export { NumberInput } from './primitives/number-input';
 export { DateInput } from './primitives/date-input';
 export { AutoTextarea } from './primitives/auto-textarea';
 export { fieldClassName } from './primitives/field-class-name';
+
+/**
+ * FEAT-20260911-002 — the workspace patterns (`E-104`, `V2`). Appended, for
+ * the reason the two blocks above are: `v2-patterns` is adding its six to
+ * this same file in its own worktree, and both sides keeping their lines at
+ * the end is what makes the merge "keep both".
+ */
+export {
+  Tree,
+  type TreeItem,
+  type TreeLinkRender,
+  type TreeProps,
+  type TreeReorder,
+} from './patterns/tree';

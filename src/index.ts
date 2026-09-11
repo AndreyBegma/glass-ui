@@ -125,3 +125,13 @@ export {
   type TreeProps,
   type TreeReorder,
 } from './patterns/tree';
+
+/**
+ * FEAT-20260911-003 — the data primitives (`E-104`, `V3`). Appended, for the
+ * reason every block above it is: `v3-board` is adding `Board` to this same
+ * file in its own worktree, and both sides keeping their lines at the end is
+ * what makes the merge "keep both".
+ */
+export { Combobox, type ComboboxOption, type ComboboxProps } from './primitives/combobox';
+export { InlineEdit } from './primitives/inline-edit';
+export { Toolbar, type ToolbarProps } from './patterns/toolbar';

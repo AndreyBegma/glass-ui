@@ -163,6 +163,7 @@ with the same capsule, the same rail and the same palette.
 | `glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
 | `glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
 | `glass-ui/tree` | `Tree` — the WAI-ARIA tree: nested rows, controlled expansion and selection, one tab stop, arrows / Home / End / type-ahead, a per-row actions slot, and drag-to-reorder that is off until `enableReorder` says otherwise. |
+| `glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
 
 Three rules run through all of them, and each one is the answer to something
 that went wrong before the pattern existed.
@@ -210,6 +211,26 @@ group headings and the collapsed rail's names, ⌘K, filtering, arrow roving,
 Enter, Escape and focus return, and the popover's four dismissal paths.
 
 The primitives are not back-filled; they arrive with their own row.
+
+## The data primitives
+
+`E-104`, `V3`. Two of the four controls a list of records needs and the
+package did not have — `Toolbar`, above, is the third; `Board` is the fourth
+and arrives from its own slot.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
+| `glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
+
+**`Combobox`'s keyboard model is `CommandPalette`'s, not `MenuContent`'s.**
+Inside a listbox the keyboard stays on the field and moves the highlight
+through `aria-activedescendant`; a `Menu` gives its rows roving focus and
+`role="menuitem"`, which would give a screen reader two places to be at once.
+The popup is a plain listbox for the same reason `CommandPalette`'s is, and
+the highlight is clamped to the list that is actually rendered so
+`aria-activedescendant` never names a row that has disappeared underneath it
+(`BUG-20260823-306`, the same guard, applied a second time).
 
 ## Fixes from the second consumer
 

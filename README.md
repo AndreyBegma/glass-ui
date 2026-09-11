@@ -302,12 +302,14 @@ the wrong thing. The first and last items never fold; the last is
 ## The data primitives
 
 `V3`. `V2` gives the shell its parts; this row gives the *contents* theirs —
-the controls a list of records needs and the package did not have. The board
-is here; `Toolbar`, `Combobox` and `InlineEdit` arrive from their own slot.
+the controls a list of records needs and the package did not have.
 
 | Import | What it is |
 |---|---|
 | `glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
+| `glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
+| `glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
+| `glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
 
 Three rules, and the first is the acceptance criterion the specification
 says gets dropped.
@@ -335,3 +337,24 @@ is the position the card takes **after** it has left where it was —
 `TreeReorder`'s convention — so a move that changes nothing is never
 reported. `labels` is optional with English defaults, and the defaults are
 for this package's own tests: Denitsa's consumers pass every one of them.
+
+Three more, one per remaining component.
+
+**`Toolbar` holds no state about the collection either.** What a view *means*,
+which filters are active, what the trailing action does are all the
+application's — `Toolbar` is layout and slots, the same contract `BottomCapsule`
+and `NavRail` keep for the shell.
+
+**`Combobox`'s keyboard model is `CommandPalette`'s, not `MenuContent`'s.**
+Inside a listbox the keyboard stays on the field and moves the highlight
+through `aria-activedescendant`; a `Menu` gives its rows roving focus and
+`role="menuitem"`, which would give a screen reader two places to be at once.
+The popup is a plain listbox for the same reason `CommandPalette`'s is, and
+the highlight is clamped to the list that is actually rendered so
+`aria-activedescendant` never names a row that has disappeared underneath it
+(`BUG-20260823-306`, the same guard, applied a second time).
+
+**`InlineEdit`'s row height is identical in both states, asserted in a test.**
+One class, `h-[var(--size-field)]`, shared byte-for-byte by the display button
+and the edit input — that is the whole difficulty, and the reason this is a
+component rather than a pattern repeated per screen.

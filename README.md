@@ -267,6 +267,15 @@ its `href`. This is the first time a failing service is legible at a glance
 rather than as one dimmed row in a list of twenty-three, and `V4` inherits it
 from here.
 
+`AppRail` takes `footerApps?: readonly AppRailItem[]` for the application that
+belongs in the rail's footer rather than its body — `memory`, in `V4` D2.
+It is drawn under a separator, pinned under the scroll, with the same item
+the body uses: `activeId`, `link`, `unavailable` and the travelling capsule
+all behave exactly as they do above, because it is the same rendering code
+and not a second copy of the item. `footer?: ReactNode` still renders below
+it, for the avatar or the settings door that is not an application. Tab order
+follows the DOM: body items, then `footerApps`, then `footer`.
+
 **Revealing is a visual state, never a DOM state.** `RowActions` is
 `opacity-0` until the row is hovered, focused within, selected (the prop, or
 `aria-selected` on the row) or the pointer is coarse — and it is *never*
@@ -291,6 +300,16 @@ Home, End, Enter — stays with it, so a keyboard has the same way back a
 pointer does. The panel owns and persists `{ width, collapsed }` under a
 required `storageKey`; it does not own its contents and does not know what an
 application is.
+
+A route that needs the panel collapsed for as long as it is mounted — over
+the stored preference, without writing it — passes `override?: boolean`:
+`true` collapsed, `false` open, `undefined` (the default) today's behaviour
+exactly. While `override` is set, the stored preference is neither read for
+`collapsed` nor written to; the handle and the collapse/expand controls may
+still move the visible state, but none of it reaches storage, and `width`
+keeps persisting as it always did. `useSidePanel().collapsed` reports this
+effective state. When `override` goes back to `undefined`, the stored
+preference applies again on the next render.
 
 `Breadcrumb` measures rather than counts: the list is `overflow-hidden`, a
 layout effect folds one more middle item while `scrollWidth` exceeds

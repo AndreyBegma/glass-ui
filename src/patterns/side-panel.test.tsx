@@ -30,6 +30,12 @@ function Header() {
   );
 }
 
+/** Reads `useSidePanel().collapsed` from the strip, where it stays mounted. */
+function RailProbe() {
+  const panel = useSidePanel();
+  return <span>collapsed: {String(panel.collapsed)}</span>;
+}
+
 const handle = () => screen.getByRole('separator', { name: 'Resize the panel' });
 const panel = () => screen.getByRole('complementary', { name: 'Sections' });
 const widthOf = () => panel().style.getPropertyValue('--side-panel-width');
@@ -230,5 +236,80 @@ describe('SidePanel', () => {
     unmount();
     render(<Panel material="glass-strong" />);
     expect(panel().className.split(' ')).toContain('glass-strong');
+  });
+
+  describe('override', () => {
+    test('renders collapsed whatever storage says, and leaves storage untouched after unmount', async () => {
+      localStorage.setItem('test-panel', JSON.stringify({ width: 300, collapsed: false }));
+      const { unmount } = render(<Panel override />);
+
+      await waitFor(() => {
+        expect(panel().getAttribute('data-collapsed')).toBe('true');
+      });
+      expect(screen.queryByText('Sections go here')).toBeNull();
+
+      unmount();
+      expect(JSON.parse(localStorage.getItem('test-panel') ?? '{}')).toEqual({
+        width: 300,
+        collapsed: false,
+      });
+    });
+
+    test('override={false} renders open whatever storage says, and leaves storage untouched', async () => {
+      localStorage.setItem('test-panel', JSON.stringify({ width: 300, collapsed: true }));
+      const { unmount } = render(<Panel override={false} />);
+
+      await waitFor(() => {
+        expect(panel().getAttribute('data-collapsed')).toBeNull();
+      });
+      expect(screen.getByText('Sections go here')).toBeDefined();
+
+      unmount();
+      expect(JSON.parse(localStorage.getItem('test-panel') ?? '{}')).toEqual({
+        width: 300,
+        collapsed: true,
+      });
+    });
+
+    test('width still persists while override is set', async () => {
+      render(<Panel override={false} side="start" />);
+      fireEvent.keyDown(handle(), { key: 'ArrowRight' });
+
+      await waitFor(() => {
+        expect(JSON.parse(localStorage.getItem('test-panel') ?? '{}').width).toBe(304);
+      });
+      // The collapsed field is untouched by the override, whichever way it reads.
+      expect(JSON.parse(localStorage.getItem('test-panel') ?? '{}').collapsed).toBe(false);
+    });
+
+    test('when override lifts, the stored preference applies again', async () => {
+      localStorage.setItem('test-panel', JSON.stringify({ width: 288, collapsed: false }));
+      const { rerender } = render(<Panel override />);
+      await waitFor(() => {
+        expect(panel().getAttribute('data-collapsed')).toBe('true');
+      });
+
+      rerender(<Panel />);
+      await waitFor(() => {
+        expect(panel().getAttribute('data-collapsed')).toBeNull();
+      });
+    });
+
+    test('useSidePanel().collapsed reports the effective, overridden state', async () => {
+      render(
+        <SidePanel
+          storageKey="test-panel"
+          aria-label="Sections"
+          labels={labels}
+          override
+          rail={<RailProbe />}
+        >
+          <p>Sections go here</p>
+        </SidePanel>,
+      );
+      await waitFor(() => {
+        expect(screen.getByText('collapsed: true')).toBeDefined();
+      });
+    });
   });
 });

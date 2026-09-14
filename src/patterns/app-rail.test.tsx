@@ -165,4 +165,111 @@ describe('AppRail', () => {
     expect(rail.firstElementChild?.textContent).toBe('D');
     expect(rail.lastElementChild?.textContent).toBe('me');
   });
+
+  describe('footerApps', () => {
+    const footerApps: AppRailItem[] = [
+      { id: 'memory', label: 'Memory', icon: BookOpen, href: '/memory' },
+    ];
+
+    test('a footer item carries `aria-current` when active', () => {
+      render(
+        <AppRail
+          aria-label="Applications"
+          link={link}
+          apps={apps}
+          footerApps={footerApps}
+          activeId="memory"
+        />,
+      );
+      const memory = screen.getByRole('link', { name: 'Memory' });
+      expect(memory.getAttribute('aria-current')).toBe('page');
+      expect(memory.getAttribute('href')).toBe('/memory');
+    });
+
+    test('a footer item carries the `warn` dot and the `sr-only` suffix when unavailable', () => {
+      render(
+        <AppRail
+          aria-label="Applications"
+          link={link}
+          apps={apps}
+          footerApps={[{ ...footerApps[0], unavailable: 'not connected' }]}
+          activeId="today"
+        />,
+      );
+      const memory = screen.getByRole('link', { name: 'Memory not connected' });
+      expect(memory.querySelectorAll('.bg-warn')).toHaveLength(1);
+      expect(memory.getAttribute('aria-disabled')).toBeNull();
+    });
+
+    test('a footer item appears after every body item in tab order', () => {
+      render(
+        <AppRail
+          aria-label="Applications"
+          link={link}
+          apps={apps}
+          footerApps={footerApps}
+          activeId="today"
+        />,
+      );
+      const links = screen.getAllByRole('link');
+      expect(links.at(-1)?.textContent).toContain('Memory');
+      expect(links).toHaveLength(apps.length + footerApps.length);
+    });
+
+    test('`footer` renders below `footerApps` when both are given, under one separator', () => {
+      render(
+        <AppRail
+          aria-label="Applications"
+          link={link}
+          apps={apps}
+          footerApps={footerApps}
+          footer={<span>D</span>}
+          activeId="today"
+        />,
+      );
+      const rail = screen.getByRole('navigation', { name: 'Applications' });
+      const wrapper = rail.lastElementChild as HTMLElement;
+      expect(wrapper.className.split(' ')).toContain('border-t');
+      expect(wrapper.querySelectorAll('.border-t')).toHaveLength(0);
+      expect(wrapper.lastElementChild?.textContent).toBe('D');
+      expect(screen.getByRole('link', { name: 'Memory' })).toBeDefined();
+    });
+
+    test('the capsule travels between the body and the footer', async () => {
+      function Shell() {
+        const [activeId, setActiveId] = useState('today');
+        return (
+          <AppRail
+            aria-label="Applications"
+            activeId={activeId}
+            apps={apps.map((app) => ({
+              ...app,
+              href: undefined,
+              onSelect: () => setActiveId(app.id),
+            }))}
+            footerApps={footerApps.map((app) => ({
+              ...app,
+              href: undefined,
+              onSelect: () => setActiveId(app.id),
+            }))}
+          />
+        );
+      }
+      render(<Shell />);
+      const rail = screen.getByRole('navigation', { name: 'Applications' });
+      const today = screen.getByRole('button', { name: 'Today' });
+      const memory = screen.getByRole('button', { name: 'Memory' });
+
+      expect(capsulesIn(today)).toHaveLength(1);
+      expect(capsulesIn(memory)).toHaveLength(0);
+
+      fireEvent.click(memory);
+
+      await waitFor(() => {
+        expect(capsulesIn(rail)).toHaveLength(1);
+        expect(capsulesIn(memory)).toHaveLength(1);
+      });
+      expect(capsulesIn(today)).toHaveLength(0);
+    });
+  });
 });

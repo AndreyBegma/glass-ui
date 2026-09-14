@@ -93,6 +93,16 @@ export interface SidePanelProps {
   maxWidth?: number;
   defaultWidth?: number;
   defaultCollapsed?: boolean;
+  /**
+   * Forces the collapsed state for the life of the mount — `true` collapsed,
+   * `false` open — over the stored preference, which is neither read nor
+   * written while this is set. The handle and the collapse/expand controls
+   * may still move the visible state; none of it reaches storage. Leave
+   * `undefined` for today's behaviour: the stored preference, read once and
+   * kept in sync. When this goes back to `undefined`, the stored preference
+   * applies again on the next render.
+   */
+  override?: boolean;
   /** `glass` for chrome — a rail of sections; `glass-strong` under body text. */
   material?: 'glass' | 'glass-strong';
   /** What the strip carries under the expand button, when collapsed. */
@@ -144,6 +154,7 @@ export function SidePanel({
   maxWidth = 480,
   defaultWidth = 288,
   defaultCollapsed = false,
+  override,
   material = 'glass',
   rail,
   children,
@@ -155,21 +166,34 @@ export function SidePanel({
   );
 
   const [width, setWidthState] = useState(() => clamp(defaultWidth));
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [collapsed, setCollapsed] = useState(() => override ?? defaultCollapsed);
   // Nothing is written back until the stored record has been read, or the
   // first render's defaults would overwrite what the person chose last time.
   const [hydrated, setHydrated] = useState(false);
+  // What `collapsed` is on disk. Moves with `collapsed` while `override` is
+  // undefined; frozen while it is set, so a forced or hand-toggled visible
+  // state during the override never reaches storage, and the stored
+  // preference is exactly what it was once the override lifts.
+  const storedCollapsed = useRef(defaultCollapsed);
 
   useEffect(() => {
     const stored = read(storageKey);
     if (stored.width !== undefined) setWidthState(clamp(stored.width));
-    if (stored.collapsed !== undefined) setCollapsed(stored.collapsed);
+    if (stored.collapsed !== undefined) storedCollapsed.current = stored.collapsed;
     setHydrated(true);
   }, [storageKey, clamp]);
 
+  // Applies `override`, in either direction — including back to `undefined`,
+  // where the stored preference (read above) takes over again.
   useEffect(() => {
-    if (hydrated) write(storageKey, { width, collapsed });
-  }, [hydrated, storageKey, width, collapsed]);
+    setCollapsed(override === undefined ? storedCollapsed.current : override);
+  }, [override]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (override === undefined) storedCollapsed.current = collapsed;
+    write(storageKey, { width, collapsed: storedCollapsed.current });
+  }, [hydrated, storageKey, width, collapsed, override]);
 
   const setWidth = useCallback((next: number) => setWidthState(clamp(next)), [clamp]);
   const collapse = useCallback(() => setCollapsed(true), []);

@@ -65,7 +65,10 @@ export const MENU_CONTENT_CLASS =
   'glass-strong z-overlay min-w-52 overflow-hidden rounded-surface p-1.5';
 
 const MENU_ITEM_BASE_CLASS = [
-  'lit flex cursor-default select-none items-center gap-2.5 rounded-control px-3 py-2.5 text-sm',
+  // `h-(--size-row)` with `items-center` centres the line box rather than
+  // pinning it with padding, so the row still centres when the desk rung
+  // takes the token to 32px.
+  'lit flex h-(--size-row) cursor-default select-none items-center gap-2.5 rounded-control px-3 text-sm',
   'outline-none transition-colors duration-(--dur-fast)',
 ].join(' ');
 

@@ -192,19 +192,29 @@
    * the sofa values is half of this row rather than a tidy-up beside it.
    *
    * These five are **not** a redesign. Each one is the value the components
-   * already produce today, so an application that adopts the token renders
-   * exactly as it did — which is the whole reason Luna Watch can be handed this
-   * version without being in the wave that wrote it.
+   * already produced before anything here read the token, so an application
+   * that adopts the token renders exactly as it did — which is the whole
+   * reason Luna Watch can be handed this version without being in the wave
+   * that wrote it.
    *
-   * Where each number comes from, so the next reader does not have to go and
-   * measure it again:
+   * FEAT-20260911-006 made four of the five consumers actually read theirs —
+   * row, control, field and tap; nav stays unclaimed — rather than merely
+   * matching the number. Where each one comes from, so the next reader does
+   * not have to go and measure it again:
    *
-   *   --size-row     `px-3 py-2.5` on a `text-sm` line box — 10 + 20 + 10.
-   *                  `Table`'s cell (`table.tsx`), `MenuItem` (`menu.tsx`).
-   *   --size-control `Button size="md"`, `h-10` (`button.tsx`).
-   *   --size-field   `Input` / `Select` / `SearchInput`, `h-11` (`field.tsx`).
-   *   --size-nav     `NavRail`'s item, `py-2.5` on the same line box.
-   *   --size-tap     `Button`'s invisible `after:h-11` target (`button.tsx`).
+   *   --size-row     `MenuItem` reads it — `h-(--size-row)`, `items-center`
+   *                  centring the line box (`menu.tsx`). `Table`'s cell
+   *                  (`table.tsx`) still writes `px-3 py-2.5` — 10 + 20 + 10 —
+   *                  to the same number by hand; that consumer is unclaimed.
+   *   --size-control `Button size="md"` reads it — `h-(--size-control)`
+   *                  (`button.tsx`); was `h-10`. `lg` is one documented step
+   *                  above it, `calc(var(--size-control) + 8px)`.
+   *   --size-field   `Input` / `Select` / `SearchInput` read it —
+   *                  `h-(--size-field)` (`field.tsx`); was `h-11`.
+   *   --size-nav     `NavRail`'s item, `py-2.5` on the same line box; still
+   *                  unclaimed, like `Table`'s cell above.
+   *   --size-tap     `Button`'s invisible touch target reads it —
+   *                  `after:h-(--size-tap)` (`button.tsx`); was `after:h-11`.
    *
    * Two tokens for a control and a field, not one, because today they are 40
    * and 44 and a single name would have to lie about one of them. A form field

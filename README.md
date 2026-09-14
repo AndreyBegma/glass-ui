@@ -117,9 +117,15 @@ against it.
 **Hit area, visual size and the density scale are three different things.**
 `--size-row` (40px, a list row), `--size-control` (40px, a button),
 `--size-field` (44px, an input) and `--size-nav` (40px, a rail item) are the
-values the components already produce, named so the desk profile can move them
-— it takes them to 32/28/28/28. `--size-tap` is 44px in both profiles and is
-not one of them; see the next rule.
+values the components produce, named so the desk profile can move them — it
+takes them to 32/28/28/28. `--size-tap` is 44px in both profiles and is not
+one of them; see the next rule.
+
+- `Button`'s `md` reads `h-(--size-control)`; `lg` stays one documented step
+  above it, `calc(var(--size-control) + 8px)`, and is not part of the scale.
+- `Field`'s `Input`, `Select` and `SearchField` read `h-(--size-field)`.
+- `Menu`'s rows read `h-(--size-row)`, the line box centred rather than
+  pinned by padding, so it still centres at the desk rung's 32px.
 
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
 `base.css` puts a 3px white outline on `:focus-visible`, sized to be read across

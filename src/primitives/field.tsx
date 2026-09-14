@@ -27,7 +27,7 @@ type InputProps = Omit<ComponentProps<'input'>, 'className'> & {
 };
 
 export function Input({ className, ...props }: InputProps) {
-  return <input className={cn(base, 'h-11 px-3.5 text-sm', className)} {...props} />;
+  return <input className={cn(base, 'h-(--size-field) px-3.5 text-sm', className)} {...props} />;
 }
 
 type TextareaProps = Omit<ComponentProps<'textarea'>, 'className'> & {
@@ -49,14 +49,15 @@ export function Textarea({ className, ...props }: TextareaProps) {
  * same border, the same radius and the same focus ring rather than a fifth
  * opinion about what a focused form control looks like.
  *
- * `h-11` matches `Input`, which matters where the two sit side by side.
+ * `h-(--size-field)` matches `Input`, which matters where the two sit side by
+ * side.
  */
 type SelectProps = Omit<ComponentProps<'select'>, 'className'> & {
   className?: string;
 };
 
 export function Select({ className, ...props }: SelectProps) {
-  return <select className={cn(base, 'h-11 px-3 text-sm', className)} {...props} />;
+  return <select className={cn(base, 'h-(--size-field) px-3 text-sm', className)} {...props} />;
 }
 
 /**
@@ -91,7 +92,12 @@ export function SearchField({
       />
       <input
         type="search"
-        className={cn(base, 'h-11 pl-10 pr-3.5 text-sm', trailing ? 'pr-11' : '', inputClassName)}
+        className={cn(
+          base,
+          'h-(--size-field) pl-10 pr-3.5 text-sm',
+          trailing ? 'pr-11' : '',
+          inputClassName,
+        )}
         {...props}
       />
       {trailing ? <div className="absolute right-2 flex items-center">{trailing}</div> : null}

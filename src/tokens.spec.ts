@@ -48,7 +48,6 @@ const ALLOWED: Record<string, string[]> = {
   'primitives/dialog.tsx': ['bg-black/55'],
   'primitives/field.tsx': ['ring-white/22'],
   'primitives/sheet.tsx': ['bg-black/55', 'bg-white/25'],
-  'primitives/slider.tsx': ['bg-white/16', 'bg-white/16'],
 };
 
 const MONOCHROME =

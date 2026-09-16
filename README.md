@@ -190,6 +190,41 @@ block for every `position: fixed` descendant; `.luna-rise-in` rests at
 moves gated, no literal curve or duration anywhere in `src/`, `base.css` with
 no keyframes of its own.
 
+### The sliders
+
+FEAT-20260916-608. One look, two components, one stylesheet
+(`src/primitives/slider.css`), in the iOS 26 shape: a 6px `line-strong`
+track with an `ink` fill, a round `ink` thumb with a one-pixel `line` rim and
+the material's shadow — 28px on the sofa, 20px at the desk, never under
+`--size-tap` to a finger — that grows to 1.15 while it is being dragged and
+brightens the track one step. `touch-action: pan-y`, so a thumb drag in a
+sheet does not scroll it and a vertical swipe still does. The elastic
+end-stretch iOS does is deliberately not built: it needs a frame loop.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/slider` | `Slider` — one thumb, the native `<input type="range">` with its props untouched: `value`, `onChange(event)`, `min`/`max`/`step`, `disabled`, `aria-*`, and the caller's `className` on the element itself. A remote and a screen reader already understand it. |
+| `glass-ui/range-slider` | `RangeSlider` — two thumbs on one track, on Radix `Slider` (a peer). `value: [lo, hi]`, `onValueChange`, `onValueCommit` (the release, and every keyboard step — fetch on this one), `min`/`max`/`step`, `thumbLabels` (required, the two accessible names in the application's language), `formatValue(value, thumb)` for `aria-valuetext`, `disabled`. |
+
+**The thumbs never cross.** `value[0] <= value[1]` always. With a pointer a
+thumb dragged into the other stops there and the drag continues on the
+other (Radix's model). With a keyboard the *focused* thumb moves — arrows by
+`step`, PageUp/PageDown and Shift by ten, Home and End to its own end — and
+stops at the other thumb. That keyboard layer is this package's, in front
+of Radix, because Radix's Home and End move the first and last thumb
+whichever one has focus, and its arrows hand focus across when the thumbs
+meet; on a television both read as the wrong thumb moving.
+
+**The focus ring is `base.css`'s.** On a `RangeSlider` thumb it lands as it
+does on any focusable span. On the native `Slider` `base.css` blanks it
+along with every other input, so `slider.css` restates the same ring —
+the same variables, the same width and offset — on the thumb
+pseudo-elements. A consumer declares none in either case.
+
+`slider.test.tsx` and `range-slider.test.tsx` hold the markup, the keyboard
+and the stylesheet's contract: only `transform` transitions, inside the
+reduced-motion gate; every duration, curve and colour a token.
+
 ### The scroll hints
 
 | Import | What it is |

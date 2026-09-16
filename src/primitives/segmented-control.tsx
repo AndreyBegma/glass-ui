@@ -64,14 +64,27 @@ interface SegmentedControlItemProps {
   active: boolean;
   layoutId: string;
   children: ReactNode;
+  /**
+   * BUG-20260916-607 — merged after the item's own `relative min-w-0 flex-1`,
+   * the way `TabsItem` takes one (BUG-20260914-578). `flex-none
+   * whitespace-nowrap` is the opt-out for a row whose width nobody set: the
+   * items keep their labels whole instead of collapsing to the narrowest
+   * width `min-w-0` allows.
+   */
+  className?: string;
 }
 
-export function SegmentedControlItem({ active, layoutId, children }: SegmentedControlItemProps) {
+export function SegmentedControlItem({
+  active,
+  layoutId,
+  children,
+  className,
+}: SegmentedControlItemProps) {
   const reduced = useReducedMotion();
   const listless = useContext(SegmentedControlContext);
   const Item = listless ? 'div' : 'li';
   return (
-    <Item className="relative min-w-0 flex-1">
+    <Item className={cn('relative min-w-0 flex-1', className)}>
       {active ? (
         <motion.span
           layoutId={layoutId}

@@ -298,6 +298,12 @@ and closed by this pull request. Each package answer:
 - `Progress` takes a `tone: neutral | ok | warn | danger` — the `Badge` set —
   on its fill; `neutral` is today's `bg-ink`.
 
+`SegmentedControlItem` and `TabsItem` both take a `className`, merged after
+their own `relative min-w-0 flex-1`. `flex-none whitespace-nowrap` is the
+opt-out for a row whose width nobody set — the item keeps its label whole
+instead of collapsing to the narrowest width `min-w-0` allows (BUG-20260914-578
+for `TabsItem`, BUG-20260916-607 for `SegmentedControlItem`).
+
 ## The workspace patterns
 
 `E-104` makes Denitsa a workspace, and a workspace needs a two-level shell and

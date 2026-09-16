@@ -313,7 +313,7 @@ export function CommandPalette({
             'glass-strong z-overlay fixed left-1/2 top-[12vh] -translate-x-1/2',
             'w-[min(36rem,calc(100vw-2rem))] rounded-sheet',
             'flex max-h-[70dvh] flex-col overflow-hidden',
-            'data-[state=open]:animate-[lunaDialogIn_var(--dur-base)_cubic-bezier(0.23,1,0.32,1)]',
+            'data-[state=open]:animate-[lunaDialogIn_var(--dur-base)_var(--ease-out-expo)]',
             'data-[state=closed]:animate-[lunaDialogOut_var(--dur-fast)_ease-out]',
             className,
           )}

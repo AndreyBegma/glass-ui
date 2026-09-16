@@ -146,15 +146,6 @@ select:focus-visible {
   }
 }
 
-/* FEAT-20260823-302 — the catalog rail's sections.
-   Suppressed by the reduced-motion block above. */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
+/* FEAT-20260823-302's `fadeIn` — the catalogue rail's sections — used to be
+   declared here. FEAT-20260916-598 moved it to `primitives/motion.css` as
+   `lunaDropIn`, where every keyframe the package declares now lives. */

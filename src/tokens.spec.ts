@@ -342,6 +342,7 @@ const ADDED: Record<string, string> = {
   '--size-field': 'FEAT-20260911-001 decision 5 — the density scale',
   '--size-nav': 'FEAT-20260911-001 decision 5 — the density scale',
   '--size-tap': 'FEAT-20260911-001 decision 5 — the density scale',
+  '--ease-out-expo': 'FEAT-20260916-598 — the motion vocabulary; the curve seven pop-ins had hard-coded',
 };
 
 const BASELINE: { commit: string; tokens: Record<string, string> } = JSON.parse(

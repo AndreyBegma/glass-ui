@@ -140,7 +140,7 @@ export function MenuContent({
           // dismissed tens of times in a session, and the durations that make a
           // modal feel considered make a menu feel slow.
           'origin-[var(--radix-dropdown-menu-content-transform-origin)]',
-          'data-[state=open]:animate-[lunaPopIn_var(--dur-fast)_cubic-bezier(0.23,1,0.32,1)]',
+          'data-[state=open]:animate-[lunaPopIn_var(--dur-fast)_var(--ease-out-expo)]',
           'data-[state=closed]:animate-[lunaPopOut_100ms_ease-out]',
           className,
         )}

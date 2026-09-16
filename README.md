@@ -143,6 +143,53 @@ phone keyboard.
 somebody else's artwork at an unpredictable weight and cannot be recoloured or
 aligned.
 
+## Motion
+
+FEAT-20260916-598. Motion is a vocabulary, not a set of effects: a load, a
+list and a swap are the same gesture in every application built on this
+package, and the gesture is declared once, in `glass-ui/motion.css`.
+
+**The rule.** Only `opacity` and `transform` animate — both are composited,
+so a television pays one layer per animated item and nothing per frame after
+the entrance. Every duration and every curve is a token. Everything that
+moves is inside `prefers-reduced-motion: no-preference`; under `reduce`
+nothing translates or scales, and nothing can stay hidden. Keyframes are
+declared in `motion.css` and nowhere else, under the `luna` prefix.
+
+**Nothing rests with a transform.** An entrance keyframe has a `from` and no
+`to`, so it lands on the element's own computed values and leaves nothing
+applied afterwards — a poster at `opacity-60` arrives at 0.6, a card keeps its
+press. A class that rested at `translateY(0)` would be a permanent containing
+block for every `position: fixed` descendant; `.luna-rise-in` rests at
+`transform: none` for exactly that reason.
+
+| Token | Value | Use |
+|---|---|---|
+| `--ease-sheet` | `cubic-bezier(0.32, 0.72, 0, 1)` | something sliding to a stop: a sheet, the page going back, a focus lift |
+| `--ease-out-expo` | `cubic-bezier(0.23, 1, 0.32, 1)` | something appearing: a dialog, a menu, a popover, a row's cascade |
+| `--dur-fast` `--dur-base` `--dur-sheet` | 140 / 220 / 420ms (100 / 150 / 260 at the desk) | the three durations |
+
+| Keyframe | Motion | Used by |
+|---|---|---|
+| `lunaFadeIn` / `lunaFadeOut` | opacity | the scrim under a dialog or sheet |
+| `lunaDialogIn` / `lunaDialogOut` | scale 0.96 → 1, centred | `Dialog`, `CommandPalette` |
+| `lunaPopIn` / `lunaPopOut` | scale 0.94 → 1 from the trigger's origin | `Menu`, `Popover`, `Tooltip`, `ContextMenu` |
+| `lunaRiseIn` | up 8px and in, `from` only | `.luna-stagger` |
+| `lunaDropIn` | down 2px and in, `from` only | a disclosure body opening under its heading (was `base.css`'s `fadeIn`) |
+| `lunaImgIn` | opacity, `from` only | `.luna-img-in` |
+| `lunaPulseOut` | scale 1 → 1.4 and out | a one-shot centre confirmation in a player |
+
+| Class | What it is for | Under `reduce` |
+|---|---|---|
+| `.luna-rise-in` | content replacing a skeleton: a transition from `@starting-style`, no mounted flag needed | shortened to nothing by `base.css` |
+| `.luna-stagger` | a row or grid arriving as a cascade; the consumer sets `--i` per item, delay is `min(--i, 12) × 30ms`, `backwards` fill so an item is invisible until its turn and nothing stays applied after; runs once per insertion, so stable keys mean a re-render does not replay it | absent — the list is simply there |
+| `.luna-img-in` | artwork fading in on load: `data-loaded="false"` hides it while pending, `"true"` plays the fade, no attribute is simply visible. An **animation**, not a transition, so it coexists with a hover transition on the same `<img>`; `.motion-reduce-keep` therefore does not apply and is not needed | absent — the image appears when loaded, never hidden |
+| `.luna-focus-lift` | `scale(1.04)` on `:focus-visible` over `--dur-fast` `--ease-sheet`, for a television whose only focus feedback was the outline; no hover gate, no ring of its own. **Owns the element's `transition` shorthand** — do not put it on an element that already transitions (`transition` does not merge across rules) | absent |
+
+`motion.spec.ts` holds all of this: every name declared, everything that
+moves gated, no literal curve or duration anywhere in `src/`, `base.css` with
+no keyframes of its own.
+
 ## Consuming it
 
 The package ships TypeScript source and is not built. A bundler must be told to

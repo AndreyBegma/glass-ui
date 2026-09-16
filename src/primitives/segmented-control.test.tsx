@@ -60,4 +60,53 @@ describe('SegmentedControl', () => {
     expect(wrapper?.children.length).toBe(2);
     expect(Array.from(wrapper?.children ?? []).every((el) => el.tagName === 'DIV')).toBe(true);
   });
+
+  test('an item with no className keeps the default markup', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View">
+        <SegmentedControlItem active={false} layoutId="view-default">
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    expect(container.querySelector('li')?.className).toBe(
+      'relative min-w-0 flex-1',
+    );
+  });
+
+  test('a className on SegmentedControlItem reaches the li, overriding flex-1 so the item keeps its width', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View">
+        <SegmentedControlItem
+          active={false}
+          layoutId="view-shrink"
+          className="flex-none whitespace-nowrap"
+        >
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const item = container.querySelector('li');
+    expect(item?.className).toContain('min-w-0');
+    expect(item?.className).toContain('flex-none');
+    expect(item?.className).toContain('whitespace-nowrap');
+    expect(item?.className).not.toContain('flex-1');
+  });
+
+  test('the className follows the item down the `role` passthrough onto the div', () => {
+    const { container } = render(
+      <SegmentedControl role="presentation">
+        <SegmentedControlItem
+          active={false}
+          layoutId="view-div"
+          className="flex-none"
+        >
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const item = container.querySelector('[role="presentation"] > div');
+    expect(item?.className).toContain('flex-none');
+    expect(item?.className).not.toContain('flex-1');
+  });
 });

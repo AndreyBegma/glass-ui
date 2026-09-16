@@ -29,29 +29,72 @@ import { cn } from '../lib/cn';
  * `SegmentedControlItem` follows the wrapper down that same passthrough — a
  * `<div>` wrapper renders `<div>` items rather than an orphan `<li>` with no
  * `<ul>` around it (issue #13).
+ *
+ * FEAT-20260916-612 — `variant="glass"`: the same control made of the
+ * header's material, for a switch that sits on the page beside a glass
+ * header rather than inside an opaque panel. The shell is the `glass`
+ * utility as a pill — the header is `rounded-full`, and "like the header"
+ * is a pill — and the travelling capsule is `bg-hover`, the lift the
+ * bottom capsule and an active header section already use on glass.
+ * Measured before it was chosen: `bg-raised` (the `surface` capsule) sits
+ * within 1/255 of the glass composite at idle and vanishes, and reads as a
+ * dark recess over a bright poster; `bg-hover` samples ten points above it.
+ *
+ * The glass variant is a row and is not built for `flex-wrap`: two rows of
+ * items inside a pill would put their corners outside its curve. It carries
+ * a `backdrop-filter`, so it must not sit inside another glass surface —
+ * one blur per stack.
+ *
+ * `surface` is the default and renders the strings it always did, to the
+ * byte; the test holds that.
  */
+type SegmentedControlVariant = 'surface' | 'glass';
+
 interface SegmentedControlProps {
   children: ReactNode;
   className?: string;
   'aria-label'?: string;
   /** Renders a `<div>` in this role instead of the default `<ul>`. */
   role?: string;
+  /** `surface` (default) is the opaque well; `glass` is the header's material as a pill. */
+  variant?: SegmentedControlVariant;
 }
 
-const SegmentedControlContext = createContext(false);
+interface SegmentedControlShape {
+  /** The wrapper is a `<div>` in a role, so the items are `<div>`s too. */
+  listless: boolean;
+  variant: SegmentedControlVariant;
+}
+
+const SegmentedControlContext = createContext<SegmentedControlShape>({
+  listless: false,
+  variant: 'surface',
+});
+
+const WRAPPER_CLASSES: Record<SegmentedControlVariant, string> = {
+  surface: 'flex gap-1 rounded-control bg-surface p-1',
+  glass: 'flex gap-1 rounded-full glass p-1',
+};
+
+const CAPSULE_CLASSES: Record<SegmentedControlVariant, string> = {
+  surface:
+    'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised',
+  glass: 'absolute inset-0 rounded-full bg-hover',
+};
 
 export function SegmentedControl({
   children,
   className,
   role,
+  variant = 'surface',
   ...props
 }: SegmentedControlProps) {
   const Wrapper = role ? 'div' : 'ul';
   return (
-    <SegmentedControlContext.Provider value={!!role}>
+    <SegmentedControlContext.Provider value={{ listless: !!role, variant }}>
       <Wrapper
         role={role}
-        className={cn('flex gap-1 rounded-control bg-surface p-1', className)}
+        className={cn(WRAPPER_CLASSES[variant], className)}
         {...props}
       >
         {children}
@@ -81,16 +124,18 @@ export function SegmentedControlItem({
   className,
 }: SegmentedControlItemProps) {
   const reduced = useReducedMotion();
-  const listless = useContext(SegmentedControlContext);
+  const { listless, variant } = useContext(SegmentedControlContext);
   const Item = listless ? 'div' : 'li';
   return (
     <Item className={cn('relative min-w-0 flex-1', className)}>
       {active ? (
         <motion.span
           layoutId={layoutId}
-          className="absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised"
+          className={CAPSULE_CLASSES[variant]}
           transition={
-            reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 }
+            reduced
+              ? { duration: 0 }
+              : { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 }
           }
         />
       ) : null}

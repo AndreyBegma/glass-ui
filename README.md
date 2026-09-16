@@ -342,6 +342,18 @@ opt-out for a row whose width nobody set — the item keeps its label whole
 instead of collapsing to the narrowest width `min-w-0` allows (BUG-20260914-578
 for `TabsItem`, BUG-20260916-607 for `SegmentedControlItem`).
 
+`SegmentedControl` takes `variant: 'surface' | 'glass'` (FEAT-20260916-612).
+`surface`, the default, is the opaque well it always was — the strings are
+held to the byte by its test. `glass` is the header's material as a pill:
+the `glass` utility at `rounded-full`, and the travelling capsule as
+`bg-hover`, the same lift `BottomCapsule` and an active header section use
+on glass — `bg-raised` was measured within 1/255 of the glass composite at
+idle and does not read. It is for a switch that sits on the page beside a
+glass header. Two things it is not: a row that wraps (two rows inside a
+pill put their corners outside its curve — keep `surface` for a wrapped
+control), and a control inside another glass surface (it carries a
+`backdrop-filter`; one blur per stack).
+
 ## The workspace patterns
 
 `E-104` makes Denitsa a workspace, and a workspace needs a two-level shell and

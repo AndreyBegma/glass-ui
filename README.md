@@ -190,6 +190,19 @@ block for every `position: fixed` descendant; `.luna-rise-in` rests at
 moves gated, no literal curve or duration anywhere in `src/`, `base.css` with
 no keyframes of its own.
 
+### The scroll hints
+
+| Import | What it is |
+|---|---|
+| `glass-ui/scroll-hint-row` | `ScrollHintRow` — a horizontal scroll box with `scrollbar-hide` that fades its left and right edges only while there is more on that side. |
+| `glass-ui/scroll-hint-column` | `ScrollHintColumn` — the same on the vertical axis: a capped scroll box (a sticky filter rail) that fades its top and bottom edges only while there is more. `wrapperClassName` takes a `rounded-*` so the fades stay inside a card's corners. |
+| `glass-ui/use-scroll-edges` | `useScrollEdges(axis)` — the one measurement both read: `{ ref, edges: { start, end }, onScroll }`, under a `ResizeObserver` on the box and its children, with four pixels of slack for rounding. |
+
+The fades are `aria-hidden`, `pointer-events-none`, always mounted, and move
+only their opacity over `--dur-fast`; `edgeClassName` is the `from-*` token of
+the surface behind the box. `scroll-hint.spec.ts` holds that contract for
+both.
+
 ## Consuming it
 
 The package ships TypeScript source and is not built. A bundler must be told to

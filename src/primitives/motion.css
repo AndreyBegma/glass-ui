@@ -159,6 +159,95 @@
   }
 }
 
+/* FEAT-20260916-609 — the aurora: four closed paths for a soft shape
+   drifting behind a page that has no artwork of its own.
+ *
+ * Each is a loop of `transform` alone — translate in per cent of the
+ * element's own box, a little scale, a few degrees of rotation — with three
+ * inner stops at different phases so that four elements on the four paths
+ * never line up. Both ends are `none`: the loop seam lands on the element's
+ * own values, and an element that is not animating (under `reduce`, where
+ * the consumer's `motion-safe:` gate leaves the animation off) rests with
+ * no transform at all.
+ *
+ * Deliberately without an `animation` shorthand here. The paths are the
+ * package's; the durations — tens of seconds, far outside the three tokens —
+ * are the consumer's, and it writes them into custom properties the way
+ * Luna Watch's hero writes `--hero-slide`. Small and fast is a gradient
+ * that jitters; these are meant for amplitudes of tens of pixels over tens
+ * of seconds, and the consumer's duration is what keeps them there. */
+@keyframes lunaDriftA {
+  0% {
+    transform: none;
+  }
+  27% {
+    transform: translate(7%, -5%) scale(1.08) rotate(5deg);
+  }
+  52% {
+    transform: translate(-4%, 7%) scale(0.95) rotate(-4deg);
+  }
+  76% {
+    transform: translate(-8%, -3%) scale(1.04) rotate(2deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes lunaDriftB {
+  0% {
+    transform: none;
+  }
+  23% {
+    transform: translate(-6%, 6%) scale(1.06) rotate(-6deg);
+  }
+  49% {
+    transform: translate(5%, 9%) scale(0.94) rotate(3deg);
+  }
+  74% {
+    transform: translate(8%, -4%) scale(1.1) rotate(-2deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes lunaDriftC {
+  0% {
+    transform: none;
+  }
+  31% {
+    transform: translate(5%, 8%) scale(0.93) rotate(4deg);
+  }
+  55% {
+    transform: translate(-9%, 2%) scale(1.07) rotate(-5deg);
+  }
+  78% {
+    transform: translate(3%, -7%) scale(1.02) rotate(6deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes lunaDriftD {
+  0% {
+    transform: none;
+  }
+  26% {
+    transform: translate(-8%, -6%) scale(1.05) rotate(3deg);
+  }
+  51% {
+    transform: translate(6%, -2%) scale(1.1) rotate(-3deg);
+  }
+  73% {
+    transform: translate(2%, 8%) scale(0.96) rotate(5deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   /* A row or a grid arriving as a cascade rather than in one frame.
    *

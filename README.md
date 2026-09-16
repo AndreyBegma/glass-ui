@@ -178,6 +178,7 @@ block for every `position: fixed` descendant; `.luna-rise-in` rests at
 | `lunaDropIn` | down 2px and in, `from` only | a disclosure body opening under its heading (was `base.css`'s `fadeIn`) |
 | `lunaImgIn` | opacity, `from` only | `.luna-img-in` |
 | `lunaPulseOut` | scale 1 → 1.4 and out | a one-shot centre confirmation in a player |
+| `lunaDriftA` … `lunaDriftD` | four closed `transform` paths, `none` at both ends, no duration of their own | an aurora behind a page with no artwork (FEAT-20260916-609); the consumer supplies the tens-of-seconds duration |
 
 | Class | What it is for | Under `reduce` |
 |---|---|---|

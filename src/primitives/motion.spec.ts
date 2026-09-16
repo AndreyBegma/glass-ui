@@ -54,6 +54,10 @@ describe('the vocabulary is declared', () => {
     'lunaDropIn',
     'lunaImgIn',
     'lunaPulseOut',
+    'lunaDriftA',
+    'lunaDriftB',
+    'lunaDriftC',
+    'lunaDriftD',
   ])('@keyframes %s', (name) => {
     expect(RULES).toContain(`@keyframes ${name} {`);
   });
@@ -97,6 +101,30 @@ describe('an entrance lands on the element, not on the keyframe', () => {
     const at = RULES.indexOf('.luna-rise-in {');
     const body = RULES.slice(at, RULES.indexOf('}', at));
     expect(body).toContain('transform: none;');
+  });
+});
+
+describe('a drift loops through identity', () => {
+  // FEAT-20260916-609. An aurora path runs for tens of seconds and loops;
+  // both ends at `none` means the seam lands on the element's own values and
+  // an element the consumer has not animated rests with no transform. No
+  // `animation` shorthand belongs beside them: the duration is the
+  // consumer's, and a literal one here would be the second bare number.
+  test.each([
+    'lunaDriftA',
+    'lunaDriftB',
+    'lunaDriftC',
+    'lunaDriftD',
+  ])('%s starts and ends at transform: none', (name) => {
+    const at = RULES.indexOf(`@keyframes ${name} {`);
+    const body = RULES.slice(at, RULES.indexOf('\n}', at));
+    expect(body).toMatch(/0% \{\s*transform: none;/);
+    expect(body).toMatch(/100% \{\s*transform: none;/);
+    expect(body).not.toContain('opacity');
+  });
+
+  test('no drift is applied by this file', () => {
+    expect(RULES).not.toMatch(/animation:[^;]*lunaDrift/);
   });
 });
 

@@ -15,4 +15,12 @@ describe('fieldClassName', () => {
     expect(result).toContain('mt-2');
     expect(result).toContain('bg-surface');
   });
+
+  test('`on-glass` is the `hover` fill, everything else unchanged', () => {
+    const result = fieldClassName(undefined, 'on-glass');
+    expect(result).toContain('bg-hover');
+    expect(result).not.toContain('bg-surface');
+    expect(result).toContain('border-line-strong');
+    expect(result).toContain('focus:ring-ink/22');
+  });
 });

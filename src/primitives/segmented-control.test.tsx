@@ -150,6 +150,31 @@ describe('SegmentedControl', () => {
     );
   });
 
+  // BUG-20260916-613 — the well inside a glass panel: a hairline, no fill,
+  // the capsule as the lift the header uses.
+  test('`variant="on-glass"` is a hairline well at the control radius with a `bg-hover` capsule, and no blur', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View" variant="on-glass">
+        <SegmentedControlItem active layoutId="view-on-glass">
+          Day
+        </SegmentedControlItem>
+        <SegmentedControlItem active={false} layoutId="view-on-glass">
+          Week
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const list = container.querySelector('ul');
+    expect(list?.className).toBe(
+      'flex gap-1 rounded-control border border-line p-1',
+    );
+    expect(list?.className).not.toContain('bg-surface');
+    expect(list?.className).not.toContain('glass');
+    expect(container.querySelector('li > span')?.className).toBe(
+      'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-hover',
+    );
+    expect(container.querySelectorAll('li > span').length).toBe(1);
+  });
+
   test('the className follows the item down the `role` passthrough onto the div', () => {
     const { container } = render(
       <SegmentedControl role="presentation">

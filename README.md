@@ -179,6 +179,8 @@ block for every `position: fixed` descendant; `.luna-rise-in` rests at
 | `lunaImgIn` | opacity, `from` only | `.luna-img-in` |
 | `lunaPulseOut` | scale 1 → 1.4 and out | a one-shot centre confirmation in a player |
 | `lunaDriftA` … `lunaDriftD` | four closed `transform` paths, `none` at both ends, no duration of their own | an aurora behind a page with no artwork (FEAT-20260916-609); the consumer supplies the tens-of-seconds duration |
+| `lunaDriftE`, `lunaDriftF` | two more closed `transform` paths for a layer that fills the viewport: travel ≤ 2.5%, scale 1.00–1.07, no rotation | a drifting wash (FEAT-20260916-611); same contract as `A`–`D` |
+| `lunaBreathe` | opacity 1 → 0.8 → 1, `from` and `to` at 1 | a second animation on a drifting blob (FEAT-20260916-611); the consumer supplies the duration |
 
 | Class | What it is for | Under `reduce` |
 |---|---|---|

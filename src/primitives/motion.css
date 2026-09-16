@@ -248,6 +248,71 @@
   }
 }
 
+/* FEAT-20260916-611. Two more paths, for a layer that fills the viewport.
+ *
+ * `lunaDriftA…D` were drawn for a blob: 4–9% of travel, a scale that dips
+ * below 1 and a few degrees of rotation, all of which expose an edge or a
+ * corner on a full-bleed image. `E` and `F` are what a wash can run: travel
+ * of at most 2.5% of the box, a scale that only grows (1.00–1.07) and no
+ * rotation, so that an element the consumer has already scaled by 1.1 never
+ * shows the ground behind it. Same contract otherwise — `none` at both ends,
+ * no duration of their own. */
+@keyframes lunaDriftE {
+  0% {
+    transform: none;
+  }
+  30% {
+    transform: translate(2%, -1.5%) scale(1.04);
+  }
+  55% {
+    transform: translate(-1.5%, 2%) scale(1.07);
+  }
+  80% {
+    transform: translate(-2.5%, -1%) scale(1.03);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes lunaDriftF {
+  0% {
+    transform: none;
+  }
+  24% {
+    transform: translate(-2%, 1.5%) scale(1.05);
+  }
+  50% {
+    transform: translate(1.5%, 2.5%) scale(1.02);
+  }
+  77% {
+    transform: translate(2.5%, -1.5%) scale(1.07);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* FEAT-20260916-611. A slow breath: opacity to 0.8 and back.
+ *
+ * For something that is already drifting and should also seem lit from
+ * within — Luna Watch's aurora blobs. Opacity only, so it composes with a
+ * drift on the same element as a second animation. Both ends are 1: an
+ * element that stops breathing, or never starts (under `reduce`), rests at
+ * its own opacity and nothing is left dimmed. Like the drifts, no duration
+ * of its own — the consumer's is tens of seconds. */
+@keyframes lunaBreathe {
+  from {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   /* A row or a grid arriving as a cascade rather than in one frame.
    *

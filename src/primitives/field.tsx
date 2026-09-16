@@ -14,29 +14,59 @@ import { cn } from '../lib/cn';
  * These three components restore that: the border lightens and a ring appears,
  * in ink rather than in an accent colour, thick enough to find from a sofa.
  */
-const base = [
-  'w-full bg-surface text-ink placeholder:text-ink-3',
-  'border border-line-strong rounded-control',
-  'transition-[border-color,box-shadow] duration-(--dur-fast)',
-  'focus:border-ink/70 focus:ring-2 focus:ring-white/22 focus:outline-none',
-  'disabled:opacity-40',
-].join(' ');
+/**
+ * BUG-20260916-613 — the fill, by where the field sits.
+ *
+ * `surface` is the flat ground's lift (+7/255 over `ground`) and is what
+ * every field always was. Inside a glass panel — the catalogue rail, the
+ * phone shell, a sheet — that same fill lands 6/255 *below* the glass
+ * composite and reads as a hole. `on-glass` swaps it for `hover`, the
+ * ink-tinted lift the chips and an active header section already are on
+ * glass: 50/255 on the dark rail at idle, measured, and it moves toward ink
+ * from whatever is under it in either theme. The border, the ring and the
+ * text do not change; `surface` renders the string it always did, to the
+ * byte.
+ */
+export type FieldTone = 'surface' | 'on-glass';
+
+const FILL: Record<FieldTone, string> = {
+  surface: 'bg-surface',
+  'on-glass': 'bg-hover',
+};
+
+function base(tone: FieldTone): string {
+  return [
+    `w-full ${FILL[tone]} text-ink placeholder:text-ink-3`,
+    'border border-line-strong rounded-control',
+    'transition-[border-color,box-shadow] duration-(--dur-fast)',
+    'focus:border-ink/70 focus:ring-2 focus:ring-white/22 focus:outline-none',
+    'disabled:opacity-40',
+  ].join(' ');
+}
 
 type InputProps = Omit<ComponentProps<'input'>, 'className'> & {
   className?: string;
+  /** Where the field sits: the flat ground (default) or inside a glass panel. */
+  tone?: FieldTone;
 };
 
-export function Input({ className, ...props }: InputProps) {
-  return <input className={cn(base, 'h-(--size-field) px-3.5 text-sm', className)} {...props} />;
+export function Input({ className, tone = 'surface', ...props }: InputProps) {
+  return (
+    <input className={cn(base(tone), 'h-(--size-field) px-3.5 text-sm', className)} {...props} />
+  );
 }
 
 type TextareaProps = Omit<ComponentProps<'textarea'>, 'className'> & {
   className?: string;
+  tone?: FieldTone;
 };
 
-export function Textarea({ className, ...props }: TextareaProps) {
+export function Textarea({ className, tone = 'surface', ...props }: TextareaProps) {
   return (
-    <textarea className={cn(base, 'px-3.5 py-3 text-sm resize-none', className)} {...props} />
+    <textarea
+      className={cn(base(tone), 'px-3.5 py-3 text-sm resize-none', className)}
+      {...props}
+    />
   );
 }
 
@@ -54,10 +84,30 @@ export function Textarea({ className, ...props }: TextareaProps) {
  */
 type SelectProps = Omit<ComponentProps<'select'>, 'className'> & {
   className?: string;
+  tone?: FieldTone;
 };
 
-export function Select({ className, ...props }: SelectProps) {
-  return <select className={cn(base, 'h-(--size-field) px-3 text-sm', className)} {...props} />;
+/**
+ * On glass the option list is guarded: Chrome and Firefox paint the native
+ * popup with the `<select>`'s own background and colour, and a 10 % white
+ * fill would put near-white ink on a near-white list. The options take the
+ * opaque `surface` the list was drawn on before; macOS draws its own list
+ * and ignores both.
+ */
+const ON_GLASS_OPTIONS = '[&>option]:bg-surface [&>option]:text-ink';
+
+export function Select({ className, tone = 'surface', ...props }: SelectProps) {
+  return (
+    <select
+      className={cn(
+        base(tone),
+        'h-(--size-field) px-3 text-sm',
+        tone === 'on-glass' && ON_GLASS_OPTIONS,
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 /**
@@ -82,6 +132,7 @@ export function SearchField({
   className,
   inputClassName,
   trailing,
+  tone = 'surface',
   ...props
 }: SearchFieldProps) {
   return (
@@ -93,7 +144,7 @@ export function SearchField({
       <input
         type="search"
         className={cn(
-          base,
+          base(tone),
           'h-(--size-field) pl-10 pr-3.5 text-sm',
           trailing ? 'pr-11' : '',
           inputClassName,

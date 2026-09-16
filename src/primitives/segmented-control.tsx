@@ -45,10 +45,25 @@ import { cn } from '../lib/cn';
  * a `backdrop-filter`, so it must not sit inside another glass surface —
  * one blur per stack.
  *
+ * BUG-20260916-613 — `variant="on-glass"`: the opaque well, placed *inside*
+ * a glass panel. `surface`'s fills are the flat ground's lifts — `surface`
+ * is +7/255 over `ground`, `raised` +7 over that — and on a glass composite
+ * (22–23/255 in the dark theme, and it does not darken under any backdrop)
+ * they land 6/255 *below* the panel and read as a hole. The measured answer
+ * is the header's own capsule turned inside out: the shell is a `line`
+ * hairline with no fill, so it is never below the panel it sits on, and
+ * the travelling capsule is `bg-hover` — +22 over the shell at idle and
+ * over the brightest poster alike, on `glass` and on `glass-strong`
+ * (`surface`'s pill is +8). The ink-tinted tokens move toward ink from
+ * whatever is under them, which is what makes one recipe serve both
+ * materials and both themes. Unlike `glass` it keeps `rounded-control`,
+ * wraps, and carries no `backdrop-filter` — it is what goes inside a
+ * glass surface, not a second one.
+ *
  * `surface` is the default and renders the strings it always did, to the
  * byte; the test holds that.
  */
-type SegmentedControlVariant = 'surface' | 'glass';
+type SegmentedControlVariant = 'surface' | 'glass' | 'on-glass';
 
 interface SegmentedControlProps {
   children: ReactNode;
@@ -56,7 +71,10 @@ interface SegmentedControlProps {
   'aria-label'?: string;
   /** Renders a `<div>` in this role instead of the default `<ul>`. */
   role?: string;
-  /** `surface` (default) is the opaque well; `glass` is the header's material as a pill. */
+  /**
+   * `surface` (default) is the opaque well; `glass` is the header's material
+   * as a pill; `on-glass` is the well for a control inside a glass panel.
+   */
   variant?: SegmentedControlVariant;
 }
 
@@ -74,12 +92,15 @@ const SegmentedControlContext = createContext<SegmentedControlShape>({
 const WRAPPER_CLASSES: Record<SegmentedControlVariant, string> = {
   surface: 'flex gap-1 rounded-control bg-surface p-1',
   glass: 'flex gap-1 rounded-full glass p-1',
+  'on-glass': 'flex gap-1 rounded-control border border-line p-1',
 };
 
 const CAPSULE_CLASSES: Record<SegmentedControlVariant, string> = {
   surface:
     'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised',
   glass: 'absolute inset-0 rounded-full bg-hover',
+  'on-glass':
+    'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-hover',
 };
 
 export function SegmentedControl({

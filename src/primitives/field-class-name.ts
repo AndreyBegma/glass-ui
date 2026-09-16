@@ -22,10 +22,16 @@ import { cn } from '../lib/cn';
  * near-white (`#f2f2f6`), so the ring reads the same against this package's
  * dark ground today. Everything else below is `field.tsx`'s string,
  * unchanged.
+ *
+ * BUG-20260916-613 — `tone` follows `field.tsx`'s `FieldTone`: `on-glass`
+ * is the `hover` fill for an element that sits inside a glass panel.
  */
-export function fieldClassName(className?: string): string {
+export function fieldClassName(
+  className?: string,
+  tone: 'surface' | 'on-glass' = 'surface',
+): string {
   return cn(
-    'w-full bg-surface text-ink placeholder:text-ink-3',
+    `w-full ${tone === 'on-glass' ? 'bg-hover' : 'bg-surface'} text-ink placeholder:text-ink-3`,
     'border border-line-strong rounded-control',
     'transition-[border-color,box-shadow] duration-(--dur-fast)',
     'focus:border-ink/70 focus:ring-2 focus:ring-ink/22 focus:outline-none',

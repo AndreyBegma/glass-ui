@@ -354,6 +354,21 @@ pill put their corners outside its curve — keep `surface` for a wrapped
 control), and a control inside another glass surface (it carries a
 `backdrop-filter`; one blur per stack).
 
+For a control *inside* a glass surface there is `variant="on-glass"`
+(BUG-20260916-613), and the field family — `Input`, `Textarea`, `Select`,
+`SearchField`, and `fieldClassName(className, tone)` — takes
+`tone: 'surface' | 'on-glass'` for the same reason. `surface` and `raised`
+are the flat ground's lifts; on a glass composite they land below the
+panel and read as holes. `on-glass` is the header's recipe turned inward:
+the segmented well is a `line` hairline with no fill and its capsule is
+`bg-hover`, measured +22/255 over the shell on `glass` and `glass-strong`
+alike; a field's fill is `bg-hover` with its border and ring unchanged. A
+`Select` on glass also paints its `<option>`s `bg-surface`, because Chrome
+and Firefox draw the native list with the select's own background.
+`on-glass` keeps `rounded-control`, wraps, and carries no blur — it is what
+goes inside a glass panel, not a second one. The defaults render the
+strings they always did, held to the byte by the tests.
+
 ## The workspace patterns
 
 `E-104` makes Denitsa a workspace, and a workspace needs a two-level shell and

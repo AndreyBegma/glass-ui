@@ -26,6 +26,8 @@
     "./field": "./src/primitives/field.tsx",
     "./menu": "./src/primitives/menu.tsx",
     "./scroll-hint-row": "./src/primitives/scroll-hint-row.tsx",
+    "./scroll-hint-column": "./src/primitives/scroll-hint-column.tsx",
+    "./use-scroll-edges": "./src/hooks/use-scroll-edges.ts",
     "./segmented-control": "./src/primitives/segmented-control.tsx",
     "./sheet": "./src/primitives/sheet.tsx",
     "./slider": "./src/primitives/slider.tsx",

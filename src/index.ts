@@ -42,6 +42,7 @@ export {
   MenuTrigger,
 } from './primitives/menu';
 export { ScrollHintRow } from './primitives/scroll-hint-row';
+export { ScrollHintColumn } from './primitives/scroll-hint-column';
 export { Skeleton } from './primitives/skeleton';
 export {
   SegmentedControl,
@@ -62,6 +63,7 @@ export { Toggle } from './primitives/toggle';
  * day when nobody else is in it.
  */
 export { useCommandPaletteShortcut } from './hooks/use-command-palette-shortcut';
+export { useScrollEdges } from './hooks/use-scroll-edges';
 export {
   BottomCapsule,
   type BottomCapsuleAction,

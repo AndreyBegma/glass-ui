@@ -58,6 +58,9 @@ describe('the vocabulary is declared', () => {
     'lunaDriftB',
     'lunaDriftC',
     'lunaDriftD',
+    'lunaDriftE',
+    'lunaDriftF',
+    'lunaBreathe',
   ])('@keyframes %s', (name) => {
     expect(RULES).toContain(`@keyframes ${name} {`);
   });
@@ -115,6 +118,8 @@ describe('a drift loops through identity', () => {
     'lunaDriftB',
     'lunaDriftC',
     'lunaDriftD',
+    'lunaDriftE',
+    'lunaDriftF',
   ])('%s starts and ends at transform: none', (name) => {
     const at = RULES.indexOf(`@keyframes ${name} {`);
     const body = RULES.slice(at, RULES.indexOf('\n}', at));
@@ -123,8 +128,38 @@ describe('a drift loops through identity', () => {
     expect(body).not.toContain('opacity');
   });
 
+  // FEAT-20260916-611. `E` and `F` are for a layer that fills the viewport:
+  // a rotation or a scale below 1 would show the ground at a corner.
+  test.each([
+    'lunaDriftE',
+    'lunaDriftF',
+  ])('%s neither rotates nor shrinks', (name) => {
+    const at = RULES.indexOf(`@keyframes ${name} {`);
+    const body = RULES.slice(at, RULES.indexOf('\n}', at));
+    expect(body).not.toContain('rotate(');
+    for (const [, scale] of body.matchAll(/scale\(([\d.]+)\)/g)) {
+      expect(Number(scale)).toBeGreaterThanOrEqual(1);
+    }
+  });
+
   test('no drift is applied by this file', () => {
     expect(RULES).not.toMatch(/animation:[^;]*lunaDrift/);
+  });
+});
+
+describe('a breath rests at full opacity', () => {
+  // FEAT-20260916-611. Opacity only, so it can run beside a drift on the
+  // same element; 1 at both ends, so nothing is left dimmed when it stops.
+  test('lunaBreathe starts and ends at opacity: 1, and only breathes', () => {
+    const at = RULES.indexOf('@keyframes lunaBreathe {');
+    const body = RULES.slice(at, RULES.indexOf('\n}', at));
+    expect(body).toMatch(/from \{\s*opacity: 1;/);
+    expect(body).toMatch(/to \{\s*opacity: 1;/);
+    expect(body).not.toContain('transform');
+  });
+
+  test('no breath is applied by this file', () => {
+    expect(RULES).not.toMatch(/animation:[^;]*lunaBreathe/);
   });
 });
 

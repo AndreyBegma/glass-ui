@@ -57,7 +57,7 @@ export function Tooltip({
             sideOffset={8}
             className={cn(
               'glass-strong z-overlay rounded-control px-2.5 py-1.5 text-xs text-ink',
-              'data-[state=delayed-open]:animate-[lunaPopIn_var(--dur-fast)_cubic-bezier(0.23,1,0.32,1)]',
+              'data-[state=delayed-open]:animate-[lunaPopIn_var(--dur-fast)_var(--ease-out-expo)]',
             )}
           >
             {content}

@@ -256,8 +256,18 @@
   --z-index-transient: 80; /* toasts — outlive nothing, block nothing */
   --z-index-top: 9999; /* the skip link, and anything that must beat all */
 
-  /* Motion. One curve — the one iOS sheets settle on — and three durations. */
+  /* Motion. Two curves and three durations.
+   *
+   * `--ease-sheet` is the one iOS sheets settle on: a drawer decelerating into
+   * its stop. `--ease-out-expo` (FEAT-20260916-598) is the exponential
+   * ease-out every pop-in — dialog, menu, popover, tooltip, context menu, the
+   * command palette — had been writing by hand as `cubic-bezier(0.23,1,0.32,1)`
+   * at seven call sites while this block claimed "one curve": fast arrival, a
+   * long settle, for something that appears rather than slides. The desk
+   * profile below re-values the durations only; a curve is the same at any
+   * distance. */
   --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
   --dur-fast: 140ms;
   --dur-base: 220ms;
   --dur-sheet: 420ms;

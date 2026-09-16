@@ -123,7 +123,7 @@ export function PopoverContent({
           // dismissed many times in a session; the durations that make a modal
           // feel considered make this feel slow.
           'origin-[var(--radix-popover-content-transform-origin)]',
-          'data-[state=open]:animate-[lunaPopIn_var(--dur-fast)_cubic-bezier(0.23,1,0.32,1)]',
+          'data-[state=open]:animate-[lunaPopIn_var(--dur-fast)_var(--ease-out-expo)]',
           'data-[state=closed]:animate-[lunaPopOut_100ms_ease-out]',
           className,
         )}

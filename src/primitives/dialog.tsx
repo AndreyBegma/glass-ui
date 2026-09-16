@@ -87,8 +87,8 @@ export function DialogContent({
           // entrance is the user's decision arriving; the exit is the system
           // getting out of the way, and a slow one reads as the interface
           // thinking about it.
-          'data-[state=open]:animate-[lunaDialogIn_var(--dur-base)_cubic-bezier(0.23,1,0.32,1)]',
-          'data-[state=closed]:animate-[lunaDialogOut_var(--dur-fast)_cubic-bezier(0.23,1,0.32,1)]',
+          'data-[state=open]:animate-[lunaDialogIn_var(--dur-base)_var(--ease-out-expo)]',
+          'data-[state=closed]:animate-[lunaDialogOut_var(--dur-fast)_var(--ease-out-expo)]',
           className,
         )}
         onOpenAutoFocus={(e) => {

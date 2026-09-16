@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, Ref } from 'react';
 import { cn } from '../lib/cn';
 import { Textarea } from './field';
 
@@ -29,11 +29,17 @@ function resize(el: HTMLTextAreaElement, maxHeight: number) {
   el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
 }
 
+function assign<T>(ref: Ref<T> | undefined, node: T | null) {
+  if (typeof ref === 'function') ref(node);
+  else if (ref) ref.current = node;
+}
+
 export function AutoTextarea({
   maxHeight = 160,
   className,
   style,
   onInput,
+  ref: outerRef,
   ...props
 }: AutoTextareaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -44,7 +50,10 @@ export function AutoTextarea({
 
   return (
     <Textarea
-      ref={ref}
+      ref={(node) => {
+        ref.current = node;
+        assign(outerRef, node);
+      }}
       rows={1}
       className={cn('resize-none overflow-y-auto', className)}
       style={{ ...style, maxHeight }}

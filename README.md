@@ -369,6 +369,12 @@ and Firefox draw the native list with the select's own background.
 goes inside a glass panel, not a second one. The defaults render the
 strings they always did, held to the byte by the tests.
 
+`AutoTextarea` composes a caller's `ref` with its own (FEAT-20260916-614).
+`ref` was always in its props type — React 19 passes it as a prop — but it
+replaced the internal ref the resize reads, so a chat composer that kept a
+ref to focus its field after a suggestion silently stopped growing. Both
+now receive the element; without a `ref` nothing changes.
+
 ## The workspace patterns
 
 `E-104` makes Denitsa a workspace, and a workspace needs a two-level shell and

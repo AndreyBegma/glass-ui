@@ -198,3 +198,9 @@ export {
 export { Combobox, type ComboboxOption, type ComboboxProps } from './primitives/combobox';
 export { InlineEdit } from './primitives/inline-edit';
 export { Toolbar, type ToolbarProps } from './patterns/toolbar';
+
+/**
+ * FEAT-20260916-608 — the range slider. Appended, for the reason every block
+ * above is.
+ */
+export { RangeSlider, type RangeSliderProps } from './primitives/range-slider';

@@ -1,0 +1,225 @@
+/* FEAT-20260916-608 — the slider, in the iOS 26 shape. One look, two
+ * components.
+ *
+ * `Slider` is a native `<input type="range">` (FEAT-20260823-375; its three
+ * callers read `event.target.value` and put their layout utilities on the
+ * element, so it stays that element). `RangeSlider` is two thumbs on a Radix
+ * root, because a phone needs a pointer model no pair of overlaid inputs can
+ * give it and a television needs thumbs it can focus. Both read this file, so
+ * a volume control in a player and a runtime range in a catalogue are the same
+ * object at the same size.
+ *
+ * The values are written once, as custom properties on `.luna-slider`, and
+ * read by three families of selector: WebKit's pseudo-elements, Firefox's,
+ * and the Radix parts. The first two cannot share a rule — a selector list
+ * that names a pseudo-element the browser does not know is dropped whole —
+ * so the thumb is declared three times and its numbers once.
+ *
+ * What is deliberately not built: the elastic stretch iOS does when a thumb
+ * is pushed past the end of its track. It needs per-frame JavaScript on the
+ * pointer position, and a slider that costs a frame loop is not one the
+ * television can afford. Do not add it here as a one-off.
+ *
+ * The rules of `motion.css` hold: only `transform` transitions, over the
+ * tokens, inside `prefers-reduced-motion: no-preference`, and nothing rests
+ * with a transform — the thumb scales while it is being dragged and returns
+ * to `none`. The pressed state also brightens the track one step; that is a
+ * swap of two tokens and not a transition, because a colour is not on the
+ * list of properties that animate.
+ *
+ * Unlayered, like `motion.css`, so it wins the properties it sets against a
+ * Tailwind utility on the same element. That is why it sets no `display`,
+ * `width` or `opacity` on the native input: every caller sets one of those
+ * with a utility, and a stylesheet that overrode `hidden sm:block` would put
+ * the player's volume on a phone. */
+
+.luna-slider {
+  /* 28px is the sofa thumb, sized to be seen across a room and hit with a
+     finger; the desk profile takes 20px below. Component-local rather than a
+     `--size-*` token until a second primitive needs it. */
+  --luna-slider-thumb: 28px;
+  --luna-slider-track: 6px;
+  --luna-slider-scale: 1.15;
+  /* The rim is what keeps a white thumb legible on a white fill; the drop is
+     the material's own shadow. */
+  --luna-slider-thumb-shadow:
+    0 0 0 1px var(--color-line), 0 2px 8px var(--glass-shadow);
+  --luna-slider-fill-color: var(--color-ink);
+  --luna-slider-track-color: var(--color-line-strong);
+  position: relative;
+  height: var(--luna-slider-thumb);
+  /* Vertical pans still scroll the sheet the slider sits in; a horizontal
+     drag is the slider's. Without this a thumb drag on a phone scrolls the
+     page and the browser cancels the pointer under the thumb. */
+  touch-action: pan-y;
+  user-select: none;
+  cursor: pointer;
+}
+
+:root:where([data-scale="desk"]) .luna-slider {
+  --luna-slider-thumb: 20px;
+}
+
+/* Hit area and visual size are separate (README). On a coarse pointer the
+   box grows to the tap size and pulls its margins in by the same amount, so
+   the row it sits in does not move. */
+@media (pointer: coarse) {
+  .luna-slider {
+    height: var(--size-tap);
+    margin-block: calc((var(--luna-slider-thumb) - var(--size-tap)) / 2);
+  }
+}
+
+.luna-slider[data-dragging] {
+  --luna-slider-track-color: var(--color-ink-3);
+}
+
+/* ---- The native input ------------------------------------------------- */
+
+input.luna-slider {
+  appearance: none;
+  background: transparent;
+  margin-inline: 0;
+  /* The WebKit track has no fill part of its own: the fill is a gradient
+     sized from the value. The thumb's centre travels from `thumb / 2` to
+     `100% - thumb / 2`, and the fill ends under it. `--luna-slider-ratio` is
+     written inline by the component, 0 to 1. */
+  --luna-slider-fill: calc(
+    var(--luna-slider-ratio, 0) *
+    (100% - var(--luna-slider-thumb)) +
+    var(--luna-slider-thumb) /
+    2
+  );
+}
+
+input.luna-slider::-webkit-slider-runnable-track {
+  height: var(--luna-slider-track);
+  border-radius: 9999px;
+  background:
+    linear-gradient(
+      var(--luna-slider-fill-color),
+      var(--luna-slider-fill-color)
+    )
+    no-repeat 0 0 / var(--luna-slider-fill) 100%,
+    var(--luna-slider-track-color);
+}
+
+input.luna-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--luna-slider-thumb);
+  height: var(--luna-slider-thumb);
+  margin-top: calc((var(--luna-slider-track) - var(--luna-slider-thumb)) / 2);
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-ink);
+  box-shadow: var(--luna-slider-thumb-shadow);
+}
+
+input.luna-slider::-moz-range-track {
+  height: var(--luna-slider-track);
+  border-radius: 9999px;
+  background:
+    linear-gradient(
+      var(--luna-slider-fill-color),
+      var(--luna-slider-fill-color)
+    )
+    no-repeat 0 0 / var(--luna-slider-fill) 100%,
+    var(--luna-slider-track-color);
+}
+
+input.luna-slider::-moz-range-thumb {
+  width: var(--luna-slider-thumb);
+  height: var(--luna-slider-thumb);
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-ink);
+  box-shadow: var(--luna-slider-thumb-shadow);
+}
+
+/* The focus ring. `base.css` owns it — 3px of `--color-focus`, 4px off the
+   edge, sized to be found across a room — and `base.css` also blanks it on
+   every `input`, because a text field draws its own. A range input draws
+   nothing, so until this rule the volume slider had no focus state on the
+   television at all. The same ring, restated on the one element the
+   exemption strips it from; a consumer still declares none. */
+input.luna-slider:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+input.luna-slider:focus-visible::-moz-range-thumb {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+/* ---- The Radix parts (RangeSlider) ------------------------------------ */
+
+.luna-range-slider {
+  display: flex;
+  align-items: center;
+}
+
+.luna-range-slider[data-disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.luna-slider-track {
+  position: relative;
+  flex: 1;
+  height: var(--luna-slider-track);
+  border-radius: 9999px;
+  background: var(--luna-slider-track-color);
+}
+
+.luna-slider-fill {
+  position: absolute;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--luna-slider-fill-color);
+}
+
+.luna-slider-thumb {
+  display: block;
+  width: var(--luna-slider-thumb);
+  height: var(--luna-slider-thumb);
+  border-radius: 50%;
+  background: var(--color-ink);
+  box-shadow: var(--luna-slider-thumb-shadow);
+  /* No `outline` here: the thumb is a `span`, and `base.css`'s ring lands on
+     it as it does on any focusable element. */
+}
+
+/* ---- The press --------------------------------------------------------- */
+
+/* The thumb under the finger grows. On the Radix root that is the thumb Radix
+   has focused for the drag (`:focus`, not `:focus-visible` — a pointer focus
+   shows no ring and this is not one); on the native input it is the one
+   thumb there is. `data-dragging` is set from the pointer events by the
+   component rather than read from `:active`, which iOS applies to a touch
+   only when a `touchstart` listener happens to be registered. */
+@media (prefers-reduced-motion: no-preference) {
+  .luna-slider-thumb {
+    transition: transform var(--dur-fast) var(--ease-sheet);
+  }
+
+  input.luna-slider::-webkit-slider-thumb {
+    transition: transform var(--dur-fast) var(--ease-sheet);
+  }
+
+  input.luna-slider::-moz-range-thumb {
+    transition: transform var(--dur-fast) var(--ease-sheet);
+  }
+
+  .luna-slider[data-dragging] .luna-slider-thumb:focus {
+    transform: scale(var(--luna-slider-scale));
+  }
+
+  input.luna-slider[data-dragging]::-webkit-slider-thumb {
+    transform: scale(var(--luna-slider-scale));
+  }
+
+  input.luna-slider[data-dragging]::-moz-range-thumb {
+    transform: scale(var(--luna-slider-scale));
+  }
+}

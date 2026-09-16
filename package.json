@@ -31,6 +31,7 @@
     "./segmented-control": "./src/primitives/segmented-control.tsx",
     "./sheet": "./src/primitives/sheet.tsx",
     "./slider": "./src/primitives/slider.tsx",
+    "./range-slider": "./src/primitives/range-slider.tsx",
     "./toast": "./src/primitives/toast.tsx",
     "./toggle": "./src/primitives/toggle.tsx",
     "./empty-state": "./src/patterns/empty-state.tsx",
@@ -92,7 +93,8 @@
     "tailwindcss": "^4.0.0",
     "@radix-ui/react-popover": ">=1.1.0",
     "@radix-ui/react-tooltip": ">=1.1.0",
-    "@radix-ui/react-context-menu": ">=2.2.0"
+    "@radix-ui/react-context-menu": ">=2.2.0",
+    "@radix-ui/react-slider": ">=1.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",

@@ -58,7 +58,9 @@ describe('SegmentedControl', () => {
     const wrapper = container.querySelector('[role="presentation"]');
     expect(wrapper).not.toBeNull();
     expect(wrapper?.children.length).toBe(2);
-    expect(Array.from(wrapper?.children ?? []).every((el) => el.tagName === 'DIV')).toBe(true);
+    expect(
+      Array.from(wrapper?.children ?? []).every((el) => el.tagName === 'DIV'),
+    ).toBe(true);
   });
 
   test('an item with no className keeps the default markup', () => {
@@ -91,6 +93,61 @@ describe('SegmentedControl', () => {
     expect(item?.className).toContain('flex-none');
     expect(item?.className).toContain('whitespace-nowrap');
     expect(item?.className).not.toContain('flex-1');
+  });
+
+  // FEAT-20260916-612 — the variant. The default is the promise a consumer
+  // that never heard of `variant` relies on, so it is held to the byte.
+  test('the default wrapper and capsule render the strings they always did', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View">
+        <SegmentedControlItem active layoutId="view-default-capsule">
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    expect(container.querySelector('ul')?.className).toBe(
+      'flex gap-1 rounded-control bg-surface p-1',
+    );
+    expect(container.querySelector('li > span')?.className).toBe(
+      'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised',
+    );
+  });
+
+  test('`variant="glass"` is the material as a pill, and the capsule is the lift the header uses', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View" variant="glass">
+        <SegmentedControlItem active layoutId="view-glass">
+          Day
+        </SegmentedControlItem>
+        <SegmentedControlItem active={false} layoutId="view-glass">
+          Week
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const list = container.querySelector('ul');
+    expect(list?.className).toBe('flex gap-1 rounded-full glass p-1');
+    expect(list?.className).not.toContain('bg-surface');
+    expect(list?.hasAttribute('variant')).toBe(false);
+    expect(container.querySelector('li > span')?.className).toBe(
+      'absolute inset-0 rounded-full bg-hover',
+    );
+    // The inactive item mounts no capsule in either variant.
+    expect(container.querySelectorAll('li > span').length).toBe(1);
+  });
+
+  test('the variant follows the items down the `role` passthrough', () => {
+    const { container } = render(
+      <SegmentedControl role="presentation" variant="glass">
+        <SegmentedControlItem active layoutId="view-glass-div">
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const wrapper = container.querySelector('[role="presentation"]');
+    expect(wrapper?.className).toContain('glass');
+    expect(wrapper?.querySelector('div > span')?.className).toBe(
+      'absolute inset-0 rounded-full bg-hover',
+    );
   });
 
   test('the className follows the item down the `role` passthrough onto the div', () => {

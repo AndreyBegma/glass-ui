@@ -204,7 +204,7 @@ export function BottomCapsule({
               <>
                 {selected ? capsule : null}
                 <Icon size={19} aria-hidden="true" className="relative" />
-                <span className="relative truncate">{tab.label}</span>
+                <span className="relative max-w-full truncate">{tab.label}</span>
               </>
             );
 
@@ -248,7 +248,7 @@ export function BottomCapsule({
             >
               {more.open ? capsule : null}
               <MoreIcon size={19} aria-hidden="true" className="relative" />
-              <span className="relative truncate">{more.label}</span>
+              <span className="relative max-w-full truncate">{more.label}</span>
             </button>
           ) : null}
         </nav>

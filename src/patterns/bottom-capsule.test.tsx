@@ -220,6 +220,45 @@ describe('BottomCapsule', () => {
     );
   });
 
+  /**
+   * `BottomCapsuleProps.tabs` warns that a fifth tab "turns the labels into
+   * truncated stubs" — but `truncate` (`overflow: hidden; text-overflow:
+   * ellipsis; white-space: nowrap`) clips against the label's own box, and a
+   * flex item under `items-center` shrink-wraps to its content instead of
+   * being bounded by the tab's width. Without a width constraint on the span
+   * itself, there is nothing for `truncate` to clip against, and a long label
+   * overflows the tab over its neighbours instead of ending in an ellipsis.
+   */
+  test('a long label stays bounded to its tab, so `truncate` has something to clip against', () => {
+    const label = 'A'.repeat(60);
+    render(
+      <BottomCapsule
+        aria-label="Main navigation"
+        tabs={[{ id: 'long', label, icon: Sun, active: true }]}
+      />,
+    );
+
+    const tab = screen.getByRole('button', { name: label });
+    const labelSpan = tab.querySelector('span.truncate');
+
+    expect(labelSpan).not.toBeNull();
+    expect(labelSpan?.className.split(' ')).toEqual(
+      expect.arrayContaining(['truncate', 'max-w-full']),
+    );
+  });
+
+  test('`More`’s label carries the same bounded width as a tab’s', () => {
+    render(<Shell />);
+
+    const more = screen.getByRole('button', { name: 'More' });
+    const labelSpan = more.querySelector('span.truncate');
+
+    expect(labelSpan).not.toBeNull();
+    expect(labelSpan?.className.split(' ')).toEqual(
+      expect.arrayContaining(['truncate', 'max-w-full']),
+    );
+  });
+
   test('the bar is glass and carries no breakpoint of its own', () => {
     render(
       <BottomCapsule

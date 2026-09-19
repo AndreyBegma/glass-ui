@@ -356,6 +356,8 @@ const ADDED: Record<string, string> = {
   '--glass-rim-shade': 'FEAT-20260919-618 — liquid glass; the rim, dark bottom-right',
   '--glass-meniscus': 'FEAT-20260919-618 — liquid glass; the band inside the bottom edge',
   '--glass-refract': 'FEAT-20260919-618 — liquid glass; the ring along the rim',
+  '--glass-rim-strong': 'BUG-20260919-626 — the rim\'s straight run on a large panel, quieter',
+  '--glass-rim-shade-strong': 'BUG-20260919-626 — the shade\'s straight run on a large panel, quieter',
 };
 
 const BASELINE: {
@@ -663,6 +665,8 @@ const FLATTENED: Record<string, string> = {
   '--glass-sheen-clear': 'transparent',
   '--glass-rim': 'transparent',
   '--glass-rim-shade': 'transparent',
+  '--glass-rim-strong': 'transparent',
+  '--glass-rim-shade-strong': 'transparent',
   '--glass-meniscus': 'transparent',
   '--glass-refract': 'transparent',
   '--glass-filter': 'none',
@@ -726,5 +730,49 @@ describe('the material is one box', () => {
     const lit = materialBlocks('.lit::before {')[0];
     expect(lit).toContain('opacity: var(--lit, 0);');
     expect(lit).toMatch(/transition: opacity /);
+  });
+});
+
+/**
+ * BUG-20260919-626 — the rim scales with the surface, and only there.
+ *
+ * `glass-strong` is the rung that is always a large rectangle, so it is the one
+ * whose straight run reads the quieter `-strong` pair while its corner glint
+ * still reads `--glass-rim`. The discs and the header capsule were tuned on the
+ * full-alpha pair and the issue's acceptance is that they do not move; a
+ * `-strong` token leaking into `glass` or `glass-clear` would dim a crescent
+ * that nobody complained about, and the full pair leaking back into the strong
+ * run would be the hairline again. Both directions are held here.
+ */
+describe('the strong rung runs its rim quieter, and the other two do not', () => {
+  const reads = (utility: string) =>
+    [...materialBlocks(`@utility ${utility} {`)[0].matchAll(/var\((--glass-[a-z-]+)\)/g)].map(
+      (m) => m[1],
+    );
+
+  test('`glass-strong` reads the `-strong` pair for its run and `--glass-rim` for its corner', () => {
+    const strong = reads('glass-strong');
+    expect(strong).toContain('--glass-rim-strong');
+    expect(strong).toContain('--glass-rim-shade-strong');
+    expect(strong).toContain('--glass-rim');
+    expect(strong).toContain('--glass-rim-shade');
+  });
+
+  test.each(['glass', 'glass-clear'])('`%s` never reads the `-strong` pair', (utility) => {
+    const read = reads(utility);
+    expect(read).not.toContain('--glass-rim-strong');
+    expect(read).not.toContain('--glass-rim-shade-strong');
+    expect(read).toContain('--glass-rim');
+  });
+
+  test('the corner glint is a negative-spread inset, which is what keeps it off the straight run', () => {
+    // offset o, spread −e: nothing on a straight edge, √2·o − e at the corner's
+    // 45° point. e ≥ o is the invariant; e < o puts a faint line back on the run.
+    const body = materialBlocks('@utility glass-strong {')[0];
+    const glints = [...body.matchAll(/inset (-?\d+)px \1px \d+px (-\d+)px var\(--glass-rim(-shade)?\)/g)];
+    expect(glints).toHaveLength(2);
+    for (const [, offset, spread] of glints) {
+      expect(Math.abs(Number(spread))).toBeGreaterThanOrEqual(Math.abs(Number(offset)));
+    }
   });
 });

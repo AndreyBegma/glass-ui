@@ -71,7 +71,12 @@ the gate is what decides which one a surface may use — measured for
 All three carry the rim, the meniscus and the refraction ring, and all three
 resolve to an opaque `raised` panel under `prefers-reduced-transparency`,
 `data-material="flat"` and a browser without `backdrop-filter`. A paragraph
-never goes on `glass-clear`.
+never goes on `glass-clear`. The rim scales with the surface
+(BUG-20260919-626): on `glass-strong`, which is always a large rectangle, the
+straight run reads the quieter `--glass-rim-strong` / `--glass-rim-shade-strong`
+pair and the light is gathered on the top-left corner by a negative-spread
+inset — the 1px offset that is a crescent on a disc is a ruler line on a
+sheet.
 
 **The primary action is white** (`bg-ink text-ground`). The system was built for
 an interface that sits on top of other people's artwork, where every poster on

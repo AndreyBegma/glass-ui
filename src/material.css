@@ -25,7 +25,10 @@
  *      and leaves the other, and that asymmetry is most of what separates
  *      glass from a painted disc. On a circle the diagonal offset makes the
  *      highlight an arc thickest at top-left and tapering both ways — a
- *      crescent, from geometry rather than from a gradient.
+ *      crescent, from geometry rather than from a gradient. On a large
+ *      rectangle the same geometry is a ruler line, so `glass-strong` runs
+ *      it quieter and gathers the light on the corner instead
+ *      (BUG-20260919-626, at the utility).
  *   7. **the meniscus and the refraction ring**: a soft dark band inside the
  *      bottom edge, where a pane is thickest, and a faint bright ring hugging
  *      the whole rim — the cheapest thing that reads as the backdrop bending.
@@ -84,6 +87,11 @@
  * band) and 8.64 / 10.37 (light, near-black); the probe reproduced those to the
  * second decimal before it measured this one.
  *
+ * BUG-20260919-626 re-measured the four flat bands with the strong rung's rim
+ * re-cut: identical to the table above to the second decimal. The rim moves no
+ * luminance inside the panel — the sample sits 40px in from the edge and the
+ * corner glint is at most 1.1px wide on the arc.
+ *
  * Two rules that are not expressible in CSS and have to be kept by hand:
  *
  *   - This belongs on chrome only — header, bottom bar, sheets, dialogs, menus,
@@ -109,7 +117,20 @@
 
 /* The same material with more presence, for surfaces that carry a whole
    interaction rather than sitting behind one: sheets, dialogs, menus. Anything
-   with body text on it belongs here rather than on `glass`. */
+   with body text on it belongs here rather than on `glass`.
+
+   BUG-20260919-626 — the rim is four insets here rather than two. This rung is
+   always a large rectangle, and on a rectangle the 1px offset inset that makes
+   a crescent on a disc makes a full-length hairline; so the straight run reads
+   the quieter `-strong` pair, and the light is put back where it would be —
+   the top-left corner — by an inset with a negative spread. An inset shadow
+   offset by `o` and spread by `−e` covers every straight edge completely (the
+   shifted, expanded clear region lies outside the box there) and leaves a band
+   of `√2·o − e` at the 45° point of the top-left arc, tapering to zero where
+   the arc meets the straight edges, whatever the radius. 5 / −6 is 1.07px at
+   the peak, with a 1px blur so it is an edge catching light and not a stitch.
+   The shade is the same figure mirrored on the bottom-right. Still one box:
+   no gradient, no `border-image`, no pseudo-element. */
 @utility glass-strong {
   background:
     linear-gradient(var(--glass-sheen), var(--glass-sheen)),
@@ -118,8 +139,10 @@
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-spec),
-    inset 1px 1px 0 var(--glass-rim),
-    inset -1px -1px 0 var(--glass-rim-shade),
+    inset 1px 1px 0 var(--glass-rim-strong),
+    inset 5px 5px 1px -6px var(--glass-rim),
+    inset -1px -1px 0 var(--glass-rim-shade-strong),
+    inset -5px -5px 1px -6px var(--glass-rim-shade),
     inset 0 -3px 3px -1px var(--glass-meniscus),
     inset 0 0 18px -4px var(--glass-refract),
     0 20px 48px var(--glass-shadow-strong);
@@ -259,6 +282,8 @@
     --glass-sheen-clear: transparent;
     --glass-rim: transparent;
     --glass-rim-shade: transparent;
+    --glass-rim-strong: transparent;
+    --glass-rim-shade-strong: transparent;
     --glass-meniscus: transparent;
     --glass-refract: transparent;
     --glass-filter: none;
@@ -274,6 +299,8 @@
   --glass-sheen-clear: transparent;
   --glass-rim: transparent;
   --glass-rim-shade: transparent;
+  --glass-rim-strong: transparent;
+  --glass-rim-shade-strong: transparent;
   --glass-meniscus: transparent;
   --glass-refract: transparent;
   --glass-filter: none;
@@ -381,6 +408,8 @@
     --glass-scrim-clear: var(--color-raised);
     --glass-rim: transparent;
     --glass-rim-shade: transparent;
+    --glass-rim-strong: transparent;
+    --glass-rim-shade-strong: transparent;
     --glass-meniscus: transparent;
     --glass-refract: transparent;
   }

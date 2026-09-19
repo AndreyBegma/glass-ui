@@ -9,7 +9,7 @@ decline the third:
 | Import | What it is |
 |---|---|
 | `glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
-| `glass-ui/material.css` | `glass`, `glass-strong` and `lit`, and every fallback they need. |
+| `glass-ui/material.css` | `glass`, `glass-strong`, `glass-clear` and `lit`, and every fallback they need. |
 | `glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
 | `glass-ui` | The primitives and `cn`. |
 
@@ -57,6 +57,21 @@ sheets, dialogs, menus, overlays and player controls use `glass` or
 `glass-strong`; anything carrying body text uses `glass-strong`. Glass on a card
 is invisible against the flat ground and it costs a television its frame rate —
 two hundred glass tiles on one page is why this rule is written down.
+
+The material has three rungs of scrim on one renderer (FEAT-20260919-618), and
+the gate is what decides which one a surface may use — measured for
+`--color-ink` on the worst of five bands, white being the worst for dark:
+
+| Utility | Blur | Holds | For |
+|---|---|---|---|
+| `glass` | 26px | 4:1 | chrome that sits behind content and carries a label or a clock: the header, the bottom bar, the player's control bar, the catalogue rail |
+| `glass-strong` | 40px | 5:1 | surfaces that carry a whole interaction and body text: sheets, dialogs, menus, toasts, popovers |
+| `glass-clear` | 26px | 3:1 (a graphic) | icon-only chrome directly over a picture: the player's discs, the seek bar's time bubble, the skip pills |
+
+All three carry the rim, the meniscus and the refraction ring, and all three
+resolve to an opaque `raised` panel under `prefers-reduced-transparency`,
+`data-material="flat"` and a browser without `backdrop-filter`. A paragraph
+never goes on `glass-clear`.
 
 **The primary action is white** (`bg-ink text-ground`). The system was built for
 an interface that sits on top of other people's artwork, where every poster on

@@ -17,7 +17,14 @@
     "",
     "JSON and not TypeScript on purpose: `tokens.spec.ts` forbids a colour",
     "literal in any `.ts` or `.tsx` under `src/`, and a baseline of colours is",
-    "exactly that. It is data, and it is stored as data."
+    "exactly that. It is data, and it is stored as data.",
+    "",
+    "FEAT-20260919-618 — the material moved, on purpose. Eight `--glass-*` values",
+    "below are the liquid-glass measurement's, not 3d1c78e's; each is listed in",
+    "`decisions` with the decision that moved it, and `--glass-filter-strong` now",
+    "reads `--glass-blur-strong` instead of a literal. The six tokens the same",
+    "feature added are named in `tokens.spec.ts`'s ADDED list, where added tokens",
+    "belong. Everything not listed in `decisions` is still 3d1c78e's to the digit."
   ],
   "commit": "3d1c78e",
   "tokens": {
@@ -37,18 +44,18 @@
     "--color-hover": "rgb(255 255 255 / 0.1)",
     "--color-focus": "#ffffff",
     "--glass-sheen": "rgb(255 255 255 / 0.06)",
-    "--glass-scrim": "rgb(9 9 12 / 0.72)",
-    "--glass-scrim-strong": "rgb(9 9 12 / 0.8)",
-    "--glass-brightness": "0.55",
-    "--glass-brightness-strong": "0.5",
+    "--glass-scrim": "rgb(9 9 12 / 0.55)",
+    "--glass-scrim-strong": "rgb(9 9 12 / 0.64)",
+    "--glass-brightness": "0.85",
+    "--glass-brightness-strong": "0.7",
     "--glass-edge": "rgb(255 255 255 / 0.14)",
     "--glass-spec": "rgb(255 255 255 / 0.2)",
     "--glass-blur": "26px",
-    "--glass-shadow": "rgb(0 0 0 / 0.45)",
-    "--glass-shadow-strong": "rgb(0 0 0 / 0.55)",
-    "--glass-lit": "rgb(255 255 255 / 0.12)",
+    "--glass-shadow": "rgb(0 0 0 / 0.35)",
+    "--glass-shadow-strong": "rgb(0 0 0 / 0.45)",
+    "--glass-lit": "rgb(255 255 255 / 0.16)",
     "--glass-filter": "blur(var(--glass-blur)) saturate(180%) brightness(var(--glass-brightness))",
-    "--glass-filter-strong": "blur(40px) saturate(180%) brightness(var(--glass-brightness-strong))",
+    "--glass-filter-strong": "blur(var(--glass-blur-strong)) saturate(180%) brightness(var(--glass-brightness-strong))",
     "--radius-control": "12px",
     "--radius-surface": "18px",
     "--radius-sheet": "28px",
@@ -62,5 +69,15 @@
     "--dur-base": "220ms",
     "--dur-sheet": "420ms",
     "--font-sans": "\"SF Pro Text\", \"SF Pro Display\", var(--font-inter), system-ui, -apple-system, \"Segoe UI\", sans-serif"
+  },
+  "decisions": {
+    "--glass-scrim": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided",
+    "--glass-scrim-strong": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided",
+    "--glass-brightness": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided",
+    "--glass-brightness-strong": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided",
+    "--glass-shadow": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided",
+    "--glass-shadow-strong": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided",
+    "--glass-lit": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided",
+    "--glass-filter-strong": "FEAT-20260919-618 — liquid glass; the value the five-band measurement decided"
   }
 }

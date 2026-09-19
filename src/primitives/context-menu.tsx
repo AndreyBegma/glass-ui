@@ -3,6 +3,7 @@
 import * as RadixContextMenu from '@radix-ui/react-context-menu';
 import type { LucideIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
+import { useInputModality } from '../hooks/use-input-modality';
 import { cn } from '../lib/cn';
 import {
   MENU_CONTENT_CLASS,
@@ -89,11 +90,17 @@ export function ContextMenuContent({
   actions,
   container,
   children,
+  onPointerMove,
+  onKeyDown,
   ...props
 }: ContextMenuContentProps) {
+  // BUG-20260919-625 — the same Radix core roves focus on hover here too;
+  // see `MenuContent` and `hooks/use-input-modality.ts`.
+  const inputModality = useInputModality({ onPointerMove, onKeyDown });
   return (
     <RadixContextMenu.Portal container={container}>
       <RadixContextMenu.Content
+        {...inputModality}
         className={cn(
           MENU_CONTENT_CLASS,
           // It grows out of where the pointer was, which Radix has already

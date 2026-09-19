@@ -149,6 +149,18 @@ and dimmer. Form elements and `contenteditable` editors are the only exemption
 — they draw their own focus indicator (a caret, or a consumer's selected-node
 state), and `base.css` already exempts them.
 
+**The ring follows the input, not the browser's guess.** A Radix menu moves
+DOM focus to the item under the pointer, and in Chromium that script focus
+inherits `:focus-visible` from the menu content, which got it on open because
+nothing was focused before — so the ring framed every hovered item, mouse or
+keyboard (BUG-20260919-625). `Menu` and `ContextMenu` content therefore carry
+`data-input="pointer"` after a `pointermove` and `data-input="keyboard"` after
+a `keydown` (`hooks/use-input-modality.ts`), and `base.css` strips the ring
+from everything under a `pointer` surface — a hovered item is `bg-hover` only,
+an arrowed item rings, and one keystroke after a hover brings it back. A
+primitive that roves focus on hover spreads the same hook on its surface;
+nothing is written on the item, and no consumer adds a class.
+
 **Hit area and visual size are separate.** `Button` carries an invisible `after:`
 pseudo-element that extends the touch target to 44px and disappears on a fine
 pointer. Forcing every control to 44px instead makes a dense toolbar look like a

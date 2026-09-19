@@ -37,3 +37,34 @@ describe('the focus ring exempts contenteditable', () => {
     expect(body).toContain('outline: none;');
   });
 });
+
+/**
+ * BUG-20260919-625 — no ring under the pointer.
+ *
+ * Radix menus rove DOM focus onto the item under the pointer, and Chromium
+ * lets that script focus inherit `:focus-visible` from the content, so the
+ * ring above framed every hovered item. The menu content records the input
+ * that moved focus (`hooks/use-input-modality.ts`) and this rule trusts the
+ * record. Source-level for the reason given at the top of this file; the
+ * computed-style proof is the Playwright harness in the bug report.
+ */
+describe('the focus ring is not drawn under a pointer surface', () => {
+  const ring = CSS.indexOf(':focus-visible {');
+  const rule = CSS.indexOf('[data-input="pointer"] :focus-visible');
+
+  test('the rule exists, after the ring it overrides', () => {
+    expect(ring).toBeGreaterThan(-1);
+    expect(rule).toBeGreaterThan(ring);
+  });
+
+  test('it removes the outline from everything under the surface, not only the highlighted item', () => {
+    const selector = CSS.slice(rule, CSS.indexOf('{', rule)).trim();
+    expect(selector).toBe('[data-input="pointer"] :focus-visible');
+    const body = CSS.slice(CSS.indexOf('{', rule) + 1, CSS.indexOf('}', rule));
+    expect(body).toContain('outline: none;');
+  });
+
+  test('a keyboard surface is left to the browser — no rule forces or strips its ring', () => {
+    expect(CSS.includes('[data-input="keyboard"]')).toBe(false);
+  });
+});

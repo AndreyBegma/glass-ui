@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, test } from 'bun:test';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Pencil, Pin, Trash2 } from 'lucide-react';
 import { RowActions, rowActionsHost } from '../patterns/row-actions';
 import {
@@ -12,6 +12,9 @@ import {
   ContextMenuTrigger,
 } from './context-menu';
 import { MENU_CONTENT_CLASS, MENU_ITEM_CLASS, MENU_LABEL_CLASS } from './menu';
+
+/** Roving focus moves in a `setTimeout(0)`, not synchronously with the key. */
+const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 const actions: ContextMenuAction[] = [
   { id: 'pin', label: 'Pin', icon: Pin, onSelect: () => {} },
@@ -37,6 +40,24 @@ function Row({ list = actions }: { list?: ContextMenuAction[] }) {
     </ContextMenuRoot>
   );
 }
+
+/**
+ * BUG-20260919-625 — let the previous test's menu finish leaving.
+ *
+ * Radix's `FocusScope` restores focus in a `setTimeout(0)` from its unmount,
+ * which `cleanup` does not wait for. Under happy-dom that deferred
+ * `document.body.focus()` fires `focusin`, and a menu the *next* test has
+ * already opened reads it as focus leaving and dismisses itself. The tests
+ * above this ticket never noticed because each asserts within the macrotask
+ * that opened the menu; a test that waits for Radix's roving focus (a
+ * `setTimeout(0)` of its own) does. So: unmount here, then one turn of the
+ * event loop, before the next test mounts. `test-setup.ts`'s own `cleanup`
+ * then finds nothing left to do.
+ */
+afterEach(async () => {
+  cleanup();
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+});
 
 describe('ContextMenu', () => {
   test('a right-click opens it where the pointer is, with one item per action', async () => {
@@ -160,5 +181,28 @@ describe('ContextMenu', () => {
     expect(screen.getByTestId('label').className).toBe(MENU_LABEL_CLASS);
     expect(screen.getByTestId('item').className).toBe(MENU_ITEM_CLASS.default);
     expect(screen.getByTestId('danger').className).toBe(MENU_ITEM_CLASS.danger);
+  });
+
+  /**
+   * BUG-20260919-625 — the same Radix core roves focus on hover here, so the
+   * content records the input the way `MenuContent` does; `menu.test.tsx`
+   * says why the record and not the computed outline is what is asserted.
+   */
+  test('the content records the input that moved focus: pointer, then keyboard', async () => {
+    render(<Row />);
+    fireEvent.contextMenu(screen.getByText('Quarterly review'), { clientX: 40, clientY: 20 });
+    const menu = await screen.findByRole('menu');
+    expect(menu.hasAttribute('data-input')).toBe(false);
+
+    const pin = screen.getByRole('menuitem', { name: 'Pin' });
+    fireEvent.pointerMove(pin, { pointerType: 'mouse' });
+    await tick();
+    expect(menu.getAttribute('data-input')).toBe('pointer');
+    expect(document.activeElement).toBe(pin);
+
+    fireEvent.keyDown(pin, { key: 'ArrowDown' });
+    await tick();
+    expect(menu.getAttribute('data-input')).toBe('keyboard');
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Edit' }));
   });
 });

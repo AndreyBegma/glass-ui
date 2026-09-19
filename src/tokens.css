@@ -201,6 +201,22 @@
   --glass-meniscus: rgb(9 9 12 / 0.55);
   --glass-refract: rgb(242 242 246 / 0.35);
 
+  /* BUG-20260919-626 — the rim's straight run on the strong rung.
+
+     The rim above was tuned on a disc, where an offset inset shadow is a
+     crescent: `o · (1 − cos θ)` thick, tapering to nothing. A rounded
+     rectangle has no such mercy — the straight run gets the full pixel at the
+     full alpha for its whole length, and on a phone-sized menu 0.8 is a ruler
+     line. `glass-strong` is the rung that is always a large rectangle (sheets,
+     dialogs, menus, toasts, popovers), so its run reads this quieter pair; the
+     light itself is gathered on the top-left corner by a second inset in
+     `material.css` that still reads `--glass-rim`, so a sheet's corner carries
+     exactly the light a disc does. Measured on the probe: the run drops from
+     0.84 to 0.49 relative luminance (top, with the specular on it) and 0.385
+     (left) over a 0.19 panel; the corner stays at 0.85. */
+  --glass-rim-strong: rgb(242 242 246 / 0.22);
+  --glass-rim-shade-strong: rgb(9 9 12 / 0.2);
+
   /* FEAT-20260902-004 — the shadow's colour, and the pointer highlight's,
      named for the same reason the four layers above already were.
      Both were literals inside `material.css`: `rgb(0 0 0 / 0.45)` under the
@@ -481,6 +497,8 @@
     --glass-spec: rgb(0 0 0 / 0.2);
     --glass-rim: rgb(255 255 255 / 0.9);
     --glass-rim-shade: rgb(24 24 27 / 0.18);
+    --glass-rim-strong: rgb(255 255 255 / 0.3);
+    --glass-rim-shade-strong: rgb(24 24 27 / 0.08);
     --glass-meniscus: rgb(24 24 27 / 0.12);
     --glass-refract: rgb(255 255 255 / 0.5);
     --glass-shadow: rgb(0 0 0 / 0.12);
@@ -553,6 +571,8 @@
   --glass-spec: rgb(0 0 0 / 0.2);
   --glass-rim: rgb(255 255 255 / 0.9);
   --glass-rim-shade: rgb(24 24 27 / 0.18);
+  --glass-rim-strong: rgb(255 255 255 / 0.3);
+  --glass-rim-shade-strong: rgb(24 24 27 / 0.08);
   --glass-meniscus: rgb(24 24 27 / 0.12);
   --glass-refract: rgb(255 255 255 / 0.5);
   --glass-shadow: rgb(0 0 0 / 0.12);

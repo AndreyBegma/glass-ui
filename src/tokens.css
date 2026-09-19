@@ -133,48 +133,98 @@
      tying them would mean the dark ring quietly became `#f2f2f6`. */
   --color-focus: #ffffff;
 
-  /* The material. See the `glass` utility below for what each part does. */
+  /* The material. See the `glass` utility below for what each part does.
+   *
+   * FEAT-20260919-618 — re-cut from five layers to seven, and a third rung.
+   * Every value below that moved was moved by a measurement, not by taste:
+   * the five-band probe (white, saturated yellow, mid grey, near-black, a real
+   * film frame) against the gates in `material.css` — `glass` >= 4:1 and
+   * `glass-strong` >= 5:1 for `--color-ink`, and 3:1 (WCAG 1.4.11, non-text)
+   * for the icon-only `glass-clear`. The table is in `material.css`. */
 
   /* The sheen — a white film that gives the panel a surface of its own. Small,
-     because it lightens, and lightening is the wrong direction over artwork. */
+     because it lightens, and lightening is the wrong direction over artwork.
+     The clear rung is the exception, and on purpose: it carries no body text
+     and almost no scrim, so it is found over a picture by the light it
+     reflects rather than by the shade it casts. Twice the sheen is what lifts
+     a disc off a black frame the way a real pane does. */
   --glass-sheen: rgb(255 255 255 / 0.06);
+  --glass-sheen-clear: rgb(255 255 255 / 0.12);
 
   /* The floor. A dark layer that guarantees the panel is never brighter than
-     this no matter what is behind it. Both of these are alpha over the ground,
-     so a dark backdrop still shows through; a bright one is capped. */
-  --glass-scrim: rgb(9 9 12 / 0.72);
-  --glass-scrim-strong: rgb(9 9 12 / 0.8);
+     this no matter what is behind it. All three are alpha over the ground, so
+     a dark backdrop still shows through; a bright one is capped.
+
+     FEAT-20260919-618: 0.72 -> 0.55, 0.8 -> 0.64, and the clear rung at 0.48.
+     Each is the lightest value that holds its gate on pure white with the
+     margin the strong rung always had: 4.43, 6.98 and 3.21 against
+     `--color-ink`. The issue's target of 0.28–0.40 for `glass` measures
+     3.1–3.9:1 on white and fails the gate; the scrim took the difference. */
+  --glass-scrim: rgb(9 9 12 / 0.55);
+  --glass-scrim-strong: rgb(9 9 12 / 0.64);
+  --glass-scrim-clear: rgb(9 9 12 / 0.48);
 
   /* The ceiling, and the part that makes this adaptive rather than fixed.
      `brightness()` is multiplicative, so it scales with what is actually
      behind: a white poster loses nearly half its luminance, a dark frame loses
      almost nothing it had. A fixed overlay cannot do that — it darkens the dark
-     frame just as much and the material turns into a painted panel. */
-  --glass-brightness: 0.55;
-  --glass-brightness-strong: 0.5;
+     frame just as much and the material turns into a painted panel.
+
+     Worth knowing before retuning either: for luminance, `brightness()` below
+     one and a black scrim are the same operation — both scale the backdrop.
+     The argument above is against a *white* tint. So the two are one dial
+     with two names: the brightness is set where the issue asked (0.85), and
+     the scrim is whatever the gate then requires. */
+  --glass-brightness: 0.85;
+  --glass-brightness-strong: 0.7;
 
   --glass-edge: rgb(255 255 255 / 0.14);
   --glass-spec: rgb(255 255 255 / 0.2);
   --glass-blur: 26px;
+  --glass-blur-strong: 40px;
+
+  /* FEAT-20260919-618 — the rim, the meniscus and the refraction ring.
+
+     What made the old material read as a painted coin was that its edge was
+     a flat hairline and a 40px drop shadow. Real glass carries the light on
+     its edge: a thin bright rim where the light enters (top-left), a dark
+     rim where it leaves (bottom-right), a soft shaded band inside the bottom
+     edge where the pane is thickest — the meniscus — and a faint brightening
+     of the backdrop along the whole rim, which is the cheapest thing that
+     reads as refraction. Each is an inset `box-shadow` in `material.css`.
+
+     The rim is cool. `--color-ink`'s own colour (242 242 246) at alpha, never
+     a warm white: the ground is a cool near-black and the artwork supplies
+     every colour, so the one light the interface owns is lunar. */
+  --glass-rim: rgb(242 242 246 / 0.8);
+  --glass-rim-shade: rgb(9 9 12 / 0.5);
+  --glass-meniscus: rgb(9 9 12 / 0.55);
+  --glass-refract: rgb(242 242 246 / 0.35);
 
   /* FEAT-20260902-004 — the shadow's colour, and the pointer highlight's,
      named for the same reason the four layers above already were.
      Both were literals inside `material.css`: `rgb(0 0 0 / 0.45)` under the
-     two utilities and `rgb(255 255 255 / 0.12)` inside `.lit::before`. The
-     values here are those literals to the digit, so the dark material renders
-     byte for byte as it did. Only the geometry stayed behind — `0 16px 40px`
-     is a distance, not a colour, and it does not change with the theme. */
-  --glass-shadow: rgb(0 0 0 / 0.45);
-  --glass-shadow-strong: rgb(0 0 0 / 0.55);
-  --glass-lit: rgb(255 255 255 / 0.12);
+     two utilities and `rgb(255 255 255 / 0.12)` inside `.lit::before`. Only
+     the geometry stayed behind — `0 16px 40px` is a distance, not a colour,
+     and it does not change with the theme.
+
+     FEAT-20260919-618: the rim carries the edge now, so the shadow recedes
+     (0.45 -> 0.35, 0.55 -> 0.45); a clear disc over a picture barely casts
+     one (0.15). The pointer light rises 0.12 -> 0.16 so it is the same
+     relative lift on a composite that is now lighter. */
+  --glass-shadow: rgb(0 0 0 / 0.35);
+  --glass-shadow-strong: rgb(0 0 0 / 0.45);
+  --glass-shadow-clear: rgb(0 0 0 / 0.15);
+  --glass-lit: rgb(255 255 255 / 0.16);
 
   /* The whole filter as one value, so a rung can switch it off rather than
      leave a zero-radius blur behind. A `backdrop-filter` that resolves to
      `blur(0px)` still asks the browser to prepare a backdrop pass; `none` does
-     not. */
+     not. The clear rung shares `--glass-filter`: it differs from `glass` in
+     its scrim and its sheen, not in its blur. */
   --glass-filter: blur(var(--glass-blur)) saturate(180%)
     brightness(var(--glass-brightness));
-  --glass-filter-strong: blur(40px) saturate(180%)
+  --glass-filter-strong: blur(var(--glass-blur-strong)) saturate(180%)
     brightness(var(--glass-brightness-strong));
 
   /* Three radii. A card at 12, its badge at 6 and the button under it at 16 is
@@ -421,15 +471,22 @@
        and the layer's job — saying where the panel's edge is — is the part
        worth keeping. */
     --glass-sheen: rgb(0 0 0 / 0.06);
-    --glass-scrim: rgb(255 255 255 / 0.72);
-    --glass-scrim-strong: rgb(255 255 255 / 0.8);
-    --glass-brightness: 1.8;
-    --glass-brightness-strong: 2;
+    --glass-sheen-clear: rgb(0 0 0 / 0.06);
+    --glass-scrim: rgb(255 255 255 / 0.52);
+    --glass-scrim-strong: rgb(255 255 255 / 0.64);
+    --glass-scrim-clear: rgb(255 255 255 / 0.42);
+    --glass-brightness: 1.15;
+    --glass-brightness-strong: 1.3;
     --glass-edge: rgb(0 0 0 / 0.18);
     --glass-spec: rgb(0 0 0 / 0.2);
-    --glass-shadow: rgb(0 0 0 / 0.14);
-    --glass-shadow-strong: rgb(0 0 0 / 0.18);
-    --glass-lit: rgb(0 0 0 / 0.07);
+    --glass-rim: rgb(255 255 255 / 0.9);
+    --glass-rim-shade: rgb(24 24 27 / 0.18);
+    --glass-meniscus: rgb(24 24 27 / 0.12);
+    --glass-refract: rgb(255 255 255 / 0.5);
+    --glass-shadow: rgb(0 0 0 / 0.12);
+    --glass-shadow-strong: rgb(0 0 0 / 0.16);
+    --glass-shadow-clear: rgb(0 0 0 / 0.08);
+    --glass-lit: rgb(0 0 0 / 0.09);
   }
 }
 
@@ -486,20 +543,35 @@
      and the layer's job — saying where the panel's edge is — is the part
      worth keeping. */
   --glass-sheen: rgb(0 0 0 / 0.06);
-  --glass-scrim: rgb(255 255 255 / 0.72);
-  --glass-scrim-strong: rgb(255 255 255 / 0.8);
-  --glass-brightness: 1.8;
-  --glass-brightness-strong: 2;
+  --glass-sheen-clear: rgb(0 0 0 / 0.06);
+  --glass-scrim: rgb(255 255 255 / 0.52);
+  --glass-scrim-strong: rgb(255 255 255 / 0.64);
+  --glass-scrim-clear: rgb(255 255 255 / 0.42);
+  --glass-brightness: 1.15;
+  --glass-brightness-strong: 1.3;
   --glass-edge: rgb(0 0 0 / 0.18);
   --glass-spec: rgb(0 0 0 / 0.2);
-  --glass-shadow: rgb(0 0 0 / 0.14);
-  --glass-shadow-strong: rgb(0 0 0 / 0.18);
-  --glass-lit: rgb(0 0 0 / 0.07);
+  --glass-rim: rgb(255 255 255 / 0.9);
+  --glass-rim-shade: rgb(24 24 27 / 0.18);
+  --glass-meniscus: rgb(24 24 27 / 0.12);
+  --glass-refract: rgb(255 255 255 / 0.5);
+  --glass-shadow: rgb(0 0 0 / 0.12);
+  --glass-shadow-strong: rgb(0 0 0 / 0.16);
+  --glass-shadow-clear: rgb(0 0 0 / 0.08);
+  --glass-lit: rgb(0 0 0 / 0.09);
 }
 
-/* Three `--glass-*` tokens are deliberately **not** in the light blocks, and
+/* FEAT-20260919-618 — the light material moved with the dark one, and was
+   measured the same way: on the five-band probe with `--color-ink` `#18181b`.
+   Light's hard band is the near-black frame, where `glass` holds 4.69:1,
+   `glass-strong` 6.63:1 and `glass-clear` 3.39:1. The rim turns over to a
+   white highlight on a near-white panel; the shade and the meniscus take the
+   light ink's colour at low alpha. */
+
+/* Four `--glass-*` tokens are deliberately **not** in the light blocks, and
    `tokens.spec.ts` asserts their absence rather than merely tolerating it.
-   `--glass-blur` is a distance and is the same in both themes; `--glass-filter`
+   `--glass-blur` and `--glass-blur-strong` are distances and are the same in
+   both themes; `--glass-filter`
    and `--glass-filter-strong` are composed out of `--glass-blur` and
    `--glass-brightness`, so they flip themselves the moment the brightness
    above does. Copying them into the light blocks would put `saturate(180%)` in

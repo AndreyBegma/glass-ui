@@ -120,15 +120,21 @@ describe('the palette is spelled once', () => {
  */
 
 /** The tokens `tokens.css` declares in the dark set and deliberately does not
- *  repeat in light. `--glass-blur` is a distance and does not change with the
- *  theme; the two filters are composed out of it and `--glass-brightness`, so
+ *  repeat in light. `--glass-blur` and `--glass-blur-strong` are distances and
+ *  do not change with the theme; the two filters are composed out of them and
+ *  `--glass-brightness`, so
  *  they flip themselves when the brightness does. Copying them would put
  *  `saturate(180%)` in three places — and a value in three places is a value
  *  that will one day be two values, which is a drift no "declared in both
  *  sets" assertion could ever see, because both sets would still declare it.
  *  Their *absence* is asserted below rather than tolerated, so that a future
  *  reader who trips over the exclusion cannot quietly satisfy it by copying. */
-const DERIVED = ['--glass-blur', '--glass-filter', '--glass-filter-strong'];
+const DERIVED = [
+  '--glass-blur',
+  '--glass-blur-strong',
+  '--glass-filter',
+  '--glass-filter-strong',
+];
 
 const TOKENS = readFileSync(join(SRC, 'tokens.css'), 'utf8').replace(
   /\/\*[\s\S]*?\*\//g,
@@ -342,9 +348,21 @@ const ADDED: Record<string, string> = {
   '--size-nav': 'FEAT-20260911-001 decision 5 — the density scale',
   '--size-tap': 'FEAT-20260911-001 decision 5 — the density scale',
   '--ease-out-expo': 'FEAT-20260916-598 — the motion vocabulary; the curve seven pop-ins had hard-coded',
+  '--glass-scrim-clear': 'FEAT-20260919-618 — liquid glass; the third rung\'s scrim',
+  '--glass-sheen-clear': 'FEAT-20260919-618 — liquid glass; the third rung\'s sheen',
+  '--glass-shadow-clear': 'FEAT-20260919-618 — liquid glass; the third rung\'s shadow',
+  '--glass-blur-strong': 'FEAT-20260919-618 — liquid glass; the strong blur as a token so the television can lower it',
+  '--glass-rim': 'FEAT-20260919-618 — liquid glass; the rim, bright top-left',
+  '--glass-rim-shade': 'FEAT-20260919-618 — liquid glass; the rim, dark bottom-right',
+  '--glass-meniscus': 'FEAT-20260919-618 — liquid glass; the band inside the bottom edge',
+  '--glass-refract': 'FEAT-20260919-618 — liquid glass; the ring along the rim',
 };
 
-const BASELINE: { commit: string; tokens: Record<string, string> } = JSON.parse(
+const BASELINE: {
+  commit: string;
+  tokens: Record<string, string>;
+  decisions?: Record<string, string>;
+} = JSON.parse(
   readFileSync(join(SRC, 'tokens.baseline.json'), 'utf8'),
 );
 
@@ -358,6 +376,17 @@ const LIVE: Record<string, string> = Object.fromEntries(
 );
 
 describe(`Luna Watch does not move (baseline ${BASELINE.commit})`, () => {
+  // FEAT-20260919-618 moved eight `--glass-*` values in the baseline itself,
+  // each named in its `decisions` map. That is the route the file's own
+  // comment allows — a decision, next to the value — and this holds the two
+  // in step: a value edited without a decision, or a decision left behind
+  // after its value was reverted, both fail.
+  test('every baseline value that moved names the decision that moved it', () => {
+    const decided = Object.keys(BASELINE.decisions ?? {});
+    expect(decided.length).toBeGreaterThan(0);
+    for (const token of decided) expect(BASELINE.tokens).toHaveProperty(token);
+  });
+
   test('the baseline is a baseline and not an empty object', () => {
     // A baseline that silently read as `{}` would pass every assertion below
     // by having nothing to say, which is the one way this guard fails open.
@@ -581,5 +610,121 @@ describe('the accent clears its contrast gate in both themes', () => {
       value(desk, '--color-accent'),
     );
     expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
+ * FEAT-20260919-618 — the third rung flattens with the other two, and the
+ * material stays one box.
+ *
+ * `material.css` reads twenty-one `--glass-*` tokens and switches the material
+ * off by overriding a handful of them in three places — the reduced-transparency
+ * query, `data-material="flat"`, and the `@supports` fallback. A token the
+ * utilities read that one of those blocks forgets is a layer that survives
+ * onto the flat rung: a rim on an opaque panel, or a translucent clear rung on
+ * a browser with no `backdrop-filter`. The flat rung is the accessibility
+ * route, so this is asserted rather than reviewed.
+ *
+ * The second block holds the shape the plan argued for: no pseudo-element and
+ * no blend mode in the material. `.lit` owns `::before` and `Button` owns
+ * `::after`; a `glass::before` here would silently fight one of them.
+ */
+const MATERIAL = readFileSync(join(SRC, 'material.css'), 'utf8').replace(
+  /\/\*[\s\S]*?\*\//g,
+  ' ',
+);
+
+/** The body of every rule in `material.css` whose selector contains `marker`. */
+function materialBlocks(marker: string): string[] {
+  const out: string[] = [];
+  let from = 0;
+  for (;;) {
+    const at = MATERIAL.indexOf(marker, from);
+    if (at < 0) return out;
+    const open = MATERIAL.indexOf('{', at);
+    let depth = 0;
+    for (let i = open; i < MATERIAL.length; i++) {
+      if (MATERIAL[i] === '{') depth++;
+      else if (MATERIAL[i] === '}' && --depth === 0) {
+        out.push(MATERIAL.slice(open + 1, i));
+        from = i;
+        break;
+      }
+    }
+  }
+}
+
+/** What the flat rung must do to every token that draws a layer. */
+const FLATTENED: Record<string, string> = {
+  '--glass-scrim': 'var(--color-raised)',
+  '--glass-scrim-strong': 'var(--color-raised)',
+  '--glass-scrim-clear': 'var(--color-raised)',
+  '--glass-sheen': 'transparent',
+  '--glass-sheen-clear': 'transparent',
+  '--glass-rim': 'transparent',
+  '--glass-rim-shade': 'transparent',
+  '--glass-meniscus': 'transparent',
+  '--glass-refract': 'transparent',
+  '--glass-filter': 'none',
+  '--glass-filter-strong': 'none',
+};
+
+/** The `@supports` fallback keeps the filter declarations (an unsupported
+ *  `backdrop-filter` is ignored anyway) and the sheens (an opaque panel with a
+ *  6% film on it is still an opaque panel, and that is how it has always
+ *  rendered there); it flattens the scrims and the four optical layers. */
+const FLATTENED_WITHOUT_FILTER = Object.fromEntries(
+  Object.entries(FLATTENED).filter(
+    ([token]) => !/^--glass-(filter|sheen)/.test(token),
+  ),
+);
+
+describe('the flat rung resolves every rung to an opaque surface', () => {
+  test.each([
+    ['prefers-reduced-transparency', '@media (prefers-reduced-transparency: reduce)', FLATTENED],
+    ['data-material="flat"', ':root[data-material="flat"] {', FLATTENED],
+    ['no backdrop-filter', '@supports not (', FLATTENED_WITHOUT_FILTER],
+  ])('%s flattens every layer the utilities draw', (_n, marker, expected) => {
+    // The first block under each marker is the token override; the `.lit`
+    // hiding under the same media query is a second block and is not this.
+    const body = materialBlocks(marker)[0];
+    expect(body).toBeDefined();
+    for (const [token, value] of Object.entries(expected)) {
+      expect(body).toContain(`${token}: ${value};`);
+    }
+  });
+
+  test('the three utilities are declared, and read only tokens the flat rung covers', () => {
+    for (const utility of ['glass', 'glass-strong', 'glass-clear']) {
+      const body = materialBlocks(`@utility ${utility} {`)[0];
+      expect(body).toBeDefined();
+      const read = [...body.matchAll(/var\((--glass-[a-z-]+)\)/g)].map((m) => m[1]);
+      expect(read.length).toBeGreaterThan(5);
+      for (const token of read) {
+        // The edge and the specular survive onto the flat rung on purpose: the
+        // opaque panel keeps its hairline. Shadows are colours the rung keeps
+        // too — an opaque panel still floats. Everything else must flatten.
+        if (/^--glass-(edge|spec|shadow(-strong|-clear)?)$/.test(token)) continue;
+        expect(Object.keys(FLATTENED)).toContain(token);
+      }
+    }
+  });
+});
+
+describe('the material is one box', () => {
+  test('no utility reaches for a pseudo-element or a blend mode', () => {
+    for (const utility of ['glass', 'glass-strong', 'glass-clear']) {
+      const body = materialBlocks(`@utility ${utility} {`)[0];
+      expect(body).not.toMatch(/::(before|after)/);
+      expect(body).not.toContain('mix-blend-mode');
+      expect(body).not.toContain('background-blend-mode');
+    }
+    expect(MATERIAL).not.toContain('mix-blend-mode');
+  });
+
+  test('the pointer light still fades with opacity and nothing else', () => {
+    const lit = materialBlocks('.lit::before {')[0];
+    expect(lit).toContain('opacity: var(--lit, 0);');
+    expect(lit).toMatch(/transition: opacity /);
   });
 });

@@ -32,3 +32,46 @@ describe('SheetContent pad', () => {
     expect(classes).toEqual(expect.arrayContaining(['min-h-0', 'flex-1', 'overflow-y-auto']));
   });
 });
+
+/**
+ * FEAT-20260919-621 — where the sheet lands.
+ *
+ * A player in element fullscreen draws nothing outside the fullscreen
+ * element, so a sheet has to be able to go inside it. Held here as a parent
+ * check rather than a pixel: happy-dom has no fullscreen and no compositor,
+ * and what the fix is made of is the portal's target.
+ */
+describe('SheetContent container', () => {
+  test('portals to `document.body` when none is given', () => {
+    const bystander = document.createElement('div');
+    document.body.appendChild(bystander);
+    try {
+      renderSheet();
+      const dialog = screen.getByRole('dialog');
+      expect(document.body.contains(dialog)).toBe(true);
+      expect(bystander.contains(dialog)).toBe(false);
+    } finally {
+      bystander.remove();
+    }
+  });
+
+  test('portals into the element it is given', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    try {
+      render(
+        <SheetRoot defaultOpen>
+          <SheetContent title="Keyboard shortcuts" container={host}>
+            <div data-testid="body">Row</div>
+          </SheetContent>
+        </SheetRoot>,
+      );
+      const dialog = screen.getByRole('dialog');
+      expect(host.contains(dialog)).toBe(true);
+      // The scrim travels with it: in fullscreen it has to be drawn too.
+      expect(host.querySelectorAll('.z-overlay').length).toBeGreaterThanOrEqual(2);
+    } finally {
+      host.remove();
+    }
+  });
+});

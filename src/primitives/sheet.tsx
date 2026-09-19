@@ -137,6 +137,16 @@ interface SheetProps {
   morphFrom?: string;
   /** `none` for a body that carries its own row padding. `md` is today's `px-6`. */
   pad?: 'none' | 'md';
+  /**
+   * FEAT-20260919-621 — where the sheet is portalled to.
+   *
+   * The default is `document.body`, and it is wrong in the one place
+   * `MenuContent`'s docblock names: a player in element fullscreen draws
+   * nothing outside the fullscreen element, so a sheet portalled to the body
+   * is in the document, focused, and invisible. Pass that element instead. The
+   * same shape as the menu's, for the same reason.
+   */
+  container?: ComponentProps<typeof RadixDialog.Portal>['container'];
 }
 
 /**
@@ -187,6 +197,7 @@ export function SheetContent({
   className,
   morphFrom,
   pad = 'md',
+  container,
 }: SheetProps) {
   const reduced = useReducedMotion();
   const state = useContext(SheetStateContext);
@@ -453,7 +464,7 @@ export function SheetContent({
   ];
 
   return (
-    <RadixDialog.Portal forceMount={forceMount}>
+    <RadixDialog.Portal forceMount={forceMount} container={container}>
       {presence ? (
         <AnimatePresence>{open ? surface : null}</AnimatePresence>
       ) : (

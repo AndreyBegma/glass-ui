@@ -357,17 +357,27 @@ opt-out for a row whose width nobody set — the item keeps its label whole
 instead of collapsing to the narrowest width `min-w-0` allows (BUG-20260914-578
 for `TabsItem`, BUG-20260916-607 for `SegmentedControlItem`).
 
-`SegmentedControl` takes `variant: 'surface' | 'glass'` (FEAT-20260916-612).
-`surface`, the default, is the opaque well it always was — the strings are
-held to the byte by its test. `glass` is the header's material as a pill:
-the `glass` utility at `rounded-full`, and the travelling capsule as
-`bg-hover`, the same lift `BottomCapsule` and an active header section use
-on glass — `bg-raised` was measured within 1/255 of the glass composite at
-idle and does not read. It is for a switch that sits on the page beside a
-glass header. Two things it is not: a row that wraps (two rows inside a
-pill put their corners outside its curve — keep `surface` for a wrapped
-control), and a control inside another glass surface (it carries a
-`backdrop-filter`; one blur per stack).
+`SegmentedControl` takes `variant: 'glass' | 'on-glass'`, and `glass` is
+the default (FEAT-20260919-624; the variant arrived as FEAT-20260916-612).
+`glass` is the header's material as a pill: the `glass` utility at
+`rounded-full`, and the travelling capsule as `bg-hover`, the same lift
+`BottomCapsule` and an active header section use on glass — `bg-raised` was
+measured within 1/255 of the glass composite at idle and does not read;
+`bg-hover` is +19 to +22/255 over the pill's shell on a flat ground, an
+ambience and a bright poster wash alike. It is for a switch that sits on the
+page, beside a glass header or on the flat ground. Two things it is not: a
+row that wraps (two rows inside a pill put their corners outside its curve —
+a wrapped control takes `on-glass`), and a control inside another glass
+surface (it carries a `backdrop-filter`; one blur per stack). The default's
+strings are held to the byte by its test.
+
+`surface` — the opaque `bg-surface` well the primitive started with, and the
+default until v0.18 — is folded into `glass`. It is still accepted, marked
+`@deprecated`, and renders exactly what the default renders, so a consumer
+written against v0.18 keeps compiling and gets the pill; it goes in the next
+major. Two variants that render identical strings under different names
+would be a lie the next reader has to unlearn, so there is one, and the old
+name is a spelling of it.
 
 For a control *inside* a glass surface there is `variant="on-glass"`
 (BUG-20260916-613), and the field family — `Input`, `Textarea`, `Select`,
@@ -381,8 +391,10 @@ alike; a field's fill is `bg-hover` with its border and ring unchanged. A
 `Select` on glass also paints its `<option>`s `bg-surface`, because Chrome
 and Firefox draw the native list with the select's own background.
 `on-glass` keeps `rounded-control`, wraps, and carries no blur — it is what
-goes inside a glass panel, not a second one. The defaults render the
-strings they always did, held to the byte by the tests.
+goes inside a glass panel, not a second one; its test asserts that none of
+the material's utilities is on its wrapper. The field family's `surface`
+tone is unchanged by FEAT-624 — a field's opaque fill on the flat ground is
+still the honest one.
 
 `SheetContent` and `DialogContent` take `container` (FEAT-20260919-621), the
 `MenuContent` shape: the element the Radix portal renders into, `document.body`

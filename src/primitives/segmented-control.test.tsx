@@ -95,9 +95,10 @@ describe('SegmentedControl', () => {
     expect(item?.className).not.toContain('flex-1');
   });
 
-  // FEAT-20260916-612 — the variant. The default is the promise a consumer
-  // that never heard of `variant` relies on, so it is held to the byte.
-  test('the default wrapper and capsule render the strings they always did', () => {
+  // FEAT-20260919-624 — the default is the pill. It is the promise a
+  // consumer that never heard of `variant` relies on, so it is held to the
+  // byte: the header's material at `rounded-full`, the capsule as `bg-hover`.
+  test('the default wrapper and capsule are the glass pill, to the byte', () => {
     const { container } = render(
       <SegmentedControl aria-label="View">
         <SegmentedControlItem active layoutId="view-default-capsule">
@@ -106,11 +107,33 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     expect(container.querySelector('ul')?.className).toBe(
-      'flex gap-1 rounded-control bg-surface p-1',
+      'flex gap-1 rounded-full glass p-1',
+    );
+    expect(container.querySelector('ul')?.className).not.toContain(
+      'bg-surface',
     );
     expect(container.querySelector('li > span')?.className).toBe(
-      'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised',
+      'absolute inset-0 rounded-full bg-hover',
     );
+  });
+
+  // The old name is accepted and means the default — a consumer written
+  // against v0.18 keeps compiling and gets the pill, not the well.
+  test('`variant="surface"` renders exactly what the default renders', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View" variant="surface">
+        <SegmentedControlItem active layoutId="view-surface-alias">
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    expect(container.querySelector('ul')?.className).toBe(
+      'flex gap-1 rounded-full glass p-1',
+    );
+    expect(container.querySelector('li > span')?.className).toBe(
+      'absolute inset-0 rounded-full bg-hover',
+    );
+    expect(container.querySelector('ul')?.hasAttribute('variant')).toBe(false);
   });
 
   test('`variant="glass"` is the material as a pill, and the capsule is the lift the header uses', () => {
@@ -151,7 +174,9 @@ describe('SegmentedControl', () => {
   });
 
   // BUG-20260916-613 — the well inside a glass panel: a hairline, no fill,
-  // the capsule as the lift the header uses.
+  // the capsule as the lift the header uses. FEAT-20260919-624 — and no
+  // `backdrop-filter`: the material's utilities are the package's only way
+  // to carry one, and none of them is on this wrapper. One blur per stack.
   test('`variant="on-glass"` is a hairline well at the control radius with a `bg-hover` capsule, and no blur', () => {
     const { container } = render(
       <SegmentedControl aria-label="View" variant="on-glass">
@@ -168,7 +193,10 @@ describe('SegmentedControl', () => {
       'flex gap-1 rounded-control border border-line p-1',
     );
     expect(list?.className).not.toContain('bg-surface');
-    expect(list?.className).not.toContain('glass');
+    const classes = Array.from(list?.classList ?? []);
+    expect(
+      classes.some((c) => ['glass', 'glass-strong', 'glass-clear'].includes(c)),
+    ).toBe(false);
     expect(container.querySelector('li > span')?.className).toBe(
       'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-hover',
     );

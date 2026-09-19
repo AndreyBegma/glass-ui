@@ -60,10 +60,26 @@ import { cn } from '../lib/cn';
  * wraps, and carries no `backdrop-filter` — it is what goes inside a
  * glass surface, not a second one.
  *
- * `surface` is the default and renders the strings it always did, to the
- * byte; the test holds that.
+ * FEAT-20260919-624 — `glass` is the default, and `surface` is gone. The
+ * opaque well was the look every switch that never named a variant still
+ * had — the title page's source and film/trailer switches, the settings
+ * tabs, a person's filmography, collections, the English switches — beside
+ * a header whose capsule had become the pill. Two variants that would render
+ * identical strings under different names is a lie the next reader has to
+ * unlearn, so `surface` is folded into `glass`: still accepted, deprecated,
+ * normalised on the way in, and it renders exactly what the default renders.
+ * `on-glass` is untouched — it is the one that carries no `backdrop-filter`,
+ * and that is why it exists.
  */
-type SegmentedControlVariant = 'surface' | 'glass' | 'on-glass';
+type SegmentedControlVariant = 'glass' | 'on-glass';
+
+/**
+ * @deprecated FEAT-20260919-624 — `surface` is `glass`; the opaque well is
+ * gone. Pass nothing. The name is accepted so that a consumer written
+ * against v0.18 keeps compiling and renders the pill; it goes in the next
+ * major.
+ */
+type DeprecatedSegmentedControlVariant = 'surface';
 
 interface SegmentedControlProps {
   children: ReactNode;
@@ -72,10 +88,11 @@ interface SegmentedControlProps {
   /** Renders a `<div>` in this role instead of the default `<ul>`. */
   role?: string;
   /**
-   * `surface` (default) is the opaque well; `glass` is the header's material
-   * as a pill; `on-glass` is the well for a control inside a glass panel.
+   * `glass` (default) is the header's material as a pill; `on-glass` is the
+   * hairline well for a control inside a glass panel. `surface` is accepted
+   * as the old name for the default.
    */
-  variant?: SegmentedControlVariant;
+  variant?: SegmentedControlVariant | DeprecatedSegmentedControlVariant;
 }
 
 interface SegmentedControlShape {
@@ -86,31 +103,36 @@ interface SegmentedControlShape {
 
 const SegmentedControlContext = createContext<SegmentedControlShape>({
   listless: false,
-  variant: 'surface',
+  variant: 'glass',
 });
 
 const WRAPPER_CLASSES: Record<SegmentedControlVariant, string> = {
-  surface: 'flex gap-1 rounded-control bg-surface p-1',
   glass: 'flex gap-1 rounded-full glass p-1',
   'on-glass': 'flex gap-1 rounded-control border border-line p-1',
 };
 
 const CAPSULE_CLASSES: Record<SegmentedControlVariant, string> = {
-  surface:
-    'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised',
   glass: 'absolute inset-0 rounded-full bg-hover',
   'on-glass':
     'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-hover',
 };
 
+/** The one place the old name is spelt: everything past it knows two variants. */
+function resolveVariant(
+  variant: SegmentedControlVariant | DeprecatedSegmentedControlVariant,
+): SegmentedControlVariant {
+  return variant === 'surface' ? 'glass' : variant;
+}
+
 export function SegmentedControl({
   children,
   className,
   role,
-  variant = 'surface',
+  variant: requested = 'glass',
   ...props
 }: SegmentedControlProps) {
   const Wrapper = role ? 'div' : 'ul';
+  const variant = resolveVariant(requested);
   return (
     <SegmentedControlContext.Provider value={{ listless: !!role, variant }}>
       <Wrapper

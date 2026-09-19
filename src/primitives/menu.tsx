@@ -2,6 +2,7 @@
 
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import type { ComponentProps } from 'react';
+import { useInputModality } from '../hooks/use-input-modality';
 import { cn } from '../lib/cn';
 import './motion.css';
 
@@ -119,12 +120,21 @@ export function MenuContent({
   className,
   sideOffset = 8,
   container,
+  onPointerMove,
+  onKeyDown,
   ...props
 }: MenuContentProps) {
+  // BUG-20260919-625 — which input moved focus last, so `base.css` can keep
+  // the television ring off an item the pointer highlighted and on one the
+  // keyboard arrowed to. Radix roves DOM focus on hover, and in Chromium that
+  // script focus inherits `:focus-visible` from the content; the hook and
+  // the rule it feeds are explained in `hooks/use-input-modality.ts`.
+  const inputModality = useInputModality({ onPointerMove, onKeyDown });
   return (
     <RadixMenu.Portal container={container}>
       <RadixMenu.Content
         sideOffset={sideOffset}
+        {...inputModality}
         className={cn(
           MENU_CONTENT_CLASS,
           // FEAT-20260830-490 — it grows out of the control that opened it.

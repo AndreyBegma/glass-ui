@@ -100,6 +100,27 @@ body[data-scroll-locked] #main-content {
   outline-offset: 4px;
 }
 
+/* BUG-20260919-625 — no ring under the pointer.
+ *
+ * A Radix menu moves DOM focus to the item under the pointer, and in Chromium
+ * that script focus inherits `:focus-visible` from the menu content, which
+ * got it on open because nothing was focused before the trigger's prevented
+ * `pointerdown`. The browser therefore rang every hovered item, mouse or
+ * keyboard, and `outline-none` on the item could not stop it: this rule is
+ * unlayered and beats every utility. The surface that roves focus knows
+ * which input moved it — `hooks/use-input-modality.ts` writes
+ * `data-input="pointer"` after a `pointermove` and `"keyboard"` after a
+ * `keydown` — and that record is trusted over the browser's guess.
+ *
+ * Everything under a pointer surface, not only the highlighted item, and
+ * deliberately so: a surface whose last input was the pointer has nothing
+ * keyboard-focused inside it, and a text field a future menu carries has its
+ * caret for a focus indicator, the same reason `input:focus-visible` is
+ * exempted below. The next `keydown` on the surface brings the ring back. */
+[data-input="pointer"] :focus-visible {
+  outline: none;
+}
+
 /* Form elements manage their own focus style */
 textarea:focus-visible,
 input:focus-visible,

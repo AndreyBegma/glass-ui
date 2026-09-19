@@ -72,6 +72,72 @@ describe('MenuRadioGroup / MenuRadioItem', () => {
 });
 
 /**
+ * BUG-20260919-625 — the ring follows the input, not the browser's guess.
+ *
+ * Radix roves DOM focus onto the item under the pointer, and Chromium lets
+ * that script focus inherit `:focus-visible` from the content — so the 3px
+ * television ring in `base.css` was drawn around every hovered item. The
+ * content now records which input moved focus last, and `base.css` strips
+ * the ring from everything under `[data-input="pointer"]`; `base.spec.ts`
+ * holds the rule, and happy-dom cannot resolve `:focus-visible` (see the
+ * note there), so what is asserted here is the record: the hovered item sits
+ * under a `pointer` surface, the arrowed item under a `keyboard` one, both
+ * ways round — a laptop user reaches for the mouse and goes back to the keys
+ * inside one menu.
+ */
+describe('MenuContent records the input that moved focus', () => {
+  test('a pointer-highlighted item sits under `data-input="pointer"`', async () => {
+    render(<SizeMenu />);
+    const menu = await screen.findByRole('menu');
+    const copy = screen.getByRole('menuitem', { name: 'Copy' });
+    expect(menu.hasAttribute('data-input')).toBe(false);
+
+    fireEvent.pointerMove(copy, { pointerType: 'mouse' });
+    await tick();
+    expect(menu.getAttribute('data-input')).toBe('pointer');
+    expect(document.activeElement).toBe(copy);
+  });
+
+  test('a keyboard-arrowed item sits under `data-input="keyboard"`, after a hover as well', async () => {
+    render(<SizeMenu />);
+    const menu = await screen.findByRole('menu');
+    const copy = screen.getByRole('menuitem', { name: 'Copy' });
+
+    fireEvent.pointerMove(copy, { pointerType: 'mouse' });
+    await tick();
+    expect(menu.getAttribute('data-input')).toBe('pointer');
+
+    fireEvent.keyDown(copy, { key: 'ArrowDown' });
+    await tick();
+    expect(menu.getAttribute('data-input')).toBe('keyboard');
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: 'Small' }));
+
+    fireEvent.pointerMove(screen.getByRole('menuitemradio', { name: 'Large' }), { pointerType: 'mouse' });
+    await tick();
+    expect(menu.getAttribute('data-input')).toBe('pointer');
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: 'Large' }));
+  });
+
+  test("a consumer's own `onPointerMove` / `onKeyDown` on the content still run", async () => {
+    let moves = 0;
+    let keys = 0;
+    render(
+      <MenuRoot defaultOpen>
+        <MenuTrigger>Open</MenuTrigger>
+        <MenuContent onPointerMove={() => moves++} onKeyDown={() => keys++}>
+          <MenuItem>Copy</MenuItem>
+        </MenuContent>
+      </MenuRoot>,
+    );
+    const menu = await screen.findByRole('menu');
+    fireEvent.pointerMove(screen.getByRole('menuitem', { name: 'Copy' }), { pointerType: 'mouse' });
+    fireEvent.keyDown(menu, { key: 'Escape' });
+    expect(moves).toBe(1);
+    expect(keys).toBe(1);
+  });
+});
+
+/**
  * FEAT-20260911-006 — the density scale, consumed. See `button.test.tsx` for
  * why this reads `tokens.css` directly rather than trusting the class name on
  * its own.

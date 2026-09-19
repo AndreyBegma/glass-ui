@@ -2,7 +2,7 @@
 
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { Button } from './button';
 import { cn } from '../lib/cn';
 import './motion.css';
@@ -45,6 +45,12 @@ interface DialogProps {
   className?: string;
   /** Hides the corner close button, for a dialog that must be answered. */
   dismissible?: boolean;
+  /**
+   * FEAT-20260919-621 — where the dialog is portalled to. `document.body` by
+   * default; the element in fullscreen when the dialog has to be drawn over
+   * one. See `SheetContent`'s `container` and `MenuContent`'s.
+   */
+  container?: ComponentProps<typeof RadixDialog.Portal>['container'];
 }
 
 export function DialogContent({
@@ -55,9 +61,10 @@ export function DialogContent({
   footer,
   className,
   dismissible = true,
+  container,
 }: DialogProps) {
   return (
-    <RadixDialog.Portal>
+    <RadixDialog.Portal container={container}>
       <RadixDialog.Overlay
         className={cn(
           'fixed inset-0 z-overlay bg-black/55 backdrop-blur-sm',

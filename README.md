@@ -384,6 +384,14 @@ and Firefox draw the native list with the select's own background.
 goes inside a glass panel, not a second one. The defaults render the
 strings they always did, held to the byte by the tests.
 
+`SheetContent` and `DialogContent` take `container` (FEAT-20260919-621), the
+`MenuContent` shape: the element the Radix portal renders into, `document.body`
+unless given. It exists for one place — a player in element fullscreen draws
+nothing outside the fullscreen element, so a sheet opened over the picture has
+to be portalled into it, as the player's menus have been since
+FEAT-20260830-489. Nothing else changes: with no `container` both render the
+DOM they always did, where they always did.
+
 `AutoTextarea` composes a caller's `ref` with its own (FEAT-20260916-614).
 `ref` was always in its props type — React 19 passes it as a prop — but it
 replaced the internal ref the resize reads, so a chat composer that kept a

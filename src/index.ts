@@ -204,3 +204,23 @@ export { Toolbar, type ToolbarProps } from './patterns/toolbar';
  * above is.
  */
 export { RangeSlider, type RangeSliderProps } from './primitives/range-slider';
+
+/**
+ * FEAT-20260923-003 — the widget grid (`W1` decision 5). Appended, for the
+ * reason every block above is: `maint/v0.8` and `develop` both carry it, and
+ * keeping it at the end is what makes the cherry-pick "keep both".
+ */
+export {
+  applyWidgetMove,
+  resolveWidgetMove,
+  resolveWidgetResize,
+  WidgetGrid,
+  type WidgetGridItem,
+  type WidgetGridLabels,
+  type WidgetGridProps,
+  type WidgetMove,
+  type WidgetMoveCommand,
+  type WidgetMoveIntent,
+  type WidgetResize,
+  type WidgetResizeIntent,
+} from './patterns/widget-grid';

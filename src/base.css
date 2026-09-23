@@ -128,6 +128,24 @@ select:focus-visible {
   outline: none;
 }
 
+/* BUG-20260923-019 — no zoom on focus on a phone at the desk.
+ *
+ * iOS Safari zooms the page when a field under 16px takes focus, and leaves
+ * it zoomed. `Input`, `Select` and `Textarea` are `text-sm` (14px), and a raw
+ * `<input>` with no size gets the browser's 13.33px. Below `sm` (Tailwind's
+ * `40rem`), every field is 16px. Pixels and not `1rem`: an application that
+ * shrinks its root size must not bring the zoom back.
+ *
+ * Under the desk profile only. Luna Watch never sets `data-scale`, so nothing
+ * it renders moves. This file is unlayered, so the rule beats `text-sm`, and it
+ * also beats a *larger* size utility. A field that must stay bigger on a phone
+ * says so with `max-sm:!text-2xl`. */
+@media (width < 40rem) {
+  :root:where([data-scale="desk"]) :is(input, select, textarea) {
+    font-size: 16px;
+  }
+}
+
 /* The caret is a text editor's focus indicator; consumers draw their own
    selected-node state. */
 [contenteditable="true"]:focus-visible {

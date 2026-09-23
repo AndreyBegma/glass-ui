@@ -82,6 +82,10 @@ export function Toaster({
       // every plain `toast()` was a white pill carrying `text-ink` — white on
       // white in a dark application.
       //
+      // `!border-line` went with it: `glass-strong` draws its own edge, and
+      // once both are important the material's, emitted later, is the one that
+      // shows — the same edge as every other glass surface.
+      //
       // No `theme` is passed, on purpose. sonner's theme is only its palette,
       // and with the toast, its buttons and its close button all pointed at
       // tokens there is none of that palette left on screen — so the toast
@@ -90,8 +94,7 @@ export function Toaster({
       // consumer to keep in step.
       toastOptions={{
         classNames: {
-          toast:
-            '!glass-strong !rounded-surface !border-line !text-ink !font-sans',
+          toast: '!glass-strong !rounded-surface !text-ink !font-sans',
           description: '!text-ink-2',
           actionButton: '!bg-ink !text-ground !rounded-control',
           cancelButton: '!bg-hover !text-ink !rounded-control',

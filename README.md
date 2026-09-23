@@ -572,3 +572,82 @@ the highlight is clamped to the list that is actually rendered so
 One class, `h-[var(--size-field)]`, shared byte-for-byte by the display button
 and the edit input — that is the whole difficulty, and the reason this is a
 component rather than a pattern repeated per screen.
+
+## The widget grid
+
+`W1`. Denitsa's Today becomes a grid of widgets that the person arranges.
+`Board` is a column kanban and cannot be bent into a grid that resizes. So
+this is a pattern of its own, tagged on `maint/v0.8` (`v0.8.6`) and carried
+to `develop`.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/widget-grid` | `WidgetGrid` is a controlled grid of 1–4 columns. The person reorders its items with a grip (pointer and touch) or a menu, and makes them wider or narrower with a separator (pointer and keys) or the same menu. `resolveWidgetMove` and `resolveWidgetResize` are the reducers. `applyWidgetMove` is the remove-then-insert that a consumer's state needs. |
+
+```tsx
+const columns = useColumns(); // the consumer's breakpoint: 4 · 2 · 1
+const [widgets, setWidgets] = useState(layout);
+
+<WidgetGrid
+  aria-label="Today"
+  items={widgets}               // { id, label, span, minSpan? }[], in order
+  columns={columns}
+  arranging={arranging}
+  resizable={columns > 1}
+  renderItem={(w) => <WidgetFrame kind={w.id} />}
+  renderItemMenu={(w) => <MenuItem onSelect={() => hide(w.id)}>Hide from Today</MenuItem>}
+  onMove={(move) => setWidgets((ws) => applyWidgetMove(ws, move))}
+  onResize={({ id, span }) =>
+    setWidgets((ws) => ws.map((w) => (w.id === id ? { ...w, span } : w)))}
+  labels={{ moved: (w, n, of) => t('announceMoved', { widget: w.label, n, of }) }}
+/>
+```
+
+Five rules.
+
+**Width is what resizes, and height follows content.** The grid is
+`repeat(columns, minmax(0, 1fr))` with `align-items: start`, and an item spans
+`min(span, columns)`. Nothing writes a height and nothing scrolls inside an
+item. A short item beside a tall one leaves a gap under it, and that is
+accepted. There is no `dense` packing, so reading order is layout order. The
+stored `span` is the consumer's, and it never changes because the viewport
+did.
+
+**One reducer per axis, two inputs each.**
+- A grip drag is a `drop` intent with the raw slot under the pointer. A menu
+  item is a `command` intent. Both become a `WidgetMove` in
+  `resolveWidgetMove` and nowhere else.
+- A separator drag is a `set` intent, snapped to the grid's measured columns.
+  The separator's keys and *Wider* / *Narrower* are `step` intents. Both
+  become a `WidgetResize` in `resolveWidgetResize`.
+- The test file asserts that the two inputs produce deep-equal results from
+  the same state.
+- Every committed change is read out by an `aria-live` region, and after a
+  move focus returns to the item's menu trigger.
+- The resize bounds are the *drawn* ones, `min(minSpan, columns)` to
+  `columns`. At two columns *Wider* never offers a step that changes nothing
+  on screen.
+
+**Arrange mode is where the controls are, and the keyboard path is not
+drag.** With `arranging` off, an item is its content and nothing else. With it
+on, the content is `inert` and dimmed, and three controls appear:
+- a grip;
+- a menu: move up, down, to the top and to the bottom, *Wider*, *Narrower*,
+  then the consumer's own items;
+- a trailing-edge `role="separator"`, `SidePanel`'s window splitter stepped
+  in columns (arrows, Home, End).
+
+With `resizable` off (the phone), there is no separator and no *Wider* /
+*Narrower*.
+
+**Touch is Pointer Events, not HTML5 drag and drop, and only the grip takes
+the touch.** The grip alone is `touch-action: none`, so a swipe that starts on
+an item's body scrolls the page. A drag moves no DOM node: pointer capture
+would be lost with it. The preview is drawn with CSS `order`, with a dashed
+placeholder at the slot, and the slot is read against the boxes measured when
+the drag began. Escape abandons a drag. Hit areas are `--size-row` at the desk
+and 44px on a coarse pointer.
+
+**Grid items are not glass.** In arrange mode an item is `Card raised`'s
+surface. A test walks every item and everything inside it. The menu is glass,
+because it is a menu.

@@ -64,6 +64,7 @@
     "./context-menu": "./src/primitives/context-menu.tsx",
     "./key-hint": "./src/patterns/key-hint.tsx",
     "./board": "./src/patterns/board.tsx",
+    "./widget-grid": "./src/patterns/widget-grid.tsx",
     "./toolbar": "./src/patterns/toolbar.tsx",
     "./combobox": "./src/primitives/combobox.tsx",
     "./inline-edit": "./src/primitives/inline-edit.tsx"

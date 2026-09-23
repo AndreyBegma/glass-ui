@@ -196,3 +196,23 @@ export {
 export { Combobox, type ComboboxOption, type ComboboxProps } from './primitives/combobox';
 export { InlineEdit } from './primitives/inline-edit';
 export { Toolbar, type ToolbarProps } from './patterns/toolbar';
+
+/**
+ * FEAT-20260923-003 — the widget grid (`W1` decision 5). Appended, for the
+ * reason every block above is: `maint/v0.8` and `develop` both carry it, and
+ * keeping it at the end is what makes the cherry-pick "keep both".
+ */
+export {
+  applyWidgetMove,
+  resolveWidgetMove,
+  resolveWidgetResize,
+  WidgetGrid,
+  type WidgetGridItem,
+  type WidgetGridLabels,
+  type WidgetGridProps,
+  type WidgetMove,
+  type WidgetMoveCommand,
+  type WidgetMoveIntent,
+  type WidgetResize,
+  type WidgetResizeIntent,
+} from './patterns/widget-grid';

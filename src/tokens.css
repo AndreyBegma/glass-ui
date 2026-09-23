@@ -103,11 +103,21 @@
   --color-canvas: #09090c;
   --color-paper: #1a1a21;
 
-  /* Text, three levels and no fourth. Anything that wants a shade between
-     `ink-2` and `ink-3` wants one of them instead. */
+  /* Text, three levels to read and a fourth that is not read. Anything that
+     wants a shade between `ink-2` and `ink-3` wants one of them instead.
+
+     BUG-20260923-019 — why a fourth now exists. `ink-3` is text somebody
+     reads (metadata, an empty state), and at the desk it is raised to clear
+     WCAG 1.4.3's 4.5:1; see the desk profile below. Some text is allowed to
+     be quiet: a decorative glyph, the label of a disabled control, which 1.4.3
+     exempts. `ink-4` is that tone, and it is today's `ink-3` to the digit in
+     every theme — so on the sofa the two are one colour, and nothing Luna
+     Watch renders moves. The desk leaves it alone. It is not gated, and it is
+     never the colour of anything a reader needs. */
   --color-ink: #f2f2f6;
   --color-ink-2: rgb(242 242 246 / 0.62);
   --color-ink-3: rgb(242 242 246 / 0.38);
+  --color-ink-4: rgb(242 242 246 / 0.38);
 
   /* Semantic, one hue per meaning. `emerald`, `rose` and `yellow` were the
      second spelling of these three and are retired. */
@@ -452,6 +462,7 @@
     --color-ink: #18181b;
     --color-ink-2: rgb(24 24 27 / 0.72);
     --color-ink-3: rgb(24 24 27 / 0.48);
+    --color-ink-4: rgb(24 24 27 / 0.48);
 
     /* `ok` has never had a light value — Denitsa ships `warn` and `danger` and
        has never needed a success colour. It is designed here: the same mint
@@ -526,6 +537,7 @@
   --color-ink: #18181b;
   --color-ink-2: rgb(24 24 27 / 0.72);
   --color-ink-3: rgb(24 24 27 / 0.48);
+  --color-ink-4: rgb(24 24 27 / 0.48);
 
   /* `ok` has never had a light value — Denitsa ships `warn` and `danger` and
      has never needed a success colour. It is designed here: the same mint
@@ -664,6 +676,19 @@
   --color-line-strong: rgb(255 255 255 / 0.18);
   --color-hover: rgb(255 255 255 / 0.06);
 
+  /* BUG-20260923-019 — the third level of text, raised to be read. On the sofa
+     `ink-3` is pinned to the other theme (3.25:1 against light's 3.18:1),
+     not to WCAG 1.4.3. At a desk it is metadata and empty-state copy read
+     at 60cm, and 4.5:1 is the bar. The quiet tone it used to be is
+     `--color-ink-4`, which this block does not touch.
+
+     0.53, and 0.64 in light, so the two themes still agree with each other
+     (5.33:1 on the dark ground, 5.32:1 on white) and each clears the bar on
+     every surface it is read on — page, card, both text-bearing glass rungs
+     over the page, and a hovered row. The table is below the light-desk
+     blocks. `desk.spec.ts` is the gate. */
+  --color-ink-3: rgb(242 242 246 / 0.53);
+
   /* Density. The sofa values are named above; these are the desk's. A row at
      32 and a control at 28 is what a workspace looks like when the reader is
      close enough to aim a pointer at it.
@@ -750,6 +775,8 @@
     --color-line-strong: rgb(0 0 0 / 0.23);
     --color-hover: rgb(0 0 0 / 0.06);
 
+    --color-ink-3: rgb(24 24 27 / 0.64);
+
     --color-accent: #5b4bd1;
     --color-accent-ink: #ffffff;
     --color-accent-soft: rgb(91 75 209 / 0.12);
@@ -766,10 +793,48 @@
   --color-line-strong: rgb(0 0 0 / 0.23);
   --color-hover: rgb(0 0 0 / 0.06);
 
+  --color-ink-3: rgb(24 24 27 / 0.64);
+
   --color-accent: #5b4bd1;
   --color-accent-ink: #ffffff;
   --color-accent-soft: rgb(91 75 209 / 0.12);
 }
+
+/* BUG-20260923-019 — `--color-ink-3` at the desk, measured. 2026-09-23.
+ *
+ * Sampled from a headless Chrome screenshot of a probe page that loads this
+ * file (with `@theme static` read as a plain block, because the probe is not
+ * compiled through Tailwind). Each band is a surface with `--color-ink-3` and
+ * `--color-ink-4` painted over it as solid fills. The glass bands are
+ * `material.css`'s background and `backdrop-filter`, over the page. So every
+ * cell is an alpha resolved by the compositor, not by arithmetic.
+ *
+ *                         dark 0.53 / ink-4     light 0.64 / ink-4
+ *   ground                  5.33    3.23          5.32    3.19
+ *   canvas                  5.33    3.23          5.00    3.08
+ *   paper                   5.17    3.32          5.32    3.19
+ *   surface                 5.30    3.28          5.25    3.17
+ *   raised                  5.20    3.32          5.13    3.13
+ *   glass over a page       5.08 – 5.20           5.03
+ *   glass-strong            5.11 – 5.18           5.06
+ *   hover over any          4.79 – 5.20           4.74 – 5.03
+ *
+ * Worst case: a hovered row, 4.79:1 over dark `paper` and 4.74:1 over light
+ * `canvas`. The page, card and glass surfaces bottom out at 5.08:1 and 5.00:1.
+ * The arithmetic `desk.spec.ts` gates on agrees to within 0.05 on the opaque
+ * bands. It reads up to 0.10 *higher* on dark glass (5.28 against 5.18 for
+ * glass-strong over the ground), because the compositor rounds every layer,
+ * the brightness pass included, to 8 bits. The sampled numbers are the ones
+ * above. The gate has 0.29 of headroom in dark and 0.22 in light, so the gap
+ * does not decide anything.
+ *
+ * The audit's 0.62 for light was tried and rejected: it reads 4.44:1 on a
+ * hovered row over `canvas`. `glass-clear` is not in the table. It carries no
+ * body text, and its gate is 3:1.
+ *
+ * With `data-scale` unset the same probe resolves `--color-ink-3` to 0.38 and
+ * 0.48, as before, and `--color-ink-4` to the same values. The sofa does not
+ * move. */
 
 /* FEAT-20260911-001 — the accent, measured. 2026-09-11.
  *

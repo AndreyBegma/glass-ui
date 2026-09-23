@@ -68,3 +68,45 @@ describe('the focus ring is not drawn under a pointer surface', () => {
     expect(CSS.includes('[data-input="keyboard"]')).toBe(false);
   });
 });
+
+/**
+ * BUG-20260923-019 — no zoom on focus on a phone at the desk.
+ *
+ * iOS Safari zooms the page when a field under 16px takes focus. `Input`,
+ * `Select` and `Textarea` are `text-sm` (14px), and a raw `<input>` gets the
+ * browser's 13.33px. Below `sm` (Tailwind's `40rem`), under the desk profile
+ * only, every field is 16px. Luna Watch never sets `data-scale`, so the rule
+ * cannot reach it.
+ *
+ * Source-level for the reason given at the top of this file: happy-dom does
+ * not evaluate media queries against an injected stylesheet's cascade.
+ */
+describe('fields are 16px on a phone at the desk', () => {
+  const query = CSS.indexOf('@media (width < 40rem)');
+  const selector = ':root:where([data-scale="desk"]) :is(input, select, textarea)';
+  const rule = CSS.indexOf(selector, query);
+
+  test('the rule sits inside the below-`sm` query', () => {
+    expect(query).toBeGreaterThan(-1);
+    expect(rule).toBeGreaterThan(query);
+    // Inside the query's own braces, not in a rule after it.
+    const open = CSS.indexOf('{', query);
+    const firstClose = CSS.indexOf('}', CSS.indexOf('{', open + 1));
+    const queryClose = CSS.indexOf('}', firstClose + 1);
+    expect(rule).toBeLessThan(queryClose);
+  });
+
+  test('it sets 16px, in pixels', () => {
+    // Pixels and not `1rem`: an application that sets a smaller root size
+    // would otherwise bring the zoom back. `html` already says `16px`, so an
+    // absent rule must not fall through to reading that one.
+    expect(rule).toBeGreaterThan(-1);
+    const body = CSS.slice(CSS.indexOf('{', rule) + 1, CSS.indexOf('}', rule));
+    expect(body).toContain('font-size: 16px;');
+  });
+
+  test('it is scoped to the desk profile and nowhere else', () => {
+    // A second, unscoped rule would move Luna Watch's fields.
+    expect(CSS.match(/:is\(input, select, textarea\)/g)).toHaveLength(1);
+  });
+});

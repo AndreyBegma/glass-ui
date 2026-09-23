@@ -358,6 +358,7 @@ const ADDED: Record<string, string> = {
   '--glass-refract': 'FEAT-20260919-618 — liquid glass; the ring along the rim',
   '--glass-rim-strong': 'BUG-20260919-626 — the rim\'s straight run on a large panel, quieter',
   '--glass-rim-shade-strong': 'BUG-20260919-626 — the shade\'s straight run on a large panel, quieter',
+  '--color-ink-4': 'BUG-20260923-019 — the quiet tone, today\'s ink-3 kept by name when the desk raises ink-3',
 };
 
 const BASELINE: {
@@ -433,7 +434,7 @@ describe(`Luna Watch does not move (baseline ${BASELINE.commit})`, () => {
  * person to read `tokens.css` has no way to tell an intended asymmetry from an
  * accident unless every intended one is written down.
  *
- * Thirteen overrides and three definitions, and the split matters: an override
+ * Fourteen overrides and three definitions, and the split matters: an override
  * has a base value to fall back to, a definition does not. `--color-accent`
  * resolving to nothing outside the desk profile is the point of decision 6,
  * not a gap in it.
@@ -445,6 +446,8 @@ const DESK_OVERRIDES = [
   '--dur-fast', '--dur-base', '--dur-sheet',
   '--color-line', '--color-line-strong', '--color-hover',
   '--size-row', '--size-control', '--size-field', '--size-nav',
+  // BUG-20260923-019 — raised to 4.5:1; the gate is `desk.spec.ts`.
+  '--color-ink-3',
 ];
 
 /** Tokens that exist *only* under the desk profile. */
@@ -453,7 +456,7 @@ const DESK_ONLY = ['--color-accent', '--color-accent-ink', '--color-accent-soft'
 /** The theme-dependent half, repeated in the two light-desk blocks. A radius
  *  and a row height do not know what colour the page is, so they are not. */
 const DESK_LIGHT = [
-  '--color-line', '--color-line-strong', '--color-hover', ...DESK_ONLY,
+  '--color-line', '--color-line-strong', '--color-hover', '--color-ink-3', ...DESK_ONLY,
 ];
 
 const DESK = block(':root:where([data-scale="desk"])');

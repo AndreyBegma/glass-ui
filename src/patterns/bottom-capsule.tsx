@@ -105,14 +105,42 @@ export interface BottomCapsuleProps {
   more?: BottomCapsuleMore;
   /** One travelling capsule per bar. Only matters if two are ever mounted at once. */
   layoutId?: string;
+  /**
+   * BUG-20260924-002 — how the row shares its width.
+   *
+   * `'equal'`, the default, gives every tab and `More` the same slice and
+   * truncates a label that does not fit it. Fine for "Today", and a stub for
+   * "Настройки": a short label leaves its slice half empty while a long one
+   * next to it is cut.
+   *
+   * `'content'` sizes each one to its label (`flex-auto`), trims the padding
+   * to `px-1.5`, and never truncates — a label that still cannot fit wraps
+   * rather than losing letters. `More` follows it too, so the row reads as one.
+   * Denitsa measured three tabs plus More in ru/uk/en at 390 px with this, the
+   * worst case at 280 of 286.
+   */
+  tabSizing?: 'equal' | 'content';
   className?: string;
 }
 
-const item = [
-  'lit relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5',
-  'rounded-full px-2 py-2 text-[11px] font-medium',
-  'motion-safe:transition-colors duration-(--dur-fast)',
-].join(' ');
+const SIZING = {
+  equal: {
+    item: [
+      'lit relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5',
+      'rounded-full px-2 py-2 text-[11px] font-medium',
+      'motion-safe:transition-colors duration-(--dur-fast)',
+    ].join(' '),
+    label: 'relative max-w-full truncate',
+  },
+  content: {
+    item: [
+      'lit relative flex min-w-0 flex-auto flex-col items-center justify-center gap-0.5',
+      'rounded-full px-1.5 py-2 text-[11px] font-medium',
+      'motion-safe:transition-colors duration-(--dur-fast)',
+    ].join(' '),
+    label: 'relative text-center',
+  },
+} as const;
 
 export function BottomCapsule({
   tabs,
@@ -121,9 +149,11 @@ export function BottomCapsule({
   action,
   more,
   layoutId = 'glass-bottom-capsule',
+  tabSizing = 'equal',
   className,
 }: BottomCapsuleProps) {
   const reduced = useReducedMotion();
+  const { item, label } = SIZING[tabSizing];
 
   /**
    * The selection travels rather than blinking.
@@ -204,7 +234,7 @@ export function BottomCapsule({
               <>
                 {selected ? capsule : null}
                 <Icon size={19} aria-hidden="true" className="relative" />
-                <span className="relative max-w-full truncate">{tab.label}</span>
+                <span className={label}>{tab.label}</span>
               </>
             );
 
@@ -248,7 +278,7 @@ export function BottomCapsule({
             >
               {more.open ? capsule : null}
               <MoreIcon size={19} aria-hidden="true" className="relative" />
-              <span className="relative max-w-full truncate">{more.label}</span>
+              <span className={label}>{more.label}</span>
             </button>
           ) : null}
         </nav>

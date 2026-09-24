@@ -144,3 +144,46 @@ describe('the scrollbar is paid for once, by the gutter', () => {
     );
   });
 });
+
+/**
+ * BUG-20260924-698 — the page goes back around the middle of the viewport,
+ * and nothing that is not the page moves with it.
+ *
+ * The origin comes from `--depth-origin-y`, which `DepthOrigin` writes when
+ * the lock appears; registered and not inherited, so the write restyles one
+ * element. `overflow: clip` rather than `hidden`, so a sticky header inside
+ * the page keeps sticking to the viewport. Source-level for the reason given
+ * at the top of this file; the measurements in a real Chromium are in the bug
+ * report.
+ */
+describe('the depth effect is centred on the viewport', () => {
+  const RULES = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const bodyOf = (selector: string) => {
+    const match = [...RULES.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
+      (m) => m[1].trim() === selector,
+    );
+    expect(match).toBeDefined();
+    return match?.[2] ?? '';
+  };
+
+  test('the origin is the written middle of the viewport, falling back to the top', () => {
+    expect(bodyOf('#main-content')).toContain(
+      'transform-origin: 50% var(--depth-origin-y, 0px);',
+    );
+    expect(RULES).not.toContain('transform-origin: top center');
+  });
+
+  test('the property is registered, not inherited, and starts at the top', () => {
+    const body = bodyOf('@property --depth-origin-y');
+    expect(body).toContain("syntax: '<length>';");
+    expect(body).toContain('inherits: false;');
+    expect(body).toContain('initial-value: 0px;');
+  });
+
+  test('the page clips while it is back, without becoming a scroll container', () => {
+    const body = bodyOf('body[data-scroll-locked] #main-content');
+    expect(body).toContain('transform: scale(0.955);');
+    expect(body).toContain('overflow: clip;');
+    expect(body).not.toContain('overflow: hidden');
+  });
+});

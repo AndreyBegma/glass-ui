@@ -19,6 +19,7 @@
     "./motion.css": "./src/primitives/motion.css",
     "./cn": "./src/lib/cn.ts",
     "./material-light": "./src/material-light.tsx",
+    "./depth-origin": "./src/depth-origin.tsx",
     "./button": "./src/primitives/button.tsx",
     "./card": "./src/primitives/card.tsx",
     "./chip": "./src/primitives/chip.tsx",

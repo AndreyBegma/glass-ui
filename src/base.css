@@ -8,8 +8,10 @@
  * reduced-motion override takes the first two and leaves this one.
  *
  * The depth effect below expects the application to put `id="main-content"` on
- * the element that should go back when a sheet opens. That is a contract, and
- * it is the only one this file has.
+ * the element that should go back when a sheet opens, to mount `DepthOrigin`
+ * (`glass-ui/depth-origin`) once, and to keep every `position: fixed` layer
+ * that must stay put outside that element. That is the contract, and it is the
+ * only one this file has.
  */
 
 html {
@@ -72,9 +74,41 @@ html body[data-scroll-locked] {
  *
  * The rounding is what makes the scale legible. Without it the page just gets
  * smaller; with it, it becomes a card that has been pushed back.
+ *
+ * BUG-20260924-698 — around the middle of the screen, and nothing else moves.
+ *
+ * The page is as tall as the document, so `transform-origin: top center` was
+ * the top of the document: scrolled 1200px, a tile slid up 89px as the sheet
+ * opened, and back as it closed. The origin is now the middle of the viewport,
+ * which only the scroll position knows; `DepthOrigin` measures it once when
+ * the lock appears and writes `--depth-origin-y`. Registered and not
+ * inherited, so writing it restyles this one element rather than the page
+ * under it. Without `DepthOrigin` it is `0px`, the top, as it always was.
+ *
+ * A transform also makes this element the containing block of every
+ * `position: fixed` descendant, for as long as it is applied. A viewport layer
+ * inside the page — an ambience behind the content — re-anchored to the whole
+ * document under the scrim (1425×900 became 1361×4393). No origin can undo
+ * that, so such layers live outside `#main-content`; see the contract at the
+ * top of this file.
+ *
+ * `overflow: clip` rather than `hidden`. Both clip to the rounded corners, but
+ * `hidden` makes this element a scroll container, and a `position: sticky`
+ * header inside the page then sticks to it instead of to the viewport — a
+ * catalogue's filter bar, scrolled, flew 687px up the moment its filter sheet
+ * opened. `clip` is not a scroll container.
  */
+@property --depth-origin-y {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 #main-content {
-  transform-origin: top center;
+  /* The fallback is for an engine without `@property`, where an unset,
+     unregistered property would make the whole declaration invalid and put
+     the origin at the centre of the document. */
+  transform-origin: 50% var(--depth-origin-y, 0px);
   transition:
     transform var(--dur-sheet) var(--ease-sheet),
     border-radius var(--dur-sheet) var(--ease-sheet);
@@ -83,7 +117,7 @@ html body[data-scroll-locked] {
 body[data-scroll-locked] #main-content {
   transform: scale(0.955);
   border-radius: var(--radius-sheet);
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* A page that cannot animate should not jump instead. */

@@ -17,6 +17,7 @@
  */
 
 export { cn } from './lib/cn';
+export { DepthOrigin } from './depth-origin';
 export { MaterialLight } from './material-light';
 export { Button, buttonClassName } from './primitives/button';
 export { Card } from './primitives/card';

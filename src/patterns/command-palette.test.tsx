@@ -6,6 +6,7 @@ import {
   CommandPalette,
   type CommandPaletteGroup,
   type CommandPaletteItem,
+  type CommandPaletteLiveStatus,
 } from './command-palette';
 
 const SECTIONS: CommandPaletteGroup = {
@@ -342,5 +343,71 @@ describe('CommandPalette', () => {
 
     expect(panel.className).toContain('glass-strong');
     expect(panel.querySelectorAll('.glass, .glass-strong')).toHaveLength(0);
+  });
+
+  /**
+   * BUG-20260924-002 — the live region is the one piece of text the palette
+   * writes itself, so it is the one a consumer could not translate.
+   */
+  describe('the live region', () => {
+    function liveRegion() {
+      const region = document.querySelector('[role="dialog"] [aria-live]');
+      if (!region) throw new Error('no live region');
+      return region;
+    }
+
+    function Palette({
+      search,
+      liveStatus,
+    }: {
+      search: () => CommandPaletteGroup[] | Promise<CommandPaletteGroup[]>;
+      liveStatus?: CommandPaletteLiveStatus;
+    }) {
+      return (
+        <CommandPalette
+          open
+          onOpenChange={() => {}}
+          search={search}
+          onSelect={() => {}}
+          liveStatus={liveStatus}
+        />
+      );
+    }
+
+    const RUSSIAN: CommandPaletteLiveStatus = {
+      searching: 'Поиск…',
+      results: (count) => `Найдено: ${count}`,
+    };
+
+    test('left out, it speaks English, as it always has', async () => {
+      let release: (groups: CommandPaletteGroup[]) => void = () => {};
+      const search = () =>
+        new Promise<CommandPaletteGroup[]>((resolve) => {
+          release = resolve;
+        });
+      render(<Palette search={search} />);
+
+      await waitFor(() => expect(liveRegion().textContent).toBe('Searching'));
+      release([SECTIONS, ACTIONS]);
+      await waitFor(() => expect(liveRegion().textContent).toBe('3 results'));
+    });
+
+    test('given, it says what the consumer wrote, count included', async () => {
+      let release: (groups: CommandPaletteGroup[]) => void = () => {};
+      const search = () =>
+        new Promise<CommandPaletteGroup[]>((resolve) => {
+          release = resolve;
+        });
+      render(<Palette search={search} liveStatus={RUSSIAN} />);
+
+      await waitFor(() => expect(liveRegion().textContent).toBe('Поиск…'));
+      release([SECTIONS]);
+      await waitFor(() => expect(liveRegion().textContent).toBe('Найдено: 2'));
+    });
+
+    test('an empty result is counted through the consumer’s function too', async () => {
+      render(<Palette search={() => []} liveStatus={RUSSIAN} />);
+      await waitFor(() => expect(liveRegion().textContent).toBe('Найдено: 0'));
+    });
   });
 });

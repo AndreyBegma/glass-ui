@@ -95,8 +95,26 @@ export interface CommandPaletteProps {
    * being searched.
    */
   empty?: ReactNode;
+  /**
+   * BUG-20260924-002 — what the hidden live region reads out while a search is
+   * in flight and once it has landed. Both or neither: a region that says
+   * "Поиск" and then "3 results" is worse than one that is English throughout.
+   * Left out, the English below.
+   */
+  liveStatus?: CommandPaletteLiveStatus;
   className?: string;
 }
+
+export interface CommandPaletteLiveStatus {
+  searching: string;
+  /** Given the number of rows drawn. Plural rules are the consumer's. */
+  results: (count: number) => string;
+}
+
+const ENGLISH_LIVE_STATUS: CommandPaletteLiveStatus = {
+  searching: 'Searching',
+  results: (count) => `${count} results`,
+};
 
 export function CommandPalette({
   open,
@@ -106,6 +124,7 @@ export function CommandPalette({
   title = 'Command palette',
   placeholder = 'Search',
   empty,
+  liveStatus = ENGLISH_LIVE_STATUS,
   className,
 }: CommandPaletteProps) {
   const reduced = useReducedMotion();
@@ -344,7 +363,7 @@ export function CommandPalette({
 
           {/* Counted for a reader, who cannot see the list grow under the field. */}
           <p aria-live="polite" aria-atomic="true" className="sr-only">
-            {pending ? 'Searching' : `${flat.length} results`}
+            {pending ? liveStatus.searching : liveStatus.results(flat.length)}
           </p>
 
           <div

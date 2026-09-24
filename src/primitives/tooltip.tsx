@@ -27,6 +27,12 @@ import './motion.css';
  * anyway. A screen that genuinely wants tooltips to hand off to each other
  * without re-waiting the delay can still mount its own `Provider` higher up;
  * Radix nests them without conflict.
+ *
+ * FEAT-20260924-679 — `container`, for a trigger that lives inside an element
+ * in fullscreen. Only that element is drawn while it is fullscreen, so a
+ * tooltip portalled to `document.body` would open where nobody can see it.
+ * This is the same reason the player's menus take a portal host. Omitted, it
+ * is the body, as before.
  */
 interface TooltipProps {
   content: string;
@@ -36,6 +42,7 @@ interface TooltipProps {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  container?: HTMLElement | null;
 }
 
 export function Tooltip({
@@ -46,12 +53,13 @@ export function Tooltip({
   open,
   defaultOpen,
   onOpenChange,
+  container,
 }: TooltipProps) {
   return (
     <RadixTooltip.Provider delayDuration={delayDuration}>
       <RadixTooltip.Root open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
         <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
-        <RadixTooltip.Portal>
+        <RadixTooltip.Portal container={container ?? undefined}>
           <RadixTooltip.Content
             side={side}
             sideOffset={8}

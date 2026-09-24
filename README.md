@@ -383,6 +383,11 @@ and closed by this pull request. Each package answer:
 - `Progress` takes a `tone: neutral | ok | warn | danger` — the `Badge` set —
   on its fill; `neutral` is today's `bg-ink`.
 
+`Tooltip` takes a `container` (FEAT-20260924-679) for a trigger inside an
+element that goes fullscreen, where only that element is drawn. `Badge` takes a
+`label` for a short value that is not a count (a player's `1.5×`, not capped),
+and a `tone="ink"`, the primary pair, for a badge on glass over a picture.
+
 `SegmentedControlItem` and `TabsItem` both take a `className`, merged after
 their own `relative min-w-0 flex-1`. `flex-none whitespace-nowrap` is the
 opt-out for a row whose width nobody set — the item keeps its label whole

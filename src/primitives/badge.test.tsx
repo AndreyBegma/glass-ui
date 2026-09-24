@@ -27,4 +27,21 @@ describe('Badge', () => {
     const { container: countContainer } = render(<Badge tone="warn" count={3} />);
     expect(countContainer.firstElementChild?.className).toContain('bg-warn/14');
   });
+
+  test('a label is shown as given, not capped like a count', () => {
+    render(<Badge label="1.75×" />);
+    expect(screen.getByText('1.75×')).not.toBeNull();
+  });
+
+  test('count wins over label when both are passed', () => {
+    const { container } = render(<Badge count={3} label="x" />);
+    expect(container.textContent).toBe('3');
+  });
+
+  test('the ink tone is the primary pair', () => {
+    const { container } = render(<Badge tone="ink" label="2×" />);
+    const classes = container.firstElementChild?.className.split(' ') ?? [];
+    expect(classes).toContain('bg-ink');
+    expect(classes).toContain('text-ground');
+  });
 });

@@ -48,15 +48,24 @@ const ABOVE_THE_BAR = 'calc(6.5rem + env(safe-area-inset-bottom))';
 export function Toaster({
   toasterId,
   position = 'bottom-right',
+  containerAriaLabel,
 }: {
   toasterId?: string;
   position?: 'bottom-right' | 'top-right';
+  /**
+   * BUG-20260924-002 — the name a screen reader gives the toast region. Left
+   * out, sonner's own English `'Notifications'` stands; a consumer that
+   * localises passes its own. Handed straight through, so the default stays
+   * sonner's rather than becoming a second copy of it here.
+   */
+  containerAriaLabel?: string;
 } = {}) {
   return (
     <SonnerToaster
       // sonner names the instance `id` on the host and `toasterId` on a toast.
       id={toasterId}
       position={position}
+      containerAriaLabel={containerAriaLabel}
       closeButton
       duration={6000}
       // sonner's own "mobile" is a hard-coded `max-width: 600px`, and the

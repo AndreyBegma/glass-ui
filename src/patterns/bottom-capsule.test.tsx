@@ -276,4 +276,80 @@ describe('BottomCapsule', () => {
     expect(bar?.className).toContain('lg:hidden');
     expect(nav.className.split(' ')).toContain('glass');
   });
+
+  /**
+   * BUG-20260924-002 — `tabSizing`. The default is pinned as literal class
+   * strings, copied from the component before the prop existed, so Luna's bar
+   * cannot drift through this without a test saying so.
+   */
+  describe('tabSizing', () => {
+    const EQUAL_ITEM =
+      'lit relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 ' +
+      'rounded-full px-2 py-2 text-[11px] font-medium ' +
+      'motion-safe:transition-colors duration-(--dur-fast)';
+    const EQUAL_LABEL = 'relative max-w-full truncate';
+
+    function Bar({ tabSizing }: { tabSizing?: 'equal' | 'content' }) {
+      return (
+        <BottomCapsule
+          aria-label="Main navigation"
+          link={link}
+          tabs={tabs('today').slice(0, 3)}
+          tabSizing={tabSizing}
+          more={{
+            label: 'Ещё',
+            title: 'Everything else',
+            open: false,
+            onOpenChange: () => {},
+            children: null,
+          }}
+        />
+      );
+    }
+
+    function row() {
+      const nav = screen.getByRole('navigation', { name: 'Main navigation' });
+      return Array.from(nav.children) as HTMLElement[];
+    }
+
+    test('left out, every tab and `More` render exactly as before', () => {
+      render(<Bar />);
+      const [today, inbox, , more] = row();
+
+      expect(today?.className).toBe(`${EQUAL_ITEM} text-ink`);
+      expect(inbox?.className).toBe(`${EQUAL_ITEM} text-ink-3`);
+      expect(more?.className).toBe(`${EQUAL_ITEM} text-ink-3`);
+      for (const element of row()) {
+        expect(element.querySelector('span:not([aria-hidden])')?.className).toBe(
+          EQUAL_LABEL,
+        );
+      }
+    });
+
+    test('`equal` is the default spelled out', () => {
+      const { container: implicit } = render(<Bar />);
+      const before = implicit.innerHTML;
+      implicit.remove();
+      const { container: explicit } = render(<Bar tabSizing="equal" />);
+      expect(explicit.innerHTML).toBe(before);
+    });
+
+    test('`content` sizes every tab, `More` included, to its label and never truncates', () => {
+      render(<Bar tabSizing="content" />);
+      const elements = row();
+      expect(elements).toHaveLength(4);
+
+      for (const element of elements) {
+        const classes = element.className.split(' ');
+        expect(classes).toEqual(expect.arrayContaining(['flex-auto', 'px-1.5']));
+        expect(classes).not.toContain('flex-1');
+        expect(classes).not.toContain('px-2');
+
+        const label = element.querySelector('span:not([aria-hidden])');
+        expect(label?.className.split(' ')).not.toContain('truncate');
+        expect(label?.className.split(' ')).not.toContain('max-w-full');
+      }
+      expect(elements[3]?.textContent).toBe('Ещё');
+    });
+  });
 });

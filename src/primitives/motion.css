@@ -344,6 +344,13 @@
    * lets it slow the settle — a television card arriving tilted and coming
    * to rest over `--dur-sheet` — without writing a transition inline.
    *
+   * `will-change: transform` is written beside the lean and the glint, and
+   * only there. A changing 3D transform changes the scale the card is
+   * rastered at, so without the hint Chromium re-rasters it on every move —
+   * 53–59 raster tasks for 61 pointer moves across one card, and 0 with it
+   * (the 611 method, 2026-09-24). On the class itself it would make every
+   * card on a grid a layer while nobody is looking at it.
+   *
    * Under `reduce` the whole block is absent: no lean, no lift, no sheen. */
   .luna-tilt {
     --tilt-lean: perspective(var(--tilt-depth))
@@ -374,21 +381,25 @@
 
   .luna-tilt:focus-visible {
     transform: var(--tilt-lean);
+    will-change: transform;
   }
 
   .luna-tilt:focus-visible .luna-tilt-sheen {
     opacity: 0.16;
     transform: var(--tilt-glint);
+    will-change: transform;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .luna-tilt:hover {
       transform: var(--tilt-lean);
+      will-change: transform;
     }
 
     .luna-tilt:hover .luna-tilt-sheen {
       opacity: 0.16;
       transform: var(--tilt-glint);
+      will-change: transform;
     }
   }
 }

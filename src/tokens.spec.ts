@@ -359,6 +359,9 @@ const ADDED: Record<string, string> = {
   '--glass-rim-strong': 'BUG-20260919-626 — the rim\'s straight run on a large panel, quieter',
   '--glass-rim-shade-strong': 'BUG-20260919-626 — the shade\'s straight run on a large panel, quieter',
   '--color-ink-4': 'BUG-20260923-019 — the quiet tone, today\'s ink-3 kept by name when the desk raises ink-3',
+  '--dur-scene': 'FEAT-20260924-680 — motion round 2; the fourth duration, for a change that covers the viewport',
+  '--tilt-angle': 'FEAT-20260924-680 — motion round 2; how far `.luna-tilt` leans at most',
+  '--tilt-depth': 'FEAT-20260924-680 — motion round 2; the perspective `.luna-tilt` leans in',
 };
 
 const BASELINE: {
@@ -434,7 +437,7 @@ describe(`Luna Watch does not move (baseline ${BASELINE.commit})`, () => {
  * person to read `tokens.css` has no way to tell an intended asymmetry from an
  * accident unless every intended one is written down.
  *
- * Fourteen overrides and three definitions, and the split matters: an override
+ * Fifteen overrides and three definitions, and the split matters: an override
  * has a base value to fall back to, a definition does not. `--color-accent`
  * resolving to nothing outside the desk profile is the point of decision 6,
  * not a gap in it.
@@ -443,7 +446,7 @@ describe(`Luna Watch does not move (baseline ${BASELINE.commit})`, () => {
 /** Tokens the desk rung re-values. Each already exists in `@theme static`. */
 const DESK_OVERRIDES = [
   '--radius-control', '--radius-surface', '--radius-sheet',
-  '--dur-fast', '--dur-base', '--dur-sheet',
+  '--dur-fast', '--dur-base', '--dur-sheet', '--dur-scene',
   '--color-line', '--color-line-strong', '--color-hover',
   '--size-row', '--size-control', '--size-field', '--size-nav',
   // BUG-20260923-019 — raised to 4.5:1; the gate is `desk.spec.ts`.

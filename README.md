@@ -187,7 +187,10 @@ so a television pays one layer per animated item and nothing per frame after
 the entrance. Every duration and every curve is a token. Everything that
 moves is inside `prefers-reduced-motion: no-preference`; under `reduce`
 nothing translates or scales, and nothing can stay hidden. Keyframes are
-declared in `motion.css` and nowhere else, under the `luna` prefix.
+declared in `motion.css` and nowhere else, under the `luna` prefix — and in
+the two files it imports first (FEAT-20260924-680): `motion-drift.css`, the
+closed ambient paths, and `motion-scroll.css`, the scroll-linked family.
+Importing `glass-ui/motion.css` brings all three.
 
 **Nothing rests with a transform.** An entrance keyframe has a `from` and no
 `to`, so it lands on the element's own computed values and leaves nothing
@@ -201,6 +204,8 @@ block for every `position: fixed` descendant; `.luna-rise-in` rests at
 | `--ease-sheet` | `cubic-bezier(0.32, 0.72, 0, 1)` | something sliding to a stop: a sheet, the page going back, a focus lift |
 | `--ease-out-expo` | `cubic-bezier(0.23, 1, 0.32, 1)` | something appearing: a dialog, a menu, a popover, a row's cascade |
 | `--dur-fast` `--dur-base` `--dur-sheet` | 140 / 220 / 420ms (100 / 150 / 260 at the desk) | the three durations |
+| `--dur-scene` | 640ms (420 at the desk) | FEAT-20260924-680: a change that covers the whole viewport — a fade to black, a flight across the screen, a bar filling from nothing. Nothing smaller uses it |
+| `--tilt-angle` `--tilt-depth` | 4deg, 900px | the most `.luna-tilt` leans, and the perspective it leans in |
 
 | Keyframe | Motion | Used by |
 |---|---|---|
@@ -214,6 +219,12 @@ block for every `position: fixed` descendant; `.luna-rise-in` rests at
 | `lunaDriftA` … `lunaDriftD` | four closed `transform` paths, `none` at both ends, no duration of their own | an aurora behind a page with no artwork (FEAT-20260916-609); the consumer supplies the tens-of-seconds duration |
 | `lunaDriftE`, `lunaDriftF` | two more closed `transform` paths for a layer that fills the viewport: travel ≤ 2.5%, scale 1.00–1.07, no rotation | a drifting wash (FEAT-20260916-611); same contract as `A`–`D` |
 | `lunaBreathe` | opacity 1 → 0.8 → 1, `from` and `to` at 1 | a second animation on a drifting blob (FEAT-20260916-611); the consumer supplies the duration |
+| `lunaDriftK` | the Ken Burns: closed, scale 1.00 → 1.06 → 1.00, travel ≤ 1.5%, no rotation | a full-bleed backdrop (FEAT-20260924-680); the consumer supplies the duration (Luna: 90s) |
+| `lunaFillIn` | `scaleX(0)` → the bar's own width, `from` only | `.luna-fill-in` |
+| `lunaSheen` | a band crossing left to right, opacity 0 → 0.28 → 0; ends invisible, so it may have a `to` | `.luna-sheen` |
+| `lunaBump` | scale 1 → 1.12 → 1, `none` at both ends; no class — the consumer applies it with a duration token | an entry that just received something |
+| `lunaScrollShift` / `lunaScrollFade` | to `translateY(--parallax-shift) scale(--parallax-scale)` / to `opacity: --parallax-fade`; bound to a timeline | `.luna-parallax`, `.luna-parallax-fade` |
+| `lunaWindowPan` | `translateX(--window-pan)` → `translateX(-(--window-pan))`; bound to a timeline | `.luna-window` |
 
 | Class | What it is for | Under `reduce` |
 |---|---|---|
@@ -221,10 +232,37 @@ block for every `position: fixed` descendant; `.luna-rise-in` rests at
 | `.luna-stagger` | a row or grid arriving as a cascade; the consumer sets `--i` per item, delay is `min(--i, 12) × 30ms`, `backwards` fill so an item is invisible until its turn and nothing stays applied after; runs once per insertion, so stable keys mean a re-render does not replay it | absent — the list is simply there |
 | `.luna-img-in` | artwork fading in on load: `data-loaded="false"` hides it while pending, `"true"` plays the fade, no attribute is simply visible. An **animation**, not a transition, so it coexists with a hover transition on the same `<img>`; `.motion-reduce-keep` therefore does not apply and is not needed | absent — the image appears when loaded, never hidden |
 | `.luna-focus-lift` | `scale(1.04)` on `:focus-visible` over `--dur-fast` `--ease-sheet`, for a television whose only focus feedback was the outline; no hover gate, no ring of its own. **Owns the element's `transition` shorthand** — do not put it on an element that already transitions (`transition` does not merge across rules) | absent |
+| `.luna-fill-in` | a progress bar filling to its width over `--dur-scene`, from the start of the line (`right` under `dir="rtl"`); honours `--i` like `.luna-stagger`, `backwards` fill | absent — the bar is at its width |
+| `.luna-sheen` | one band of light across the host as it is inserted, on its `::after`. **The host is the consumer's to shape:** `relative overflow-hidden rounded-*`, so the band is clipped by its radius | absent — no band |
+| `.luna-tilt` | a card leaning in 3D towards the pointer or the direction focus came from, lifted 1.04. Rests at `transform: none`; the lean is written only on `:focus-visible` and on hover under a fine pointer. The script writes four **unitless** numbers in [-1, 1]: `--tilt-x`/`--tilt-y` (× `--tilt-angle`) and `--tilt-sx`/`--tilt-sy` (the highlight); `--tilt-dur` slows the settle, `--tilt-lift` changes the lift. **Replaces `.luna-focus-lift`** on the element — both own `transition` | absent — no lean, no lift |
+| `.luna-tilt-sheen` | the tilt's highlight: a child inside the artwork's `overflow-hidden` box, an oversized radial gradient **moved by `transform`**, never repainted | absent |
+| `.luna-parallax` | a header or hero layer moving at its own rate as it scrolls away: `lunaScrollShift` on `view()` over the `exit` range, so a layer at the top of the page rests untransformed at scroll 0. `--parallax-timeline` / `--parallax-range` override (`scroll(root)` + `normal` for a layer inside something fixed) | absent — still |
+| `.luna-parallax-fade` | the same, fading to `--parallax-fade`: a title travelling faster than its backdrop | absent — still |
+| `.luna-window` | artwork panning by `--window-pan` inside a card as a row scrolls past, on `view(inline)` over `cover`. Rests transformed by design, so it goes only on a leaf wrapper around the image, with the image scaled up enough to hide the edge | absent — still |
+
+**The scroll-linked family** (the last three) is bound to a timeline, not a
+clock: longhands with `animation-duration: auto`, never the `animation`
+shorthand (which resets the timeline), and only inside
+`@supports (animation-timeline: view())` and `no-preference`. Where the
+engine has no scroll timelines the element is simply still — that is the
+fallback, and there is nothing to detect. Each goes only on an element with
+**no `position: fixed` descendant**, and on its own wrapper: one element, one
+of these, no other animation.
+
+**Which of these a television runs is the application's decision.** The
+package has no notion of a television beyond `material.css`'s coarse-pointer
+rung. Luna Watch switches the scroll-linked family off under its own
+television query and keeps the rest.
+
+No `color-mix()` anywhere in the motion files: the sheen's and the tilt's
+strength is opacity over a plain `--color-ink` gradient, because the engines
+of some televisions (Chromium 94–108) do not have it.
 
 `motion.spec.ts` holds all of this: every name declared, everything that
 moves gated, no literal curve or duration anywhere in `src/`, `base.css` with
-no keyframes of its own.
+no keyframes of its own; and since FEAT-20260924-680 the tilt resting flat,
+the one-shots with a `to` ending invisible, the closed paths closed, and the
+scroll-linked family only where a timeline can drive it.
 
 ### The sliders
 

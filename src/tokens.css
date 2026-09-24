@@ -332,7 +332,7 @@
   --z-index-transient: 80; /* toasts — outlive nothing, block nothing */
   --z-index-top: 9999; /* the skip link, and anything that must beat all */
 
-  /* Motion. Two curves and three durations.
+  /* Motion. Two curves and four durations.
    *
    * `--ease-sheet` is the one iOS sheets settle on: a drawer decelerating into
    * its stop. `--ease-out-expo` (FEAT-20260916-598) is the exponential
@@ -341,12 +341,25 @@
    * at seven call sites while this block claimed "one curve": fast arrival, a
    * long settle, for something that appears rather than slides. The desk
    * profile below re-values the durations only; a curve is the same at any
-   * distance. */
+   * distance.
+   *
+   * `--dur-scene` (FEAT-20260924-680) is the fourth, and it is for one thing:
+   * a change that covers the whole viewport — a player fading to black, a
+   * poster flying across a 1080p screen, a bar filling from nothing. At
+   * `--dur-sheet` a full-screen move reads as a cut on a television across a
+   * room; much above 700ms it reads as waiting. Nothing smaller may use it.
+   *
+   * `--tilt-angle` and `--tilt-depth` are what `.luna-tilt` (`motion.css`)
+   * reads: how far a card leans at most, and the distance of the eye that
+   * sees it lean. Emitted as plain custom properties, like the durations. */
   --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
   --dur-fast: 140ms;
   --dur-base: 220ms;
   --dur-sheet: 420ms;
+  --dur-scene: 640ms;
+  --tilt-angle: 4deg;
+  --tilt-depth: 900px;
 
   /* Type. San Francisco where it exists, which is every Apple device this is
      watched on, and the self-hosted Inter that `next/font` injects as
@@ -663,6 +676,7 @@
   --dur-fast: 100ms;
   --dur-base: 150ms;
   --dur-sheet: 260ms;
+  --dur-scene: 420ms;
 
   /* Hairlines heavier, hover lighter, and they move in opposite directions for
      opposite reasons. On a dense opaque workspace the border carries structure

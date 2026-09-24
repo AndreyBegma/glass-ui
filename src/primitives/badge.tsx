@@ -20,12 +20,20 @@ import { cn } from '../lib/cn';
  * `size-2.5` on a 14 % wash is very nearly invisible. The counting badge
  * keeps the tint; it carries a number, so it does not depend on colour alone
  * to be seen.
+ *
+ * FEAT-20260924-679 — `label`, for a short value that is not a count: a
+ * player's "1.5×" pinned to its speed icon. It is shown as given. The 99+ cap
+ * is for counts, and a label is not one. `tone="ink"` is the primary's own
+ * pair (`bg-ink text-ground`). It is for a badge that sits on glass over a
+ * picture, where the 10 % `neutral` wash has nothing solid behind it to be
+ * seen against.
  */
 const badge = tv({
   base: 'inline-flex items-center justify-center whitespace-nowrap font-semibold leading-none tabular-nums',
   variants: {
     tone: {
       neutral: 'bg-hover text-ink-2',
+      ink: 'bg-ink text-ground',
       ok: 'bg-ok/14 text-ok',
       warn: 'bg-warn/14 text-warn',
       danger: 'bg-danger/14 text-danger',
@@ -51,10 +59,13 @@ type BadgeProps = Omit<ComponentProps<'span'>, 'className' | 'children'> &
     className?: string;
     /** Capped at "99+" — a count bubble is a glance, not a precise readout. */
     count?: number;
+    /** A short value that is not a count, shown as given. `count` wins when both are passed. */
+    label?: string;
   };
 
-export function Badge({ tone, dot = false, count, className, ...props }: BadgeProps) {
-  const display = typeof count === 'number' ? (count > 99 ? '99+' : String(count)) : null;
+export function Badge({ tone, dot = false, count, label, className, ...props }: BadgeProps) {
+  const display =
+    typeof count === 'number' ? (count > 99 ? '99+' : String(count)) : (label ?? null);
   return (
     <span className={cn(badge({ tone, dot }), className)} {...props}>
       {dot ? null : display}

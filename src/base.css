@@ -24,6 +24,35 @@ body {
   overflow-x: hidden;
 }
 
+/* BUG-20260924-693 — the scrollbar's width is paid once, by the gutter.
+ *
+ * A `Dialog` or `Sheet` takes Radix's scroll lock, which hides the page's
+ * scrollbar and gives `<body>` a `margin-right` of the scrollbar's width so
+ * the page's own flow does not widen into the space. Nothing does the same for
+ * `position: fixed` chrome: the viewport grows by 15px on a desktop with a
+ * classic scrollbar, and the header capsule moved 7.5px right every time a
+ * dialog opened and back when it closed.
+ *
+ * A stable gutter keeps the space reserved whether the scrollbar is drawn or
+ * not, so neither the flow nor the fixed layers see the viewport change. The
+ * lock still measures the old gap and adds its margin, which with the gutter
+ * already held would pay the width twice and move the page 7.5px left instead;
+ * the second rule takes the margin back. It has to out-rank the lock's own
+ * `body[data-scroll-locked]`, which is injected after this sheet and is
+ * `!important` too, and `html` in front is what does that.
+ *
+ * Overlay scrollbars — macOS, phones, the television — have no width, so
+ * both rules change nothing there. The cost is on a desktop with a classic
+ * scrollbar: a page that never scrolls keeps a ground-coloured strip where
+ * the scrollbar would be. */
+html {
+  scrollbar-gutter: stable;
+}
+
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+}
+
 /* FEAT-20260823-364 — the page goes back when something opens over it.
  *
  * This is the one piece of depth that is felt rather than seen. A sheet that

@@ -31,6 +31,23 @@ describe('Toaster', () => {
     expect(classes(shown)).not.toContain('glass-strong');
   });
 
+  test('the region keeps sonner’s own name when none is given', () => {
+    render(<Toaster />);
+    expect(
+      document.querySelector('section[aria-label^="Notifications"]'),
+    ).not.toBeNull();
+  });
+
+  test('a consumer can name the region in its own language', () => {
+    render(<Toaster containerAriaLabel="Уведомления" />);
+    expect(
+      document.querySelector('section[aria-label^="Уведомления"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('section[aria-label^="Notifications"]'),
+    ).toBeNull();
+  });
+
   test('the close button is drawn from tokens, not from sonner’s palette', async () => {
     const shown = await showToast();
     const close = shown.querySelector('[data-close-button]');

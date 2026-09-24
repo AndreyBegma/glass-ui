@@ -291,6 +291,30 @@ describe('the tilt rests flat', () => {
     expect(hover).toContain('.luna-tilt:hover {');
   });
 
+  test('the card and the sheen are layers only while leaning', () => {
+    // G2's trace: without the hint a changing 3D transform re-rasters the
+    // card on every pointer move (53–59 per 61); with it at rest, every card
+    // on a grid is a layer.
+    const hinted = [
+      ...ALL.matchAll(/([^{}]+)\{[^{}]*will-change: transform/g),
+    ].map((m) => m[1].trim());
+    expect(hinted.sort()).toEqual([
+      '.luna-tilt:focus-visible',
+      '.luna-tilt:focus-visible .luna-tilt-sheen',
+      '.luna-tilt:hover',
+      '.luna-tilt:hover .luna-tilt-sheen',
+    ]);
+    expect(ALL.match(/will-change:/g)?.length).toBe(4);
+    const hover = blockAfter(
+      GATED,
+      '@media (hover: hover) and (pointer: fine)',
+    );
+    expect(rule(hover, '.luna-tilt:hover')).toContain('will-change: transform');
+    expect(rule(hover, '.luna-tilt:hover .luna-tilt-sheen')).toContain(
+      'will-change: transform',
+    );
+  });
+
   test('the angle and the depth are the tokens', () => {
     const lean = rule(GATED, '.luna-tilt');
     expect(lean).toContain('perspective(var(--tilt-depth))');

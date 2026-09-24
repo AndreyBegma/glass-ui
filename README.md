@@ -198,6 +198,20 @@ are consulted are all product decisions and all the consumer's. A promise puts
 the list into a pending state that draws `Skeleton` rows, and a result that
 arrives after a newer one is dropped.
 
+**Every string a pattern writes itself can be replaced, and English is only
+the default.** The palette's hidden live region reads `'Searching'` and
+`` `${n} results` `` unless `liveStatus={{ searching, results: (n) => … }}` says
+otherwise. Pass both strings, because a region that is half translated is
+worse than one that is all English. `Toaster` hands `containerAriaLabel` to
+sonner, whose own default is `'Notifications'`. Neither prop changes anything
+for a consumer that leaves it out.
+
+**`BottomCapsule`'s `tabSizing` decides how the row shares its width.** The
+default is `'equal'`: every tab and `More` gets the same slice, and a label
+that does not fit its slice is truncated. `'content'` sizes each one to its
+label (`flex-auto`, `px-1.5`) and never truncates; a label that still cannot
+fit wraps instead. This is for languages whose words are longer than "Today".
+
 `Popover` is **not** a menu. A menu is a list of commands and Radix gives it
 roving focus, type-ahead and `role="menuitem"`; a popover is a panel whose
 content has structure of its own — a heading, a list, an action, an empty

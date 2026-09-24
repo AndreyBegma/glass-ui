@@ -48,15 +48,24 @@ const ABOVE_THE_BAR = 'calc(6.5rem + env(safe-area-inset-bottom))';
 export function Toaster({
   toasterId,
   position = 'bottom-right',
+  containerAriaLabel,
 }: {
   toasterId?: string;
   position?: 'bottom-right' | 'top-right';
+  /**
+   * BUG-20260924-002 — the name a screen reader gives the toast region. Left
+   * out, sonner's own English `'Notifications'` stands; a consumer that
+   * localises passes its own. Handed straight through, so the default stays
+   * sonner's rather than becoming a second copy of it here.
+   */
+  containerAriaLabel?: string;
 } = {}) {
   return (
     <SonnerToaster
       // sonner names the instance `id` on the host and `toasterId` on a toast.
       id={toasterId}
       position={position}
+      containerAriaLabel={containerAriaLabel}
       closeButton
       duration={6000}
       // sonner's own "mobile" is a hard-coded `max-width: 600px`, and the
@@ -73,12 +82,33 @@ export function Toaster({
       className="max-lg:[--offset-bottom:calc(6.5rem_+_env(safe-area-inset-bottom))]!"
       // Sonner's own theming assumes CSS variables it defines; pointing those
       // at ours keeps it inside the token layer rather than beside it.
+      //
+      // BUG-20260923-660 — every class here is `!`, the material included.
+      // sonner injects its stylesheet unlayered and Tailwind puts every utility
+      // in `@layer utilities`, and an unlayered declaration beats a layered one
+      // whatever their specificity. `glass-strong` was the one class without
+      // the `!`, so sonner's `background: var(--normal-bg)` won over it and
+      // every plain `toast()` was a white pill carrying `text-ink` — white on
+      // white in a dark application.
+      //
+      // `!border-line` went with it: `glass-strong` draws its own edge, and
+      // once both are important the material's, emitted later, is the one that
+      // shows — the same edge as every other glass surface.
+      //
+      // No `theme` is passed, on purpose. sonner's theme is only its palette,
+      // and with the toast, its buttons and its close button all pointed at
+      // tokens there is none of that palette left on screen — so the toast
+      // follows the consumer's own theme, whether that is Luna Watch's dark
+      // default, `data-theme`, or the system preference, with nothing for a
+      // consumer to keep in step.
       toastOptions={{
         classNames: {
-          toast: 'glass-strong !rounded-surface !border-line !text-ink !font-sans',
+          toast: '!glass-strong !rounded-surface !text-ink !font-sans',
           description: '!text-ink-2',
           actionButton: '!bg-ink !text-ground !rounded-control',
           cancelButton: '!bg-hover !text-ink !rounded-control',
+          closeButton:
+            '!bg-raised !text-ink !border-line hover:!border-line-strong',
           error: '!text-danger',
           success: '!text-ok',
         },

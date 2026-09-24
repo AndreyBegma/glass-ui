@@ -144,8 +144,9 @@ one of them; see the next rule.
 - `Button`'s `md` reads `h-(--size-control)`; `lg` stays one documented step
   above it, `calc(var(--size-control) + 8px)`, and is not part of the scale.
 - `Field`'s `Input`, `Select` and `SearchField` read `h-(--size-field)`.
-- `Menu`'s rows read `h-(--size-row)`, the line box centred rather than
-  pinned by padding, so it still centres at the desk rung's 32px.
+- `Menu`'s rows read `min-h-(--size-row)`, the line box centred rather than
+  pinned by padding, so it still centres at the desk rung's 32px. It is a
+  minimum: a label that wraps grows its row rather than overlapping the next.
 
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
 `base.css` puts a 3px white outline on `:focus-visible`, sized to be read across

@@ -66,10 +66,14 @@ export const MENU_CONTENT_CLASS =
   'glass-strong z-overlay min-w-52 overflow-hidden rounded-surface p-1.5';
 
 const MENU_ITEM_BASE_CLASS = [
-  // `h-(--size-row)` with `items-center` centres the line box rather than
+  // `min-h-(--size-row)` with `items-center` centres the line box rather than
   // pinning it with padding, so the row still centres when the desk rung
-  // takes the token to 32px.
-  'lit flex h-(--size-row) cursor-default select-none items-center gap-2.5 rounded-control px-3 text-sm',
+  // takes the token to 32px. BUG-20260924-672 — a minimum, not a height: a
+  // label that wraps grows its row instead of painting over the next one.
+  // `py-1.5` is the breathing room a wrapped row keeps; one 20px line plus
+  // 6 + 6 fits inside both rungs (40px, 32px), so a single-line row measures
+  // exactly what it did.
+  'lit flex min-h-(--size-row) cursor-default select-none items-center gap-2.5 rounded-control px-3 py-1.5 text-sm',
   'outline-none transition-colors duration-(--dur-fast)',
 ].join(' ');
 

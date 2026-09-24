@@ -278,7 +278,7 @@
    * matching the number. Where each one comes from, so the next reader does
    * not have to go and measure it again:
    *
-   *   --size-row     `MenuItem` reads it — `h-(--size-row)`, `items-center`
+   *   --size-row     `MenuItem` reads it — `min-h-(--size-row)`, `items-center`
    *                  centring the line box (`menu.tsx`). `Table`'s cell
    *                  (`table.tsx`) still writes `px-3 py-2.5` — 10 + 20 + 10 —
    *                  to the same number by hand; that consumer is unclaimed.

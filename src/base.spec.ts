@@ -110,3 +110,37 @@ describe('fields are 16px on a phone at the desk', () => {
     expect(CSS.match(/:is\(input, select, textarea\)/g)).toHaveLength(1);
   });
 });
+
+/**
+ * BUG-20260924-693 — opening a dialog does not move the fixed chrome.
+ *
+ * Radix's scroll lock hides the scrollbar and pays its width back as a
+ * `margin-right` on `<body>`, which covers the page's flow and not its `fixed`
+ * layers; the header moved 7.5px on every open. The gutter holds the width
+ * instead, and the lock's margin is taken back so it is not paid twice.
+ * Source-level for the reason given at the top of this file; the measurements
+ * in a real Chromium are in the bug report.
+ */
+describe('the scrollbar is paid for once, by the gutter', () => {
+  const RULES = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  /** Every block whose selector is exactly `selector`, joined — `html` has two. */
+  const bodyOf = (selector: string) => {
+    const blocks = [...RULES.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter((match) => match[1].trim() === selector)
+      .map((match) => match[2]);
+    expect(blocks.length).toBeGreaterThan(0);
+    return blocks.join('\n');
+  };
+
+  test('the root reserves a stable gutter', () => {
+    expect(bodyOf('html')).toContain('scrollbar-gutter: stable;');
+  });
+
+  test("the lock's body margin is taken back, out-ranking the lock's own rule", () => {
+    // `html` in front is the specificity that beats Radix's injected
+    // `body[data-scroll-locked] { margin-right: … !important }`.
+    expect(bodyOf('html body[data-scroll-locked]')).toContain(
+      'margin-right: 0 !important;',
+    );
+  });
+});

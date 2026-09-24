@@ -67,7 +67,10 @@
     "./widget-grid": "./src/patterns/widget-grid.tsx",
     "./toolbar": "./src/patterns/toolbar.tsx",
     "./combobox": "./src/primitives/combobox.tsx",
-    "./inline-edit": "./src/primitives/inline-edit.tsx"
+    "./inline-edit": "./src/primitives/inline-edit.tsx",
+    "./springs": "./src/primitives/springs.ts",
+    "./flight": "./src/primitives/flight.tsx",
+    "./tilt": "./src/primitives/tilt.tsx"
   },
   "files": [
     "src"

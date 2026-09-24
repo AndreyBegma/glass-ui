@@ -224,3 +224,20 @@ export {
   type WidgetResize,
   type WidgetResizeIntent,
 } from './patterns/widget-grid';
+
+/**
+ * FEAT-20260924-680 — the motion vocabulary's JavaScript half (`G2`): named
+ * springs, the flight layer and the tilt. Appended, for the reason every
+ * block above is: `G1` is adding the CSS half beside it in its own worktree.
+ */
+export { SPRINGS, type SpringName } from './primitives/springs';
+export {
+  type FlightOptions,
+  FlightLayer,
+  useFlight,
+} from './primitives/flight';
+export {
+  type TiltDirection,
+  tiltFromDirection,
+  useTilt,
+} from './primitives/tilt';

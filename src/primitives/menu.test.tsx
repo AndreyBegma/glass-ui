@@ -169,11 +169,36 @@ const SOFA = block('@theme static');
 const DESK = block(':root:where([data-scale="desk"])');
 
 describe('MenuItem reads the density scale', () => {
-  test('a row is `h-(--size-row)`, the line box centred rather than pinned by padding', async () => {
+  test('a row is `min-h-(--size-row)`, the line box centred rather than pinned by padding', async () => {
     render(<SizeMenu />);
     const copy = await screen.findByRole('menuitem', { name: 'Copy' });
-    expect(copy.className).toContain('h-(--size-row)');
+    expect(copy.className).toContain('min-h-(--size-row)');
     expect(copy.className).toContain('items-center');
+  });
+
+  // BUG-20260924-672 — a fixed height let a wrapped label overflow its row
+  // and paint over the next one. Both item kinds must carry a minimum only.
+  test('no row has a fixed height, so a label that wraps grows its row', async () => {
+    render(<SizeMenu />);
+    const rows = [
+      await screen.findByRole('menuitem', { name: 'Copy' }),
+      ...screen.getAllByRole('menuitemradio'),
+    ];
+    for (const row of rows) {
+      const fixed = row.className.split(/\s+/).filter((c) => /^h-/.test(c));
+      expect(fixed).toEqual([]);
+    }
+  });
+
+  // One `text-sm` line (20px) plus `py-1.5` (6 + 6) must fit the smaller
+  // rung, or a single-line row would measure taller than it did before.
+  test('a single line plus its padding fits the desk rung', async () => {
+    render(<SizeMenu />);
+    const copy = await screen.findByRole('menuitem', { name: 'Copy' });
+    expect(copy.className).toContain('py-1.5');
+    expect(copy.className).toContain('text-sm');
+    const desk = Number.parseInt(tokenValue(DESK, '--size-row'), 10);
+    expect(20 + 6 + 6).toBeLessThanOrEqual(desk);
   });
 
   test('the sofa rung measures what the row drew before: 40px', () => {

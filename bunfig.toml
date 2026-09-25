@@ -1,0 +1,10 @@
+# FEAT-20260902-004 — the render tests need a DOM before the first import runs.
+#
+# `preload` is evaluated once, before any test file, which is the only place a
+# global DOM can be installed: React and Testing Library both read `document`
+# while their own modules evaluate, so registering it from inside a test file is
+# already too late for the module that needed it.
+#
+# See `src/test-setup.ts` for what is registered and what is stubbed.
+[test]
+preload = ["./src/test-setup.ts"]

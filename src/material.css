@@ -8,8 +8,9 @@
  */
 
 /* FEAT-20260823-362 — the glass material.
+ * FEAT-20260919-618 — seven layers and a third rung.
  *
- * Five layers, and the blur is the least important of them:
+ * Seven layers, and the blur is the least important of them:
  *
  *   1. `saturate` alongside the blur. This is what makes colour behind the
  *      panel look alive instead of grey, and the app used it zero times.
@@ -17,8 +18,33 @@
  *      is the part a fixed overlay cannot do. See the note below.
  *   3. A dark scrim, as a floor under the brightness.
  *   4. A white sheen, small, so the panel has a surface of its own.
- *   5. The inset highlight and the drop shadow, which are what read as
- *      thickness and as floating rather than as a painted rectangle.
+ *   5. The specular along the top edge, and the drop shadow — smaller than it
+ *      was, because the edge is carried by
+ *   6. **the rim**: a 1px inset highlight offset to the top-left, and a 1px
+ *      inset shade offset to the bottom-right. Light enters one side of a pane
+ *      and leaves the other, and that asymmetry is most of what separates
+ *      glass from a painted disc. On a circle the diagonal offset makes the
+ *      highlight an arc thickest at top-left and tapering both ways — a
+ *      crescent, from geometry rather than from a gradient. On a large
+ *      rectangle the same geometry is a ruler line, so `glass-strong` runs
+ *      it quieter and gathers the light on the corner instead
+ *      (BUG-20260919-626, at the utility).
+ *   7. **the meniscus and the refraction ring**: a soft dark band inside the
+ *      bottom edge, where a pane is thickest, and a faint bright ring hugging
+ *      the whole rim — the cheapest thing that reads as the backdrop bending.
+ *
+ * A surface with three of the seven is a grey box, not glass.
+ *
+ * **Why the ring is a box-shadow and not a blend.** The issue that asked for
+ * it sketched a pseudo-element in `mix-blend-mode: overlay`. There is no
+ * pseudo-element left to give it: `.lit` owns `::before` (the pointer light,
+ * faded with `opacity`) and `Button` owns `::after` (the 44px touch target,
+ * on every variant). Sharing `.lit::before` would either lose the light's fade
+ * or animate a custom property, which motion rule 1 forbids. Measured on the
+ * probe at 1080p, an overlay ring and an inset-shadow ring on the player's
+ * discs over a film frame are indistinguishable — so the material stays one
+ * box: one `background`, one `backdrop-filter`, one `box-shadow`, no
+ * pseudo-element, no blend mode, and nothing a primitive has to make room for.
  *
  * **Why brightness rather than a heavier tint.** The first version of this was a
  * white tint over a blur, and it failed the moment it sat over something bright:
@@ -33,9 +59,38 @@
  * loses almost nothing it had. The scrim then sets a floor so the worst case is
  * bounded rather than merely improved.
  *
- * The numbers are chosen against the worst case, a pure white backdrop:
- * `glass` lands near 4:1 against `--color-ink` and `glass-strong` above 5:1.
- * Anything that carries body text uses `glass-strong` for that reason.
+ * **The measurement.** FEAT-20260919-618, 2026-09-19, replacing the
+ * FEAT-20260902-004 table. Three rungs over the five-band probe — white, a
+ * saturated yellow (#ffd60a), mid grey, a near-black frame, and a real film
+ * frame (a public-domain still from *Charade*, 1963) — in both themes, sampled
+ * out of a browser screenshot rather than computed: the backdrop, the filter,
+ * the scrim, the sheen and the ring, in that order, at the brightest pixel of
+ * a blank area of the panel. `--color-ink` against the panel:
+ *
+ *                dark                       light
+ *                glass  strong  clear       glass  strong  clear
+ *   white         4.43   6.98    3.21       15.55  15.55   15.55
+ *   yellow        5.40   8.09    3.97       14.64  14.87   14.45
+ *   grey          8.98  11.29    6.67        9.63  11.72    8.64
+ *   near-black   15.85  16.01   13.33        4.69   6.63    3.39
+ *   film frame   10.71  10.75    6.15        8.03  12.36    9.47
+ *
+ * The gates: `glass` >= 4:1 and `glass-strong` >= 5:1, because a label and a
+ * paragraph are text; `glass-clear` >= 3:1, WCAG 1.4.11 for a graphic, because
+ * its content is a 2px icon and a timecode. The worst case changes ends with
+ * the theme — dark is worst over white paper, light over a black frame — and
+ * every rung holds its gate on its hard band. The margins are thin by design:
+ * the scrim is the lightest value that holds, not a number chosen for looks,
+ * and the plan says by how much it had to rise to get there.
+ *
+ * For the record, the 2026-09-02 material measured 10.16 / 12.14 (dark, white
+ * band) and 8.64 / 10.37 (light, near-black); the probe reproduced those to the
+ * second decimal before it measured this one.
+ *
+ * BUG-20260919-626 re-measured the four flat bands with the strong rung's rim
+ * re-cut: identical to the table above to the second decimal. The rim moves no
+ * luminance inside the panel — the sample sits 40px in from the edge and the
+ * corner glint is at most 1.1px wide on the arc.
  *
  * Two rules that are not expressible in CSS and have to be kept by hand:
  *
@@ -53,12 +108,29 @@
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-spec),
-    0 16px 40px rgb(0 0 0 / 0.45);
+    inset 1px 1px 0 var(--glass-rim),
+    inset -1px -1px 0 var(--glass-rim-shade),
+    inset 0 -3px 3px -1px var(--glass-meniscus),
+    inset 0 0 18px -4px var(--glass-refract),
+    0 12px 32px var(--glass-shadow);
 }
 
 /* The same material with more presence, for surfaces that carry a whole
    interaction rather than sitting behind one: sheets, dialogs, menus. Anything
-   with body text on it belongs here rather than on `glass`. */
+   with body text on it belongs here rather than on `glass`.
+
+   BUG-20260919-626 — the rim is four insets here rather than two. This rung is
+   always a large rectangle, and on a rectangle the 1px offset inset that makes
+   a crescent on a disc makes a full-length hairline; so the straight run reads
+   the quieter `-strong` pair, and the light is put back where it would be —
+   the top-left corner — by an inset with a negative spread. An inset shadow
+   offset by `o` and spread by `−e` covers every straight edge completely (the
+   shifted, expanded clear region lies outside the box there) and leaves a band
+   of `√2·o − e` at the 45° point of the top-left arc, tapering to zero where
+   the arc meets the straight edges, whatever the radius. 5 / −6 is 1.07px at
+   the peak, with a 1px blur so it is an edge catching light and not a stitch.
+   The shade is the same figure mirrored on the bottom-right. Still one box:
+   no gradient, no `border-image`, no pseudo-element. */
 @utility glass-strong {
   background:
     linear-gradient(var(--glass-sheen), var(--glass-sheen)),
@@ -67,7 +139,35 @@
   border: 1px solid var(--glass-edge);
   box-shadow:
     inset 0 1px 0 var(--glass-spec),
-    0 24px 60px rgb(0 0 0 / 0.55);
+    inset 1px 1px 0 var(--glass-rim-strong),
+    inset 5px 5px 1px -6px var(--glass-rim),
+    inset -1px -1px 0 var(--glass-rim-shade-strong),
+    inset -5px -5px 1px -6px var(--glass-rim-shade),
+    inset 0 -3px 3px -1px var(--glass-meniscus),
+    inset 0 0 18px -4px var(--glass-refract),
+    0 20px 48px var(--glass-shadow-strong);
+}
+
+/* FEAT-20260919-618 — the third rung: the most transparent, for chrome that
+   carries no body text and sits directly over a picture — the player's
+   discs, the seek bar's time bubble, the skip pills. It differs from `glass`
+   in its scrim (lighter), its sheen (doubled, so it is found by the light it
+   reflects rather than the shade it casts) and its shadow (almost none); the
+   blur is the same. Its gate is 3:1 for a graphic, not 4:1 for text: a label
+   on it is allowed but is not what it is for, and a paragraph never is. */
+@utility glass-clear {
+  background:
+    linear-gradient(var(--glass-sheen-clear), var(--glass-sheen-clear)),
+    var(--glass-scrim-clear);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-spec),
+    inset 1px 1px 0 var(--glass-rim),
+    inset -1px -1px 0 var(--glass-rim-shade),
+    inset 0 -3px 3px -1px var(--glass-meniscus),
+    inset 0 0 18px -4px var(--glass-refract),
+    0 6px 20px var(--glass-shadow-clear);
 }
 
 /* FEAT-20260823-364 — the material reacts to what is touching it.
@@ -105,7 +205,7 @@
   transition: opacity var(--dur-base) ease-out;
   background: radial-gradient(
     14rem circle at var(--lx, 50%) var(--ly, 50%),
-    rgb(255 255 255 / 0.12),
+    var(--glass-lit),
     transparent 62%
   );
 }
@@ -135,11 +235,14 @@
  * We have two rungs, and only two, because only two are real:
  *
  *   glass  — the default. Blur, saturation, an adaptive brightness cap, a scrim
- *            floor, a specular edge. Cheap enough for anything with a GPU.
+ *            floor, a specular edge, and (FEAT-20260919-618) the rim, the
+ *            meniscus and the ring. Cheap enough for anything with a GPU.
  *   flat   — opaque surfaces, no blur, no filter at all. Everything stays
  *            legible; only the material goes.
  *
- * There is deliberately no third rung. The obvious candidate is SVG
+ * `glass-clear` (FEAT-20260919-618) is not a third rung in this sense: it is
+ * a third *scrim* on the same renderer, and the flat rung flattens it with the
+ * other two. There is deliberately no third renderer. The obvious candidate is SVG
  * `feDisplacementMap` inside `backdrop-filter` for real refraction, which is
  * what liquefy-ui does and what makes their glass look like glass rather than
  * like frost. It is Chromium-only, it costs a filter pass over a live backdrop,
@@ -157,12 +260,32 @@
  *      afford the material — the television, if it ever turns out it cannot.
  *   3. The browser has no `backdrop-filter` at all, which is the automatic
  *      safety net below.
- */
+ *
+ * FEAT-20260902-004 — all three routes work in light without a second copy,
+ * because all three are written in terms of `--color-raised`, which is itself
+ * a token that flips. In light the rung resolves to an opaque `#f4f4f5` panel,
+ * no sheen, no filter and no pointer highlight, carrying the light theme's 14%
+ * black hairline; in dark it is the `#17171e` it always was.
+ *
+ * That is only true while these blocks keep beating the theme blocks in
+ * `tokens.css`, and they weigh (0,1,0) against the theme's (0,1,0), so it is
+ * source order that settles it: this file is imported after `tokens.css`. The
+ * theme blocks are written with `:where()` to hold themselves at that weight
+ * deliberately — the note over there says what breaks if anybody takes it off,
+ * and it is this. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --glass-scrim: var(--color-raised);
     --glass-scrim-strong: var(--color-raised);
+    --glass-scrim-clear: var(--color-raised);
     --glass-sheen: transparent;
+    --glass-sheen-clear: transparent;
+    --glass-rim: transparent;
+    --glass-rim-shade: transparent;
+    --glass-rim-strong: transparent;
+    --glass-rim-shade-strong: transparent;
+    --glass-meniscus: transparent;
+    --glass-refract: transparent;
     --glass-filter: none;
     --glass-filter-strong: none;
   }
@@ -171,9 +294,33 @@
 :root[data-material="flat"] {
   --glass-scrim: var(--color-raised);
   --glass-scrim-strong: var(--color-raised);
+  --glass-scrim-clear: var(--color-raised);
   --glass-sheen: transparent;
+  --glass-sheen-clear: transparent;
+  --glass-rim: transparent;
+  --glass-rim-shade: transparent;
+  --glass-rim-strong: transparent;
+  --glass-rim-shade-strong: transparent;
+  --glass-meniscus: transparent;
+  --glass-refract: transparent;
   --glass-filter: none;
   --glass-filter-strong: none;
+}
+
+/* FEAT-20260919-618 — the television pays less for the blur.
+ *
+ * Not a rung: the material is the same seven layers, only the radius of the
+ * blur is smaller, because a `backdrop-filter` blur costs the compositor in
+ * proportion to its radius and the television is the one device this
+ * application has never been able to profile. The query is the shape Luna
+ * Watch already uses for a set-top screen — no hover, a coarse pointer, and
+ * a viewport a phone never has. Nothing else in the stack changes and the
+ * contrast table above holds: the blur radius moves no luminance. */
+@media (hover: none) and (pointer: coarse) and (min-width: 1280px) {
+  :root {
+    --glass-blur: 16px;
+    --glass-blur-strong: 24px;
+  }
 }
 
 /* The pointer highlight is part of the material, so it goes with it. */
@@ -200,6 +347,44 @@
   }
 }
 
+/* FEAT-20260902-004 — and the same answer in light, which needs its own block.
+ *
+ * The four values above are white alphas. Under the light set they would be a
+ * white edge on a near-white panel and white text on a white page: the block
+ * would still apply, still win, and do nothing at all — the failure mode where
+ * an accessibility setting is honoured on paper and ignored on screen.
+ *
+ * The alphas are chosen the way the base set's were, by landing the same
+ * measured contrast the dark set's boost lands: `--color-ink-2` at 0.88 is
+ * 12.47:1 on white against dark's 11.93:1, and `--color-ink-3` at 0.72 is
+ * 7.02:1 against dark's 7.04:1 — which is to say the third level of text, for
+ * a reader who has asked for more contrast, is promoted to what the second
+ * level normally is. The edge and the specular keep the dark block's alphas;
+ * only the colour turns over.
+ *
+ * Two blocks rather than one, and `:where()`, for the same reasons `tokens.css`
+ * gives: the media query is the system default, guarded so an explicit dark
+ * choice keeps dark, and the attribute block follows it to win the tie. Both
+ * sit at (0,1,0) after the block above, so they beat it on source order and
+ * are still beaten by nothing that matters. */
+@media (prefers-contrast: more) and (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])) {
+    --glass-edge: rgb(0 0 0 / 0.42);
+    --glass-spec: rgb(0 0 0 / 0.5);
+    --color-ink-2: rgb(24 24 27 / 0.88);
+    --color-ink-3: rgb(24 24 27 / 0.72);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root:where([data-theme="light"]) {
+    --glass-edge: rgb(0 0 0 / 0.42);
+    --glass-spec: rgb(0 0 0 / 0.5);
+    --color-ink-2: rgb(24 24 27 / 0.88);
+    --color-ink-3: rgb(24 24 27 / 0.72);
+  }
+}
+
 /* Where `backdrop-filter` is not supported the panel must still be readable, so
    it becomes an opaque surface rather than a transparent one — which, on a media
    centre, is aimed squarely at the television.
@@ -220,5 +405,12 @@
   :root {
     --glass-scrim: var(--color-raised);
     --glass-scrim-strong: var(--color-raised);
+    --glass-scrim-clear: var(--color-raised);
+    --glass-rim: transparent;
+    --glass-rim-shade: transparent;
+    --glass-rim-strong: transparent;
+    --glass-rim-shade-strong: transparent;
+    --glass-meniscus: transparent;
+    --glass-refract: transparent;
   }
 }

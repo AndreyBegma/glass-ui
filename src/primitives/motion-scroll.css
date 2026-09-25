@@ -1,0 +1,123 @@
+/* FEAT-20260924-680 — the scroll-linked family.
+ *
+ * Imported by `motion.css`, and read with it: the rules in that file's header
+ * hold here too, except where this header says otherwise. A file of its own
+ * because it is the one family bound to a timeline rather than a clock, and
+ * the rule that follows is about exactly that difference.
+ *
+ * The rule (Luna's motion rules number it 6):
+ *
+ * A scroll-linked keyframe — `lunaScroll*`, `lunaWindow*` — is bound to a
+ * scroll or view timeline, not a clock, so it has no duration token
+ * (`animation-duration: auto`) and it may hold a `to`: the element is where
+ * the scroll says it is, and is back at the start when the scroll is. It is
+ * applied **only** inside
+ * `@supports (animation-timeline: view()) { @media (prefers-reduced-motion:
+ * no-preference) { … } }`; where the timeline is unsupported — every engine
+ * on the Samsung set, Firefox without a flag — or motion is reduced, the
+ * element is simply still, which is why no JavaScript is needed to decide.
+ * It goes only on an element with **no `position: fixed` descendant**: a
+ * transform partway along the timeline is a containing block like any
+ * other, and the only thing that keeps it harmless is that there is nothing
+ * fixed beneath it to capture. That is the consumer's promise, stated per
+ * class below. And at the top of its timeline it rests at `none` / 1 —
+ * except the window, whose identity is the middle of its path by design.
+ *
+ * Longhands, never the `animation` shorthand: the shorthand resets
+ * `animation-timeline` to `auto`, and one written after this class would
+ * quietly turn a parallax into a zero-length clock animation. The same
+ * reason means one element, one of these classes and no other animation —
+ * the wrapper-per-animation habit (a scroll wrapper around a Ken Burns
+ * image, never both on one element).
+ *
+ * Every variable has an inert default, so a class without its variable does
+ * nothing rather than being an invalid declaration.
+ */
+
+/* The layer travels as the page does: down by `--parallax-shift` (a
+   positive shift lags the page, a negative one leads it) and, if asked,
+   grows to `--parallax-scale`. */
+@keyframes lunaScrollShift {
+  to {
+    transform: translateY(var(--parallax-shift, 0px))
+      scale(var(--parallax-scale, 1));
+  }
+}
+
+/* The layer fades as it goes, to `--parallax-fade`. */
+@keyframes lunaScrollFade {
+  to {
+    opacity: var(--parallax-fade, 0);
+  }
+}
+
+/* Artwork panning inside a card as the row scrolls past it: from one side
+   of its travel to the other, so it moves slower than the card's frame. */
+@keyframes lunaWindowPan {
+  from {
+    transform: translateX(var(--window-pan, 0%));
+  }
+  to {
+    transform: translateX(calc(-1 * var(--window-pan, 0%)));
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* A layer of a header or a hero moving at its own rate as it scrolls
+     * away: a backdrop slower than the page, a portrait lagging the list
+     * beneath it.
+     *
+     * The timeline is the element's own `view()`; `--parallax-timeline`
+     * names another (`scroll(root)` for a layer inside something fixed,
+     * like the aurora). The range is `exit` — from the moment the element
+     * starts leaving the top of the viewport until it has left — so a
+     * header at the top of the page is at the start of its range at scroll
+     * 0 and rests untransformed on first paint; with `view()`'s default
+     * `cover` it would already be partway. A consumer on a `scroll()`
+     * timeline sets `--parallax-range: normal`.
+     *
+     * The consumer's promise: no `position: fixed` descendant. */
+    .luna-parallax {
+      animation-name: lunaScrollShift;
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: var(--parallax-timeline, view());
+      animation-range: var(--parallax-range, exit);
+    }
+
+    /* The same, and fading: the title and its metadata travelling faster
+     * than the backdrop behind them and dimming as they go, so the words
+     * leave before the picture does. Same timeline, same range, same
+     * promise. */
+    .luna-parallax-fade {
+      animation-name: lunaScrollShift, lunaScrollFade;
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: var(--parallax-timeline, view());
+      animation-range: var(--parallax-range, exit);
+    }
+
+    /* Artwork as seen through a window: in a horizontally scrolled row the
+     * image pans by `--window-pan` each side against its card's frame.
+     * `view(inline)` against the nearest scroller, so no row has to name
+     * a timeline. The range is `cover`, the whole pass across the row, and
+     * the image is at identity when its card is centred.
+     *
+     * The consumer's promise is stricter here, because this one does rest
+     * transformed: it goes on a leaf wrapper around the image — nothing
+     * fixed, nothing interactive beneath it — inside the card's
+     * `overflow-hidden` box, with the image scaled up enough that the pan
+     * never shows an edge. */
+    .luna-window {
+      animation-name: lunaWindowPan;
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view(inline);
+      animation-range: cover;
+    }
+  }
+}

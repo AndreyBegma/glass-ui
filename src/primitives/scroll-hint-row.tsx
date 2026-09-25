@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useScrollEdges } from '../hooks/use-scroll-edges';
 
 /**
  * BUG-20260822-287 — a horizontal row that says when it has more to show.
@@ -15,6 +15,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * The fade appears on a side only while there is something on that side, and
  * goes when the row is scrolled to that end. It is `pointer-events-none`, so it
  * never eats a tap meant for the chip underneath.
+ *
+ * FEAT-20260916-604 — the measuring moved to `useScrollEdges`, shared with
+ * `ScrollHintColumn`. The props and the markup are unchanged.
  */
 export function ScrollHintRow({
   className,
@@ -27,32 +30,11 @@ export function ScrollHintRow({
   edgeClassName?: string;
   children: React.ReactNode;
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'children'>) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [edges, setEdges] = useState({ start: false, end: false });
-
-  const measure = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    const max = el.scrollWidth - el.clientWidth;
-    // A pixel or two of rounding is not "more content".
-    setEdges({ start: el.scrollLeft > 4, end: max - el.scrollLeft > 4 });
-  }, []);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    measure();
-    // The row's own width and its contents both change — chips arrive from a
-    // request, the viewport rotates — and either changes the answer.
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    for (const child of Array.from(el.children)) observer.observe(child);
-    return () => observer.disconnect();
-  }, [measure]);
+  const { ref, edges, onScroll } = useScrollEdges('x');
 
   return (
     <div className="relative">
-      <div ref={ref} onScroll={measure} className={className} {...rest}>
+      <div ref={ref} onScroll={onScroll} className={className} {...rest}>
         {children}
       </div>
       {/* FEAT-20260830-490 — both fades stay mounted and change opacity.

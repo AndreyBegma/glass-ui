@@ -2,6 +2,7 @@
 
 import * as RadixMenu from '@radix-ui/react-dropdown-menu';
 import type { ComponentProps } from 'react';
+import { useInputModality } from '../hooks/use-input-modality';
 import { cn } from '../lib/cn';
 import './motion.css';
 
@@ -46,6 +47,61 @@ export function MenuRoot({
 }
 export const MenuTrigger = RadixMenu.Trigger;
 
+/**
+ * FEAT-20260911-002 — the styling, named, so `ContextMenu` can wear it.
+ *
+ * Radix ships the dropdown menu and the context menu as two packages over one
+ * `react-menu` core, and `context-menu.tsx` is the second styled as the first.
+ * The strings live here and are imported there — not copied — because a copy
+ * is two menus that agree today, and `V2` decision 6 says a right-click menu
+ * and a dropdown menu must not be able to drift apart. The components below
+ * are unchanged; they read the same strings they always did.
+ *
+ * `MENU_CONTENT_CLASS` leaves out the transform-origin and the two animations,
+ * which are the same idea under two variable names (`--radix-dropdown-menu-…`
+ * and `--radix-context-menu-…`) and are written at each call site beside the
+ * variable they read.
+ */
+export const MENU_CONTENT_CLASS =
+  'glass-strong z-overlay min-w-52 overflow-hidden rounded-surface p-1.5';
+
+const MENU_ITEM_BASE_CLASS = [
+  // `min-h-(--size-row)` with `items-center` centres the line box rather than
+  // pinning it with padding, so the row still centres when the desk rung
+  // takes the token to 32px. BUG-20260924-672 — a minimum, not a height: a
+  // label that wraps grows its row instead of painting over the next one.
+  // `py-1.5` is the breathing room a wrapped row keeps; one 20px line plus
+  // 6 + 6 fits inside both rungs (40px, 32px), so a single-line row measures
+  // exactly what it did.
+  'lit flex min-h-(--size-row) cursor-default select-none items-center gap-2.5 rounded-control px-3 py-1.5 text-sm',
+  'outline-none transition-colors duration-(--dur-fast)',
+].join(' ');
+
+export const MENU_ITEM_CLASS: Record<'default' | 'danger', string> = {
+  default: [
+    MENU_ITEM_BASE_CLASS,
+    'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
+    'data-disabled:opacity-40 data-disabled:pointer-events-none',
+  ].join(' '),
+  danger: [
+    MENU_ITEM_BASE_CLASS,
+    'text-danger data-highlighted:bg-danger/15',
+    'data-disabled:opacity-40 data-disabled:pointer-events-none',
+  ].join(' '),
+};
+
+export const MENU_RADIO_ITEM_CLASS = [
+  MENU_ITEM_BASE_CLASS,
+  'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
+  'data-[state=checked]:text-ink',
+  'data-disabled:opacity-40 data-disabled:pointer-events-none',
+].join(' ');
+
+export const MENU_SEPARATOR_CLASS = 'my-1.5 h-px bg-hover';
+
+export const MENU_LABEL_CLASS =
+  'px-3 pb-1 pt-2 text-[11px] uppercase tracking-wider text-ink-3';
+
 type MenuContentProps = Omit<
   ComponentProps<typeof RadixMenu.Content>,
   'className'
@@ -68,14 +124,23 @@ export function MenuContent({
   className,
   sideOffset = 8,
   container,
+  onPointerMove,
+  onKeyDown,
   ...props
 }: MenuContentProps) {
+  // BUG-20260919-625 — which input moved focus last, so `base.css` can keep
+  // the television ring off an item the pointer highlighted and on one the
+  // keyboard arrowed to. Radix roves DOM focus on hover, and in Chromium that
+  // script focus inherits `:focus-visible` from the content; the hook and
+  // the rule it feeds are explained in `hooks/use-input-modality.ts`.
+  const inputModality = useInputModality({ onPointerMove, onKeyDown });
   return (
     <RadixMenu.Portal container={container}>
       <RadixMenu.Content
         sideOffset={sideOffset}
+        {...inputModality}
         className={cn(
-          'glass-strong z-overlay min-w-52 overflow-hidden rounded-surface p-1.5',
+          MENU_CONTENT_CLASS,
           // FEAT-20260830-490 — it grows out of the control that opened it.
           //
           // Radix already measures where the trigger is relative to the menu
@@ -89,7 +154,7 @@ export function MenuContent({
           // dismissed tens of times in a session, and the durations that make a
           // modal feel considered make a menu feel slow.
           'origin-[var(--radix-dropdown-menu-content-transform-origin)]',
-          'data-[state=open]:animate-[lunaPopIn_var(--dur-fast)_cubic-bezier(0.23,1,0.32,1)]',
+          'data-[state=open]:animate-[lunaPopIn_var(--dur-fast)_var(--ease-out-expo)]',
           'data-[state=closed]:animate-[lunaPopOut_100ms_ease-out]',
           className,
         )}
@@ -107,25 +172,49 @@ type MenuItemProps = Omit<ComponentProps<typeof RadixMenu.Item>, 'className'> & 
 export function MenuItem({ className, tone = 'default', ...props }: MenuItemProps) {
   return (
     <RadixMenu.Item
-      className={cn(
-        'lit flex cursor-default select-none items-center gap-2.5 rounded-control px-3 py-2.5 text-sm',
-        'outline-none transition-colors duration-(--dur-fast)',
-        // Radix marks the item under the pointer *and* the item the keyboard is
-        // on with the same attribute, so one rule covers both and the mouse and
-        // the remote never disagree about what is selected.
-        tone === 'danger'
-          ? 'text-danger data-highlighted:bg-danger/15'
-          : 'text-ink-2 data-highlighted:bg-hover data-highlighted:text-ink',
-        'data-disabled:opacity-40 data-disabled:pointer-events-none',
-        className,
-      )}
+      // Radix marks the item under the pointer *and* the item the keyboard is
+      // on with the same attribute, so one rule covers both and the mouse and
+      // the remote never disagree about what is selected.
+      className={cn(MENU_ITEM_CLASS[tone], className)}
       {...props}
     />
   );
 }
 
 export function MenuSeparator({ className }: { className?: string }) {
-  return <RadixMenu.Separator className={cn('my-1.5 h-px bg-hover', className)} />;
+  return <RadixMenu.Separator className={cn(MENU_SEPARATOR_CLASS, className)} />;
+}
+
+/**
+ * FEAT-20260902-004 — a one-of-many row, first-class, from issue #11 item 3
+ * (`u3-shell`, 2026-09-02).
+ *
+ * A `SegmentedControl` with hand-rolled `role="menuitemradio"` and
+ * `aria-checked` was Denitsa's consumer-side fix, and it did not work: Radix's
+ * roving focus and arrow-key handling inside `[role="menu"]` walk its own
+ * Collection, which only elements registered through Radix's `RadioGroup` /
+ * `RadioItem` join. A plain `button` wearing the right ARIA attributes reads
+ * correctly to a screen reader and is still invisible to Tab and the arrows.
+ * `MenuRadioGroup` / `MenuRadioItem` are that `RadioGroup` / `RadioItem`,
+ * styled like `MenuItem` — `aria-checked` and the roving both come from
+ * Radix, not from here.
+ */
+export const MenuRadioGroup = RadixMenu.RadioGroup;
+
+type MenuRadioItemProps = Omit<
+  ComponentProps<typeof RadixMenu.RadioItem>,
+  'className'
+> & {
+  className?: string;
+};
+
+export function MenuRadioItem({ className, ...props }: MenuRadioItemProps) {
+  return (
+    <RadixMenu.RadioItem
+      className={cn(MENU_RADIO_ITEM_CLASS, className)}
+      {...props}
+    />
+  );
 }
 
 type MenuLabelProps = Omit<ComponentProps<typeof RadixMenu.Label>, 'className'> & {
@@ -135,7 +224,7 @@ type MenuLabelProps = Omit<ComponentProps<typeof RadixMenu.Label>, 'className'> 
 export function MenuLabel({ className, ...props }: MenuLabelProps) {
   return (
     <RadixMenu.Label
-      className={cn('px-3 pb-1 pt-2 text-[11px] uppercase tracking-wider text-ink-3', className)}
+      className={cn(MENU_LABEL_CLASS, className)}
       {...props}
     />
   );

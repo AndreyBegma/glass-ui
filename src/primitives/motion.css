@@ -1,21 +1,68 @@
 /* FEAT-20260830-490 — the keyframes the primitives animate with.
+ * FEAT-20260916-598 — and the vocabulary an application composes with.
  *
- * A file of its own rather than another block in `globals.css`. These belong to
- * three components and are imported by them, so a primitive that is deleted
+ * A file of its own rather than another block in `base.css`. The keyframes
+ * belong to the components that import them, so a primitive that is deleted
  * takes its motion with it, and a reader who opens `dialog.tsx` can find out
- * what `lunaDialogIn` is without leaving the folder.
+ * what `lunaDialogIn` is without leaving the folder. Since FEAT-20260916-598
+ * this is also the **one** place the package declares keyframes: `base.css`
+ * used to carry a `fadeIn` of its own, and two animations with generic names
+ * in one global stylesheet is how the second one arriving silently renames
+ * the first. It lives here now as `lunaDropIn`.
  *
- * The `luna` prefix is not decoration. `globals.css` already owns a `fadeIn`,
- * and it carries a `translateY(-2px)` for the catalog rail's sections — a
- * sensible entrance for a strip of content and the wrong one for a full-screen
- * scrim, which would slide two pixels for no reason anybody could name. Two
- * different animations cannot share one name in a global stylesheet, and the
- * one that arrives second is the one that renames.
+ * The `luna` prefix is not decoration: it is what keeps a keyframe of this
+ * package from colliding with one an application declares under the same
+ * generic name, in the one namespace CSS does not scope.
  *
- * Durations and curves are not written here. They come from the tokens at the
- * call site — `animate-[lunaDialogIn_var(--dur-base)_…]` — so that the three
- * durations stay in the one place the design system declares them.
+ * Durations and curves are not written here except through the tokens —
+ * `var(--dur-base)`, `var(--ease-out-expo)` — so that the durations and the
+ * two curves stay in the one place the design system declares them. The one
+ * bare number in this file is the stagger's 30ms step, which is a spacing
+ * between items rather than a duration, and it is written down as such.
+ *
+ * Two rules every keyframe and class below follows, and the reason for each:
+ *
+ * 1. **Only `opacity` and `transform` animate.** Both are composited; nothing
+ *    here causes layout or paint after the first frame, which is what lets a
+ *    television pay one layer per item and nothing per frame afterwards.
+ *
+ * 2. **Nothing rests with a transform.** An entrance keyframe is written with
+ *    a `from` and no `to`, so it lands on whatever the element's own computed
+ *    values are — a poster at `opacity-60` arrives at 0.6, a card with
+ *    `.lit:active`'s press keeps its press — and once it has ended, nothing
+ *    is left applied. That is also why `.luna-stagger` fills `backwards` and
+ *    not `both`: a forwards fill would pin `transform: translateY(0)` to the
+ *    element for the rest of its life, and any transform other than `none` is
+ *    a containing block for every `position: fixed` descendant and a stacking
+ *    context of its own. A class in this file that rests with a transform
+ *    breaks the page beneath it, quietly.
+ *
+ * Everything that moves is inside `prefers-reduced-motion: no-preference`,
+ * rather than relying on `base.css`'s blanket override: that override
+ * shortens durations but not delays, and a staggered item under `reduce`
+ * would otherwise sit invisible for the length of its delay.
+ *
+ * FEAT-20260924-680 — two families live in files of their own, imported
+ * below so that `glass-ui/motion.css` stays the one thing to import. The
+ * drifts and the breath (`motion-drift.css`) are closed paths with no
+ * duration of their own that only a consumer applies. The scroll-linked
+ * family (`motion-scroll.css`) is bound to a timeline rather than a clock,
+ * which is why it is the one place the two rules above are stated
+ * differently; that file's header is the rule (Luna's motion rules number
+ * it 6).
+ *
+ * The television. The package has no notion of one beyond `material.css`'s
+ * coarse-pointer rung, and which of these classes a particular set can
+ * afford is the application's decision, not the vocabulary's. Luna Watch
+ * switches the scroll-linked family off under its own television query —
+ * the Sony's engine supports scroll timelines and the Samsung's does not,
+ * and a D-pad scroll is an instant jump that a parallax would turn into a
+ * lurch — and keeps the rest: the tilt driven by focus, and the fill, the
+ * sheen, the bump and the Ken Burns, each one composited layer.
  */
+
+@import "./motion-drift.css";
+@import "./motion-scroll.css";
 
 /* The scrim behind a dialog or a sheet. Opacity only: it covers the viewport,
    and there is nothing for a transform to mean at that size. */
@@ -71,7 +118,10 @@
  * checked against each. */
 .luna-rise-in {
   opacity: 1;
-  transform: translateY(0);
+  /* `none`, not `translateY(0)`: they draw the same and interpolate the same
+     from the starting style, but only `none` stops being a containing block
+     once the entrance is over (FEAT-20260916-598, found by 599's template). */
+  transform: none;
   transition:
     opacity var(--dur-fast) ease-out,
     transform var(--dur-fast) ease-out;
@@ -81,5 +131,275 @@
   .luna-rise-in {
     opacity: 0;
     transform: translateY(4px);
+  }
+}
+
+/* FEAT-20260916-598 — the motion vocabulary.
+ *
+ * What an application reaches for so that a load, a list and a swap are the
+ * same gesture everywhere. Each class below is documented with what it is
+ * for, what it deliberately is not, and how it behaves under `reduce`.
+ */
+
+/* An item arriving: up eight pixels and in. `from` only — see the header. */
+@keyframes lunaRiseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* A disclosure body opening under its heading: two pixels down and in. This
+   was `base.css`'s `fadeIn` (FEAT-20260823-302, the catalogue rail's
+   sections), moved here so that keyframes are declared in one file. */
+@keyframes lunaDropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+/* Artwork that has just finished loading. `from` only, for the same reason. */
+@keyframes lunaImgIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A one-shot centre confirmation — the player's play/pause glyph — growing
+   and fading out. The one keyframe here with a `to`, because it ends gone
+   and the element is expected to unmount or be reset with it. */
+@keyframes lunaPulseOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+/* FEAT-20260924-680 — a progress bar filling from nothing to its value.
+   `from` only, like every entrance: it lands on the bar's own width. */
+@keyframes lunaFillIn {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* FEAT-20260924-680 — a band of light crossing a surface once. The second
+   keyframe here with a `to`, for the same reason as `lunaPulseOut`: it ends
+   invisible. The 0.28 is the band's strength, carried by opacity rather than
+   by `color-mix()`, which the Samsung set's engine does not have. */
+@keyframes lunaSheen {
+  from {
+    opacity: 0;
+    transform: translateX(-120%);
+  }
+  50% {
+    opacity: 0.28;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+}
+
+/* FEAT-20260924-680 — one visible overshoot: a count that just changed, an
+   entry that just received something. A closed path like the drifts —
+   `none` at both ends — so it can be replayed and never leaves a transform
+   behind. No class: the consumer supplies a duration token. */
+@keyframes lunaBump {
+  from {
+    transform: none;
+  }
+  40% {
+    transform: scale(1.12);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* A row or a grid arriving as a cascade rather than in one frame.
+   *
+   * The consumer sets `--i` per item (`style="--i: 3"`); the delay is that
+   * index times a 30ms step, capped at twelve steps so that the sixtieth
+   * card of a catalogue page does not wait for two seconds. `backwards`
+   * fill is what keeps an item invisible until its turn; it releases at the
+   * end, so nothing stays applied (see the header). A CSS animation runs
+   * once, when the element is inserted — a re-render does not replay it,
+   * and a list keyed by stable ids only cascades the items that are new.
+   *
+   * Under `reduce` the whole rule is absent: no delay, no rise, the list is
+   * simply there. */
+  .luna-stagger {
+    animation: lunaRiseIn var(--dur-base) var(--ease-out-expo) backwards;
+  }
+
+  /* FEAT-20260924-680 — a bar filling to its value: the continue row's
+     resume point. The consumer sets the bar's width; this scales it up from
+     nothing towards the start of the line, over `--dur-scene`, so a bar
+     reads as time passing rather than as a pop. `backwards`, so it rests at
+     its own transform — none. Honours `--i` like the cascade, so a bar can
+     wait for its card. Under `reduce` the bar is simply at its width. */
+  .luna-fill-in {
+    transform-origin: left;
+    animation: lunaFillIn var(--dur-scene) var(--ease-out-expo) backwards;
+  }
+
+  [dir="rtl"] .luna-fill-in {
+    transform-origin: right;
+  }
+
+  /* One stagger step for both: an item's index times 30ms, capped at twelve.
+     After the shorthands above, which would otherwise reset it. */
+  .luna-stagger,
+  .luna-fill-in {
+    animation-delay: calc(min(var(--i, 0), 12) * 30ms);
+  }
+
+  /* Artwork fading in as it loads instead of popping.
+   *
+   * The consumer renders the image with `data-loaded="false"` once it knows
+   * the load is still pending and flips it to `"true"` on load; an element
+   * with neither value is simply visible, which is the safe default for
+   * markup that has not been hydrated yet.
+   *
+   * An animation rather than a transition, deliberately. The `<img>` this
+   * goes on commonly carries a hover transition of its own (Luna Watch's
+   * `.poster-hover` transitions `transform`), and two `transition`
+   * shorthands on one element leave one of them dead according to which
+   * stylesheet happened to load last. An animation and a transition coexist.
+   * The cost is that `.motion-reduce-keep` — the transition-only escape
+   * hatch in `base.css` — does not apply; it does not need to, because under
+   * `reduce` this block is absent and the image appears the moment it has
+   * loaded, never hidden, exactly as it did before the class existed. */
+  .luna-img-in[data-loaded="false"] {
+    opacity: 0;
+  }
+
+  .luna-img-in[data-loaded="true"] {
+    animation: lunaImgIn var(--dur-base) ease-out;
+  }
+
+  /* Focus, felt: a four per cent lift on `:focus-visible`.
+   *
+   * For the television, where there is no pointer and the only focus
+   * feedback until now was the outline. No hover gate on purpose — hover is
+   * not what this is for — and no outline of its own: `base.css` draws the
+   * focus ring and this does not replace it.
+   *
+   * This class owns the element's `transition` shorthand. An element that
+   * also carries a transition of its own (Luna Watch's `.poster-lift`
+   * transitions `transform` and `box-shadow`) keeps only one of the two,
+   * decided by stylesheet order; put this on the element that does not
+   * already transition, or fold the two into one rule. */
+  .luna-focus-lift {
+    transition: transform var(--dur-fast) var(--ease-sheet);
+  }
+
+  .luna-focus-lift:focus-visible {
+    transform: scale(1.04);
+  }
+
+  /* FEAT-20260924-680 — a sheen across a surface, once, as it arrives: an
+     achievement's medallion. The band is the host's `::after`; the host is
+     the consumer's to shape — `relative overflow-hidden rounded-*` — so the
+     band is clipped by its radius. Not set here, because an unlayered
+     `position` would beat an `absolute` utility on the same host. Replays
+     when the host is inserted again. Under `reduce` there is no band. */
+  .luna-sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      var(--color-ink) 50%,
+      transparent 65%
+    );
+    opacity: 0;
+    animation: lunaSheen var(--dur-scene) var(--ease-sheet);
+  }
+
+  /* FEAT-20260924-680 — a card leaning towards the pointer or towards the
+   * direction focus arrived from, lifted as `.luna-focus-lift` lifts it.
+   *
+   * It replaces `.luna-focus-lift` on the element that carries it: both own
+   * the `transition` shorthand, and only one of two survives.
+   *
+   * It rests at `none`, like everything here: the lean is written only on
+   * `:focus-visible` and on a real hover, so a card nobody is pointing at
+   * or focused on is not a containing block. Hover is gated on a fine
+   * pointer because a touch screen's hover sticks after a tap.
+   *
+   * What moves it is four unitless numbers between -1 and 1 that the script
+   * (`useTilt`, `tiltFromDirection`) writes on the element: `--tilt-x`/`-y`
+   * lean it by that fraction of `--tilt-angle`, `--tilt-sx`/`-sy` carry the
+   * sheen. The script never knows an angle; the token does. `--tilt-dur`
+   * lets it slow the settle — a television card arriving tilted and coming
+   * to rest over `--dur-sheet` — without writing a transition inline.
+   *
+   * `will-change: transform` is written beside the lean and the glint, and
+   * only there. A changing 3D transform changes the scale the card is
+   * rastered at, so without the hint Chromium re-rasters it on every move —
+   * 53–59 raster tasks for 61 pointer moves across one card, and 0 with it
+   * (the 611 method, 2026-09-24). On the class itself it would make every
+   * card on a grid a layer while nobody is looking at it.
+   *
+   * Under `reduce` the whole block is absent: no lean, no lift, no sheen. */
+  .luna-tilt {
+    --tilt-lean: perspective(var(--tilt-depth))
+      rotateX(calc(var(--tilt-y, 0) * var(--tilt-angle)))
+      rotateY(calc(var(--tilt-x, 0) * var(--tilt-angle)))
+      scale(var(--tilt-lift, 1.04));
+    transition: transform var(--tilt-dur, var(--dur-fast)) var(--ease-sheet);
+  }
+
+  /* The highlight: an oversized radial gradient that is *moved*, not
+     repainted — a moving `background-position` paints every frame, a
+     `transform` does not. A child of the artwork's `overflow-hidden` box,
+     which clips it; strength by opacity, as the sheen's. */
+  .luna-tilt-sheen {
+    --tilt-glint: translate(
+      calc(var(--tilt-sx, 0) * 25%),
+      calc(var(--tilt-sy, 0) * 25%)
+    );
+    position: absolute;
+    inset: -50%;
+    pointer-events: none;
+    background: radial-gradient(closest-side, var(--color-ink), transparent);
+    opacity: 0;
+    transition:
+      opacity var(--tilt-dur, var(--dur-fast)) var(--ease-sheet),
+      transform var(--tilt-dur, var(--dur-fast)) var(--ease-sheet);
+  }
+
+  .luna-tilt:focus-visible {
+    transform: var(--tilt-lean);
+    will-change: transform;
+  }
+
+  .luna-tilt:focus-visible .luna-tilt-sheen {
+    opacity: 0.16;
+    transform: var(--tilt-glint);
+    will-change: transform;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .luna-tilt:hover {
+      transform: var(--tilt-lean);
+      will-change: transform;
+    }
+
+    .luna-tilt:hover .luna-tilt-sheen {
+      opacity: 0.16;
+      transform: var(--tilt-glint);
+      will-change: transform;
+    }
   }
 }

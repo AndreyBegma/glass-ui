@@ -43,7 +43,7 @@ const button = tv({
     'transition-[background-color,border-color,color,opacity] duration-(--dur-fast)',
     'disabled:opacity-40 disabled:pointer-events-none',
     // The touch target, invisible and pointer-coarse only. See the note above.
-    "after:absolute after:left-0 after:top-1/2 after:h-11 after:w-full after:-translate-y-1/2 after:content-['']",
+    "after:absolute after:left-0 after:top-1/2 after:h-(--size-tap) after:w-full after:-translate-y-1/2 after:content-['']",
     '[@media(pointer:fine)]:after:hidden',
   ],
   variants: {
@@ -59,8 +59,10 @@ const button = tv({
     },
     size: {
       sm: 'h-8 px-3 text-xs rounded-[calc(var(--radius-control)-4px)]',
-      md: 'h-10 px-4 text-sm rounded-control',
-      lg: 'h-12 px-6 text-base rounded-control',
+      md: 'h-(--size-control) px-4 text-sm rounded-control',
+      // One documented step above `md`: the control token plus 8px, the sofa
+      // rung's 40 -> 48 kept as a formula rather than a second literal.
+      lg: 'h-[calc(var(--size-control)+8px)] px-6 text-base rounded-control',
     },
     /** Square, for a button whose whole label is its icon. */
     icon: {

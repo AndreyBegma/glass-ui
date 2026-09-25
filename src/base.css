@@ -8,8 +8,10 @@
  * reduced-motion override takes the first two and leaves this one.
  *
  * The depth effect below expects the application to put `id="main-content"` on
- * the element that should go back when a sheet opens. That is a contract, and
- * it is the only one this file has.
+ * the element that should go back when a sheet opens, to mount `DepthOrigin`
+ * (`glass-ui/depth-origin`) once, and to keep every `position: fixed` layer
+ * that must stay put outside that element. That is the contract, and it is the
+ * only one this file has.
  */
 
 html {
@@ -22,6 +24,64 @@ body {
   -webkit-font-smoothing: antialiased;
   /* Prevent horizontal overflow from broken layouts */
   overflow-x: hidden;
+}
+
+/* BUG-20260924-693 — the scrollbar's width is paid once, by the gutter.
+ *
+ * A `Dialog` or `Sheet` takes Radix's scroll lock, which hides the page's
+ * scrollbar and gives `<body>` a `margin-right` of the scrollbar's width so
+ * the page's own flow does not widen into the space. Nothing does the same for
+ * `position: fixed` chrome: the viewport grows by 15px on a desktop with a
+ * classic scrollbar, and the header capsule moved 7.5px right every time a
+ * dialog opened and back when it closed.
+ *
+ * A stable gutter keeps the space reserved whether the scrollbar is drawn or
+ * not, so neither the flow nor the fixed layers see the viewport change. The
+ * lock still measures the old gap and adds its margin, which with the gutter
+ * already held would pay the width twice and move the page 7.5px left instead;
+ * the second rule takes the margin back. It has to out-rank the lock's own
+ * `body[data-scroll-locked]`, which is injected after this sheet and is
+ * `!important` too, and `html` in front is what does that.
+ *
+ * Overlay scrollbars — macOS, phones, the television — have no width, so
+ * both rules change nothing there. The cost is on a desktop with a classic
+ * scrollbar: a page that never scrolls keeps a ground-coloured strip where
+ * the scrollbar would be. */
+html {
+  scrollbar-gutter: stable;
+}
+
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+}
+
+/* BUG-20260925-708 — the gutter is not paid while the whole screen is the
+ * player.
+ *
+ * Element fullscreen (`requestFullscreen()` on the player, not the browser
+ * chrome's own F11) still measured against the gutter above: on a desktop
+ * with a classic scrollbar the fullscreen element was 1905px wide at a
+ * 1920px viewport, a 15px empty strip down the right edge. There is no
+ * scrollbar to reserve space for once the document cannot be scrolled past
+ * the fullscreen element, so the gutter is dropped for as long as `:fullscreen`
+ * matches. `:root:has(…)` outranks the plain `html` above by specificity, so
+ * this needs no `!important` and never touches the scroll-locked case: a
+ * sheet or dialog opened from inside the fullscreen element still gets the
+ * stable gutter it did before, unchanged. `:-webkit-full-screen` is the
+ * pre-standard form Safari used before it shipped `:fullscreen`, and it is a
+ * separate rule rather than a selector list with the standard form: a
+ * selector list is one rule, and `:has()` is unforgiving of an argument it
+ * does not recognise — a browser without `:-webkit-full-screen` support would
+ * drop the whole list, including the `:fullscreen` half it does understand.
+ * Chromium below 105 (Tizen's 94, the television) does not support `:has()`
+ * at all and ignores both rules, which is harmless there: the television's
+ * scrollbar is an overlay with no gutter to drop. */
+:root:has(:fullscreen) {
+  scrollbar-gutter: auto;
+}
+
+:root:has(:-webkit-full-screen) {
+  scrollbar-gutter: auto;
 }
 
 /* FEAT-20260823-364 — the page goes back when something opens over it.
@@ -43,9 +103,41 @@ body {
  *
  * The rounding is what makes the scale legible. Without it the page just gets
  * smaller; with it, it becomes a card that has been pushed back.
+ *
+ * BUG-20260924-698 — around the middle of the screen, and nothing else moves.
+ *
+ * The page is as tall as the document, so `transform-origin: top center` was
+ * the top of the document: scrolled 1200px, a tile slid up 89px as the sheet
+ * opened, and back as it closed. The origin is now the middle of the viewport,
+ * which only the scroll position knows; `DepthOrigin` measures it once when
+ * the lock appears and writes `--depth-origin-y`. Registered and not
+ * inherited, so writing it restyles this one element rather than the page
+ * under it. Without `DepthOrigin` it is `0px`, the top, as it always was.
+ *
+ * A transform also makes this element the containing block of every
+ * `position: fixed` descendant, for as long as it is applied. A viewport layer
+ * inside the page — an ambience behind the content — re-anchored to the whole
+ * document under the scrim (1425×900 became 1361×4393). No origin can undo
+ * that, so such layers live outside `#main-content`; see the contract at the
+ * top of this file.
+ *
+ * `overflow: clip` rather than `hidden`. Both clip to the rounded corners, but
+ * `hidden` makes this element a scroll container, and a `position: sticky`
+ * header inside the page then sticks to it instead of to the viewport — a
+ * catalogue's filter bar, scrolled, flew 687px up the moment its filter sheet
+ * opened. `clip` is not a scroll container.
  */
+@property --depth-origin-y {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 #main-content {
-  transform-origin: top center;
+  /* The fallback is for an engine without `@property`, where an unset,
+     unregistered property would make the whole declaration invalid and put
+     the origin at the centre of the document. */
+  transform-origin: 50% var(--depth-origin-y, 0px);
   transition:
     transform var(--dur-sheet) var(--ease-sheet),
     border-radius var(--dur-sheet) var(--ease-sheet);
@@ -54,7 +146,7 @@ body {
 body[data-scroll-locked] #main-content {
   transform: scale(0.955);
   border-radius: var(--radius-sheet);
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* A page that cannot animate should not jump instead. */
@@ -84,16 +176,84 @@ body[data-scroll-locked] #main-content {
  * the Tailwind utility unconditionally: a dialog at `rounded-sheet` collapsed
  * to 6px corners the moment it took focus. Browsers already draw the outline
  * following the element's own radius, so the declaration bought nothing and
- * cost that. */
+ * cost that.
+ *
+ * FEAT-20260902-004 — the colour is `--color-focus` rather than `#fff`, which
+ * is the same ring in dark and a visible one in light. A white outline on a
+ * white ground is not a quiet focus ring, it is no focus ring, and this is a
+ * ring somebody navigates a television with. The width and the offset are
+ * untouched: 3px is what makes it findable across a room, and the 4px offset
+ * is what keeps it off the element's own edge.
+ *
+ * The light value is `--color-ink`'s colour rather than the token itself, and
+ * deliberately so — see the note in `tokens.css`. */
 :focus-visible {
-  outline: 3px solid #fff;
+  outline: 3px solid var(--color-focus);
   outline-offset: 4px;
+}
+
+/* BUG-20260919-625 — no ring under the pointer.
+ *
+ * A Radix menu moves DOM focus to the item under the pointer, and in Chromium
+ * that script focus inherits `:focus-visible` from the menu content, which
+ * got it on open because nothing was focused before the trigger's prevented
+ * `pointerdown`. The browser therefore rang every hovered item, mouse or
+ * keyboard, and `outline-none` on the item could not stop it: this rule is
+ * unlayered and beats every utility. The surface that roves focus knows
+ * which input moved it — `hooks/use-input-modality.ts` writes
+ * `data-input="pointer"` after a `pointermove` and `"keyboard"` after a
+ * `keydown` — and that record is trusted over the browser's guess.
+ *
+ * Everything under a pointer surface, not only the highlighted item, and
+ * deliberately so: a surface whose last input was the pointer has nothing
+ * keyboard-focused inside it, and a text field a future menu carries has its
+ * caret for a focus indicator, the same reason `input:focus-visible` is
+ * exempted below. The next `keydown` on the surface brings the ring back. */
+[data-input="pointer"] :focus-visible {
+  outline: none;
 }
 
 /* Form elements manage their own focus style */
 textarea:focus-visible,
 input:focus-visible,
 select:focus-visible {
+  outline: none;
+}
+
+/* BUG-20260923-019 — no zoom on focus on a phone at the desk.
+ *
+ * iOS Safari zooms the page when a field under 16px takes focus, and leaves
+ * it zoomed. `Input`, `Select` and `Textarea` are `text-sm` (14px), and a raw
+ * `<input>` with no size gets the browser's 13.33px. Below `sm` (Tailwind's
+ * `40rem`), every field is 16px. Pixels and not `1rem`: an application that
+ * shrinks its root size must not bring the zoom back.
+ *
+ * Under the desk profile only. Luna Watch never sets `data-scale`, so nothing
+ * it renders moves. This file is unlayered, so the rule beats `text-sm`, and it
+ * also beats a *larger* size utility. A field that must stay bigger on a phone
+ * says so with `max-sm:!text-2xl`. */
+@media (width < 40rem) {
+  :root:where([data-scale="desk"]) :is(input, select, textarea) {
+    font-size: 16px;
+  }
+}
+
+/* The caret is a text editor's focus indicator; consumers draw their own
+   selected-node state. */
+[contenteditable="true"]:focus-visible {
+  outline: none;
+}
+
+/* BUG-20260925-707 — no ring around a dialog panel Radix focused itself.
+ *
+ * A Radix `Dialog` or `Sheet` with nothing focusable inside moves focus to its
+ * own content element (`role="dialog" tabindex="-1"`) so Escape and focus trap
+ * still work. Opened by a key, that focus is `:focus-visible`, and the base
+ * rule above rang the whole panel — a 3px line down its edge, not a ring
+ * around a control. This is the container Radix parks focus on when there is
+ * nothing else to park it on, never a real control: a button or field inside
+ * the same dialog keeps its ring untouched. */
+[role="dialog"][tabindex="-1"]:focus-visible {
   outline: none;
 }
 
@@ -130,15 +290,6 @@ select:focus-visible {
   }
 }
 
-/* FEAT-20260823-302 — the catalog rail's sections.
-   Suppressed by the reduced-motion block above. */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
+/* FEAT-20260823-302's `fadeIn` — the catalogue rail's sections — used to be
+   declared here. FEAT-20260916-598 moved it to `primitives/motion.css` as
+   `lunaDropIn`, where every keyframe the package declares now lives. */

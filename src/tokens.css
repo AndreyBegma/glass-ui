@@ -5,6 +5,14 @@
  * values and unchanged in names. It is deliberately not a redesign: the same
  * colours in the place where a redesign becomes one edit rather than a search
  * across an application.
+ *
+ * FEAT-20260902-004 gave it a second set of values. Dark is still the set with
+ * no selector, so an application that never says anything gets exactly what it
+ * got before this change; light is the same token names under two selectors at
+ * the bottom of this file. Nothing was renamed and nothing was added to the
+ * dark set except the four tokens that had to exist before a colour could be
+ * flipped at all — see `--color-focus`, `--glass-shadow` and `--glass-lit`
+ * below, each of which holds the value it was hard-coded to elsewhere.
  */
 
 /**
@@ -64,11 +72,52 @@
   --color-surface: #101015;
   --color-raised: #17171e;
 
-  /* Text, three levels and no fourth. Anything that wants a shade between
-     `ink-2` and `ink-3` wants one of them instead. */
+  /* FEAT-20260905-001 — the page, and the thing it lies on.
+   *
+   * `ground`/`surface`/`raised` are a ladder of *chrome*: how far a panel is
+   * from the back of the window. A document is not a rung on it. It is a sheet
+   * of paper with an edge, lying on a desk, and the desk is not "the ground
+   * one step down" — it is a different kind of thing, which is why an editor
+   * built out of `raised` on `ground` never quite looks like a page.
+   *
+   * So: two names, one meaning each. `canvas` is what a page lies on; `paper`
+   * is the page.
+   *
+   * Each theme grounds one end of the pair, and that is a symmetry rather than
+   * a coincidence to be tidied away. In dark the desk is the ground itself
+   * (`#09090c`, `--color-ground` to the digit) and the page is lifted off it;
+   * in light the page is the ground (`#ffffff`) and the desk is darkened
+   * behind it. Written as a literal here and not as `var(--color-ground)`:
+   * `@theme` entries that reference each other emit a utility whose value is a
+   * `var()` of a `var()`, and the light blocks have to break the reference
+   * anyway — one spelling in three places beats two spellings in three places.
+   *
+   * The dark `paper` is the one value in this pair that is a judgement rather
+   * than arithmetic, and `Q40` records it as the default with its trigger.
+   * Measured: `ink` `#f2f2f6` on it is 15.50:1, well past the 12:1 this had to
+   * clear, and it sits ΔL* 7.02 above `canvas` where light's page sits 6.53
+   * above its own — the two themes lift the page by the same amount. Against
+   * `raised` it is ΔL* 1.52, which is above it but by the narrowest step in
+   * the ladder; the two rungs are different kinds of thing and rarely touch,
+   * and if that ever stops being true this is the number that moves. */
+  --color-canvas: #09090c;
+  --color-paper: #1a1a21;
+
+  /* Text, three levels to read and a fourth that is not read. Anything that
+     wants a shade between `ink-2` and `ink-3` wants one of them instead.
+
+     BUG-20260923-019 — why a fourth now exists. `ink-3` is text somebody
+     reads (metadata, an empty state), and at the desk it is raised to clear
+     WCAG 1.4.3's 4.5:1; see the desk profile below. Some text is allowed to
+     be quiet: a decorative glyph, the label of a disabled control, which 1.4.3
+     exempts. `ink-4` is that tone, and it is today's `ink-3` to the digit in
+     every theme — so on the sofa the two are one colour, and nothing Luna
+     Watch renders moves. The desk leaves it alone. It is not gated, and it is
+     never the colour of anything a reader needs. */
   --color-ink: #f2f2f6;
   --color-ink-2: rgb(242 242 246 / 0.62);
   --color-ink-3: rgb(242 242 246 / 0.38);
+  --color-ink-4: rgb(242 242 246 / 0.38);
 
   /* Semantic, one hue per meaning. `emerald`, `rose` and `yellow` were the
      second spelling of these three and are retired. */
@@ -85,37 +134,123 @@
   --color-line-strong: rgb(255 255 255 / 0.14);
   --color-hover: rgb(255 255 255 / 0.1);
 
-  /* The material. See the `glass` utility below for what each part does. */
+  /* FEAT-20260902-004 — the focus ring, named.
+     It was `#fff` written into `base.css`, which is the one place a colour was
+     spelled outside this file and the two lines of `material.css`. On a white
+     ground a white ring is not a quiet ring, it is no ring: the value has to
+     be able to change with the theme, and a value that changes with the theme
+     is a token. Deliberately not `--color-ink`: a focus ring is not text, and
+     tying them would mean the dark ring quietly became `#f2f2f6`. */
+  --color-focus: #ffffff;
+
+  /* The material. See the `glass` utility below for what each part does.
+   *
+   * FEAT-20260919-618 — re-cut from five layers to seven, and a third rung.
+   * Every value below that moved was moved by a measurement, not by taste:
+   * the five-band probe (white, saturated yellow, mid grey, near-black, a real
+   * film frame) against the gates in `material.css` — `glass` >= 4:1 and
+   * `glass-strong` >= 5:1 for `--color-ink`, and 3:1 (WCAG 1.4.11, non-text)
+   * for the icon-only `glass-clear`. The table is in `material.css`. */
 
   /* The sheen — a white film that gives the panel a surface of its own. Small,
-     because it lightens, and lightening is the wrong direction over artwork. */
+     because it lightens, and lightening is the wrong direction over artwork.
+     The clear rung is the exception, and on purpose: it carries no body text
+     and almost no scrim, so it is found over a picture by the light it
+     reflects rather than by the shade it casts. Twice the sheen is what lifts
+     a disc off a black frame the way a real pane does. */
   --glass-sheen: rgb(255 255 255 / 0.06);
+  --glass-sheen-clear: rgb(255 255 255 / 0.12);
 
   /* The floor. A dark layer that guarantees the panel is never brighter than
-     this no matter what is behind it. Both of these are alpha over the ground,
-     so a dark backdrop still shows through; a bright one is capped. */
-  --glass-scrim: rgb(9 9 12 / 0.72);
-  --glass-scrim-strong: rgb(9 9 12 / 0.8);
+     this no matter what is behind it. All three are alpha over the ground, so
+     a dark backdrop still shows through; a bright one is capped.
+
+     FEAT-20260919-618: 0.72 -> 0.55, 0.8 -> 0.64, and the clear rung at 0.48.
+     Each is the lightest value that holds its gate on pure white with the
+     margin the strong rung always had: 4.43, 6.98 and 3.21 against
+     `--color-ink`. The issue's target of 0.28–0.40 for `glass` measures
+     3.1–3.9:1 on white and fails the gate; the scrim took the difference. */
+  --glass-scrim: rgb(9 9 12 / 0.55);
+  --glass-scrim-strong: rgb(9 9 12 / 0.64);
+  --glass-scrim-clear: rgb(9 9 12 / 0.48);
 
   /* The ceiling, and the part that makes this adaptive rather than fixed.
      `brightness()` is multiplicative, so it scales with what is actually
      behind: a white poster loses nearly half its luminance, a dark frame loses
      almost nothing it had. A fixed overlay cannot do that — it darkens the dark
-     frame just as much and the material turns into a painted panel. */
-  --glass-brightness: 0.55;
-  --glass-brightness-strong: 0.5;
+     frame just as much and the material turns into a painted panel.
+
+     Worth knowing before retuning either: for luminance, `brightness()` below
+     one and a black scrim are the same operation — both scale the backdrop.
+     The argument above is against a *white* tint. So the two are one dial
+     with two names: the brightness is set where the issue asked (0.85), and
+     the scrim is whatever the gate then requires. */
+  --glass-brightness: 0.85;
+  --glass-brightness-strong: 0.7;
 
   --glass-edge: rgb(255 255 255 / 0.14);
   --glass-spec: rgb(255 255 255 / 0.2);
   --glass-blur: 26px;
+  --glass-blur-strong: 40px;
+
+  /* FEAT-20260919-618 — the rim, the meniscus and the refraction ring.
+
+     What made the old material read as a painted coin was that its edge was
+     a flat hairline and a 40px drop shadow. Real glass carries the light on
+     its edge: a thin bright rim where the light enters (top-left), a dark
+     rim where it leaves (bottom-right), a soft shaded band inside the bottom
+     edge where the pane is thickest — the meniscus — and a faint brightening
+     of the backdrop along the whole rim, which is the cheapest thing that
+     reads as refraction. Each is an inset `box-shadow` in `material.css`.
+
+     The rim is cool. `--color-ink`'s own colour (242 242 246) at alpha, never
+     a warm white: the ground is a cool near-black and the artwork supplies
+     every colour, so the one light the interface owns is lunar. */
+  --glass-rim: rgb(242 242 246 / 0.8);
+  --glass-rim-shade: rgb(9 9 12 / 0.5);
+  --glass-meniscus: rgb(9 9 12 / 0.55);
+  --glass-refract: rgb(242 242 246 / 0.35);
+
+  /* BUG-20260919-626 — the rim's straight run on the strong rung.
+
+     The rim above was tuned on a disc, where an offset inset shadow is a
+     crescent: `o · (1 − cos θ)` thick, tapering to nothing. A rounded
+     rectangle has no such mercy — the straight run gets the full pixel at the
+     full alpha for its whole length, and on a phone-sized menu 0.8 is a ruler
+     line. `glass-strong` is the rung that is always a large rectangle (sheets,
+     dialogs, menus, toasts, popovers), so its run reads this quieter pair; the
+     light itself is gathered on the top-left corner by a second inset in
+     `material.css` that still reads `--glass-rim`, so a sheet's corner carries
+     exactly the light a disc does. Measured on the probe: the run drops from
+     0.84 to 0.49 relative luminance (top, with the specular on it) and 0.385
+     (left) over a 0.19 panel; the corner stays at 0.85. */
+  --glass-rim-strong: rgb(242 242 246 / 0.22);
+  --glass-rim-shade-strong: rgb(9 9 12 / 0.2);
+
+  /* FEAT-20260902-004 — the shadow's colour, and the pointer highlight's,
+     named for the same reason the four layers above already were.
+     Both were literals inside `material.css`: `rgb(0 0 0 / 0.45)` under the
+     two utilities and `rgb(255 255 255 / 0.12)` inside `.lit::before`. Only
+     the geometry stayed behind — `0 16px 40px` is a distance, not a colour,
+     and it does not change with the theme.
+
+     FEAT-20260919-618: the rim carries the edge now, so the shadow recedes
+     (0.45 -> 0.35, 0.55 -> 0.45); a clear disc over a picture barely casts
+     one (0.15). The pointer light rises 0.12 -> 0.16 so it is the same
+     relative lift on a composite that is now lighter. */
+  --glass-shadow: rgb(0 0 0 / 0.35);
+  --glass-shadow-strong: rgb(0 0 0 / 0.45);
+  --glass-shadow-clear: rgb(0 0 0 / 0.15);
+  --glass-lit: rgb(255 255 255 / 0.16);
 
   /* The whole filter as one value, so a rung can switch it off rather than
      leave a zero-radius blur behind. A `backdrop-filter` that resolves to
      `blur(0px)` still asks the browser to prepare a backdrop pass; `none` does
-     not. */
+     not. The clear rung shares `--glass-filter`: it differs from `glass` in
+     its scrim and its sheen, not in its blur. */
   --glass-filter: blur(var(--glass-blur)) saturate(180%)
     brightness(var(--glass-brightness));
-  --glass-filter-strong: blur(40px) saturate(180%)
+  --glass-filter-strong: blur(var(--glass-blur-strong)) saturate(180%)
     brightness(var(--glass-brightness-strong));
 
   /* Three radii. A card at 12, its badge at 6 and the button under it at 16 is
@@ -123,6 +258,62 @@
   --radius-control: 12px;
   --radius-surface: 18px;
   --radius-sheet: 28px;
+
+  /* FEAT-20260911-001 — the density scale, named.
+   *
+   * Before this there was none: every control and row height was written where
+   * it was used, which is fine until a second product wants the same interface
+   * at a different distance. The desk profile at the bottom of this file is
+   * that second product, and a scale with one rung is not a scale — so naming
+   * the sofa values is half of this row rather than a tidy-up beside it.
+   *
+   * These five are **not** a redesign. Each one is the value the components
+   * already produced before anything here read the token, so an application
+   * that adopts the token renders exactly as it did — which is the whole
+   * reason Luna Watch can be handed this version without being in the wave
+   * that wrote it.
+   *
+   * FEAT-20260911-006 made four of the five consumers actually read theirs —
+   * row, control, field and tap; nav stays unclaimed — rather than merely
+   * matching the number. Where each one comes from, so the next reader does
+   * not have to go and measure it again:
+   *
+   *   --size-row     `MenuItem` reads it — `min-h-(--size-row)`, `items-center`
+   *                  centring the line box (`menu.tsx`). `Table`'s cell
+   *                  (`table.tsx`) still writes `px-3 py-2.5` — 10 + 20 + 10 —
+   *                  to the same number by hand; that consumer is unclaimed.
+   *   --size-control `Button size="md"` reads it — `h-(--size-control)`
+   *                  (`button.tsx`); was `h-10`. `lg` is one documented step
+   *                  above it, `calc(var(--size-control) + 8px)`.
+   *   --size-field   `Input` / `Select` / `SearchInput` read it —
+   *                  `h-(--size-field)` (`field.tsx`); was `h-11`.
+   *   --size-nav     `NavRail`'s item, `py-2.5` on the same line box; still
+   *                  unclaimed, like `Table`'s cell above.
+   *   --size-tap     `Button`'s invisible touch target reads it —
+   *                  `after:h-(--size-tap)` (`button.tsx`); was `after:h-11`.
+   *
+   * Two tokens for a control and a field, not one, because today they are 40
+   * and 44 and a single name would have to lie about one of them. A form field
+   * is taller than a toolbar button on purpose — it is a target you aim at and
+   * then type into.
+   *
+   * `--size-tap` is the odd one and stays odd: it is a *hit* area, not a visual
+   * size, it is already 44px for the reason the README gives, and the desk
+   * profile leaves it alone. A finger is the same size at either distance.
+   *
+   * `Button`'s `sm` (32px) and `lg` (48px) are deliberately **not** here. The
+   * scale names the default rung; the other two stay component-local until
+   * something actually needs them from outside. That is a decision, not an
+   * omission.
+   *
+   * `--size-*` is not one of Tailwind's theme namespaces, so these emit as
+   * plain custom properties the way `--glass-*` and `--dur-*` do. Read them as
+   * `h-[var(--size-row)]`. */
+  --size-row: 40px;
+  --size-control: 40px;
+  --size-field: 44px;
+  --size-nav: 40px;
+  --size-tap: 44px;
 
   /* FEAT-20260823-364 — the layers, named.
    *
@@ -141,11 +332,34 @@
   --z-index-transient: 80; /* toasts — outlive nothing, block nothing */
   --z-index-top: 9999; /* the skip link, and anything that must beat all */
 
-  /* Motion. One curve — the one iOS sheets settle on — and three durations. */
+  /* Motion. Two curves and four durations.
+   *
+   * `--ease-sheet` is the one iOS sheets settle on: a drawer decelerating into
+   * its stop. `--ease-out-expo` (FEAT-20260916-598) is the exponential
+   * ease-out every pop-in — dialog, menu, popover, tooltip, context menu, the
+   * command palette — had been writing by hand as `cubic-bezier(0.23,1,0.32,1)`
+   * at seven call sites while this block claimed "one curve": fast arrival, a
+   * long settle, for something that appears rather than slides. The desk
+   * profile below re-values the durations only; a curve is the same at any
+   * distance.
+   *
+   * `--dur-scene` (FEAT-20260924-680) is the fourth, and it is for one thing:
+   * a change that covers the whole viewport — a player fading to black, a
+   * poster flying across a 1080p screen, a bar filling from nothing. At
+   * `--dur-sheet` a full-screen move reads as a cut on a television across a
+   * room; much above 700ms it reads as waiting. Nothing smaller may use it.
+   *
+   * `--tilt-angle` and `--tilt-depth` are what `.luna-tilt` (`motion.css`)
+   * reads: how far a card leans at most, and the distance of the eye that
+   * sees it lean. Emitted as plain custom properties, like the durations. */
   --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
   --dur-fast: 140ms;
   --dur-base: 220ms;
   --dur-sheet: 420ms;
+  --dur-scene: 640ms;
+  --tilt-angle: 4deg;
+  --tilt-depth: 900px;
 
   /* Type. San Francisco where it exists, which is every Apple device this is
      watched on, and the self-hosted Inter that `next/font` injects as
@@ -157,7 +371,525 @@
 }
 
 /* The page gutter. Shared because it is a measure of a reading column, not a
-   decision about a media centre. */
+   decision about a media centre.
+
+   `color-scheme` is here rather than in `base.css` because it is a property of
+   the theme rather than an opinion about the page: it is what makes the
+   browser's own furniture — scrollbars, form controls, autofill, the caret —
+   agree with the palette. Without it a light page renders dark scrollbars and
+   a dark date picker, and the application cannot fix that without knowing to.
+   It sits *above* the light blocks on purpose; see the cascade note there. */
 :root {
   --safe: clamp(1rem, 4vw, 5rem);
+  color-scheme: dark;
 }
+
+/* FEAT-20260902-004 — the light set.
+ *
+ * Everything below is the same token names with a second set of values, and
+ * `material.css` is not touched by any of it: the light material is these ten
+ * `--glass-*` lines and nothing else. What the two selectors are for:
+ *
+ *   - the media block is the system default, guarded so that somebody who has
+ *     explicitly chosen dark keeps dark on a light desktop;
+ *   - the attribute block is the explicit choice, and it comes second so that
+ *     it wins the tie.
+ *
+ * Dark has no block of its own. It is the values above, with no selector, so a
+ * consumer that never sets `data-theme` is untouched by this file's second
+ * half — which was the point of the exercise.
+ *
+ * **Why `:where()`, and please do not take it off.** Written plainly, as
+ * `:root[data-theme="light"]`, these blocks weigh (0,2,0) and beat the `flat`
+ * rung in `material.css`, which is `:root` at (0,1,0). The consequence is not
+ * cosmetic: in light, `prefers-reduced-transparency: reduce` and
+ * `data-material="flat"` would silently stop working, and the material would
+ * refuse to switch off for exactly the readers who asked it to. `:where()`
+ * holds both blocks at (0,1,0), so the rungs keep winning on source order —
+ * `material.css` is imported after this file, as its header already requires —
+ * and every rung block over there stays as it was. It also keeps the package
+ * polite: an application overriding a token at plain `:root` still wins.
+ *
+ * The two blocks are byte-identical and `tokens.spec.ts` asserts it. A drift
+ * between them fails in one direction only — the toggle, or the system
+ * default, but never both — which is exactly how it survives a review.
+ *
+ * **Where the values come from.** Denitsa's shipped light palette
+ * (`packages/ui/src/tokens.css`) is the only light set either product has
+ * ever had, so it is the starting point, and then each level is pinned to the
+ * contrast the *dark* set measures against its own ground — because "the
+ * second level of text" has to mean the same thing in both themes or it means
+ * nothing. Measured on the four-band probe, 2026-09-02:
+ *
+ *   level    light on #ffffff    dark on #09090c
+ *   ink            17.72:1            17.81:1
+ *   ink-2           7.02:1             7.04:1
+ *   ink-3           3.18:1             3.25:1
+ *
+ * Two of those are deliberate departures from Denitsa's values, and they are
+ * the honest edges of this set rather than an oversight:
+ *
+ *   `--color-ink-3` is alpha 0.48, not Denitsa's `#a1a1aa`. That colour
+ *   measures 2.56:1 on white where the dark set's third rung measures 3.25:1;
+ *   shipped as-is, the third level of text would be visibly weaker in light
+ *   than in dark for no reason anybody decided.
+ *
+ *   `--color-ink-2` is alpha 0.72, not `#52525b` (which is alpha 0.75, 7.73:1).
+ *   The difference is one step of grey that nobody will see; the agreement
+ *   between the two themes is the part worth having.
+ *
+ * **The hairlines.** `--color-line` and `--color-hover` keep the dark set's
+ * alphas and only turn over in colour, because at that weight the same number
+ * really does draw the same hairline: 8% black on white measures 1.196:1 and
+ * 8% white on near-black measures 1.178:1. (Denitsa's `#e4e4e7` is 10.6%
+ * black, near enough that the agreement with dark wins.)
+ *
+ * `--color-line-strong` is the exception, at 0.18 rather than 0.14, and it is
+ * the one value here that was decided by looking rather than by arithmetic.
+ * It is tied to `--glass-edge` — the dark set ties them so that a border
+ * sitting beside the glass edge reads as the same weight rather than as a
+ * second opinion about it — and the edge has to do its work on the band where
+ * the panel and the backdrop are nearest each other. In dark that band is the
+ * near-black frame; in light it is white paper. Measured on the probe at 0.14
+ * the light edge came to 1.508:1 against that backdrop where dark's came to
+ * 1.637:1, which is a hairline doing visibly less work for no reason anybody
+ * chose. At 0.18 it measures 1.671:1, and against its own panel 1.530:1
+ * against dark's 1.548:1 — the same hairline, both ways round.
+ */
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])) {
+    color-scheme: light;
+
+    --color-ground: #ffffff;
+    --color-surface: #fafafa;
+    --color-raised: #f4f4f5;
+
+    /* The page and its desk, the other way round — see the dark set for what
+       the pair is for. Here the page *is* the ground and the desk is darkened
+       behind it, which is the arrangement paper has had on a desk for rather
+       longer than either theme. `#ececef` is a shade under `raised`, so a page
+       reads as lying on the canvas rather than as one more panel on it. */
+    --color-canvas: #ececef;
+    --color-paper: #ffffff;
+
+    --color-ink: #18181b;
+    --color-ink-2: rgb(24 24 27 / 0.72);
+    --color-ink-3: rgb(24 24 27 / 0.48);
+    --color-ink-4: rgb(24 24 27 / 0.48);
+
+    /* `ok` has never had a light value — Denitsa ships `warn` and `danger` and
+       has never needed a success colour. It is designed here: the same mint
+       family as the dark `#5fd3a0` (hue 158° against its 154°), pitched to sit
+       *between* `warn` and `danger` rather than above them, so that the three
+       semantic hues read as one set rather than as three separate decisions.
+       On white: ok 4.90:1, warn 5.02:1, danger 4.83:1. */
+    --color-ok: #0a8156;
+    --color-warn: #b45309;
+    --color-danger: #dc2626;
+
+    --color-line: rgb(0 0 0 / 0.08);
+    --color-line-strong: rgb(0 0 0 / 0.18);
+    --color-hover: rgb(0 0 0 / 0.1);
+
+    --color-focus: #18181b;
+
+    /* The material, with its five layers pointing the other way.
+
+       The scrim is the theme's own ground at the same two alphas, and it is a
+       **floor** here where it is a ceiling in dark: on a light ground the
+       failure case is a panel that goes too dark to read black text on, not
+       one that goes too bright.
+
+       The brightness values are the reciprocals of the dark pair — 1/0.55 is
+       1.82, 1/0.5 is 2.0 — so the filter moves the backdrop the same distance,
+       in the other direction. Over a near-black frame it does almost nothing,
+       exactly as `brightness(0.55)` does almost nothing to a near-black frame
+       in dark; the scrim is what bounds that case in both themes.
+
+       The specular is dark. A white highlight along the top edge of a panel
+       that is already near-white is not a quiet highlight, it is no highlight,
+       and the layer's job — saying where the panel's edge is — is the part
+       worth keeping. */
+    --glass-sheen: rgb(0 0 0 / 0.06);
+    --glass-sheen-clear: rgb(0 0 0 / 0.06);
+    --glass-scrim: rgb(255 255 255 / 0.52);
+    --glass-scrim-strong: rgb(255 255 255 / 0.64);
+    --glass-scrim-clear: rgb(255 255 255 / 0.42);
+    --glass-brightness: 1.15;
+    --glass-brightness-strong: 1.3;
+    --glass-edge: rgb(0 0 0 / 0.18);
+    --glass-spec: rgb(0 0 0 / 0.2);
+    --glass-rim: rgb(255 255 255 / 0.9);
+    --glass-rim-shade: rgb(24 24 27 / 0.18);
+    --glass-rim-strong: rgb(255 255 255 / 0.3);
+    --glass-rim-shade-strong: rgb(24 24 27 / 0.08);
+    --glass-meniscus: rgb(24 24 27 / 0.12);
+    --glass-refract: rgb(255 255 255 / 0.5);
+    --glass-shadow: rgb(0 0 0 / 0.12);
+    --glass-shadow-strong: rgb(0 0 0 / 0.16);
+    --glass-shadow-clear: rgb(0 0 0 / 0.08);
+    --glass-lit: rgb(0 0 0 / 0.09);
+  }
+}
+
+:root:where([data-theme="light"]) {
+  color-scheme: light;
+
+  --color-ground: #ffffff;
+  --color-surface: #fafafa;
+  --color-raised: #f4f4f5;
+
+  /* The page and its desk, the other way round — see the dark set for what
+     the pair is for. Here the page *is* the ground and the desk is darkened
+     behind it, which is the arrangement paper has had on a desk for rather
+     longer than either theme. `#ececef` is a shade under `raised`, so a page
+     reads as lying on the canvas rather than as one more panel on it. */
+  --color-canvas: #ececef;
+  --color-paper: #ffffff;
+
+  --color-ink: #18181b;
+  --color-ink-2: rgb(24 24 27 / 0.72);
+  --color-ink-3: rgb(24 24 27 / 0.48);
+  --color-ink-4: rgb(24 24 27 / 0.48);
+
+  /* `ok` has never had a light value — Denitsa ships `warn` and `danger` and
+     has never needed a success colour. It is designed here: the same mint
+     family as the dark `#5fd3a0` (hue 158° against its 154°), pitched to sit
+     *between* `warn` and `danger` rather than above them, so that the three
+     semantic hues read as one set rather than as three separate decisions.
+     On white: ok 4.90:1, warn 5.02:1, danger 4.83:1. */
+  --color-ok: #0a8156;
+  --color-warn: #b45309;
+  --color-danger: #dc2626;
+
+  --color-line: rgb(0 0 0 / 0.08);
+  --color-line-strong: rgb(0 0 0 / 0.18);
+  --color-hover: rgb(0 0 0 / 0.1);
+
+  --color-focus: #18181b;
+
+  /* The material, with its five layers pointing the other way.
+
+     The scrim is the theme's own ground at the same two alphas, and it is a
+     **floor** here where it is a ceiling in dark: on a light ground the
+     failure case is a panel that goes too dark to read black text on, not
+     one that goes too bright.
+
+     The brightness values are the reciprocals of the dark pair — 1/0.55 is
+     1.82, 1/0.5 is 2.0 — so the filter moves the backdrop the same distance,
+     in the other direction. Over a near-black frame it does almost nothing,
+     exactly as `brightness(0.55)` does almost nothing to a near-black frame
+     in dark; the scrim is what bounds that case in both themes.
+
+     The specular is dark. A white highlight along the top edge of a panel
+     that is already near-white is not a quiet highlight, it is no highlight,
+     and the layer's job — saying where the panel's edge is — is the part
+     worth keeping. */
+  --glass-sheen: rgb(0 0 0 / 0.06);
+  --glass-sheen-clear: rgb(0 0 0 / 0.06);
+  --glass-scrim: rgb(255 255 255 / 0.52);
+  --glass-scrim-strong: rgb(255 255 255 / 0.64);
+  --glass-scrim-clear: rgb(255 255 255 / 0.42);
+  --glass-brightness: 1.15;
+  --glass-brightness-strong: 1.3;
+  --glass-edge: rgb(0 0 0 / 0.18);
+  --glass-spec: rgb(0 0 0 / 0.2);
+  --glass-rim: rgb(255 255 255 / 0.9);
+  --glass-rim-shade: rgb(24 24 27 / 0.18);
+  --glass-rim-strong: rgb(255 255 255 / 0.3);
+  --glass-rim-shade-strong: rgb(24 24 27 / 0.08);
+  --glass-meniscus: rgb(24 24 27 / 0.12);
+  --glass-refract: rgb(255 255 255 / 0.5);
+  --glass-shadow: rgb(0 0 0 / 0.12);
+  --glass-shadow-strong: rgb(0 0 0 / 0.16);
+  --glass-shadow-clear: rgb(0 0 0 / 0.08);
+  --glass-lit: rgb(0 0 0 / 0.09);
+}
+
+/* FEAT-20260919-618 — the light material moved with the dark one, and was
+   measured the same way: on the five-band probe with `--color-ink` `#18181b`.
+   Light's hard band is the near-black frame, where `glass` holds 4.69:1,
+   `glass-strong` 6.63:1 and `glass-clear` 3.39:1. The rim turns over to a
+   white highlight on a near-white panel; the shade and the meniscus take the
+   light ink's colour at low alpha. */
+
+/* Four `--glass-*` tokens are deliberately **not** in the light blocks, and
+   `tokens.spec.ts` asserts their absence rather than merely tolerating it.
+   `--glass-blur` and `--glass-blur-strong` are distances and are the same in
+   both themes; `--glass-filter`
+   and `--glass-filter-strong` are composed out of `--glass-blur` and
+   `--glass-brightness`, so they flip themselves the moment the brightness
+   above does. Copying them into the light blocks would put `saturate(180%)` in
+   three places, and a value in three places is a value that will one day be
+   two values — a drift no assertion about "declared in both sets" could see,
+   because both sets would still declare it. */
+
+/* FEAT-20260911-001 — the desk profile. `E-104`.
+ *
+ * A fourth axis, beside `data-theme` and `data-material`. Denitsa is a
+ * workspace read at 60cm; Luna Watch is a media centre operated from a sofa,
+ * and every value above this line is the sofa's. They have shared this file
+ * since `E-92` and the sharing was the right call — what was wrong was
+ * pretending one set of distances serves both.
+ *
+ * **`desk` is unset by default, and that is the whole of Luna's protection.**
+ * Not a promise in a document: an application that never writes the attribute
+ * cannot be reached by anything below, because nothing below matches it.
+ * `tokens.spec.ts` holds every token above to its value at `3d1c78e` so that
+ * stays true under edit rather than under intention.
+ *
+ * **This adds no mechanism.** It is the light theme's shape — an attribute
+ * block, a media-guarded system block, `:where()` so source order settles ties
+ * — applied to a third question. If that shape is unfamiliar, the note above
+ * the light blocks explains what breaks without it.
+ *
+ * **Why `:where()` here too, and the same please-do-not.** Written plainly,
+ * `:root[data-scale="desk"]` weighs (0,2,0) and would beat the light blocks at
+ * (0,1,0) — so a light desk page would take the *white* hairlines below and
+ * draw them on white paper. That is not a hypothetical; it is the exact failure
+ * the light blocks' `:where()` was added to prevent, arriving a second time
+ * through a new door. At (0,1,0) all three blocks below settle on source order
+ * like everything else in this file, and the package stays polite: an
+ * application overriding a token at plain `:root` still wins.
+ *
+ * Which means **order is load-bearing**: the plain block sets the dark values,
+ * and the two light-desk blocks after it turn the theme-dependent half back
+ * over. Moving either above the light pair silently breaks light.
+ *
+ * `material.css` is untouched by all of this. Its rungs override `--glass-*`
+ * only, nothing here is a `--glass-*`, and it is still imported after this
+ * file — so `flat` keeps winning exactly as it does today, in both themes and
+ * at either distance.
+ */
+:root:where([data-scale="desk"]) {
+  /* Radii. The sofa values exist because a card seen across a room needs a
+     silhouette that survives the distance; at 60cm the same corner reads as a
+     toy. Three radii stay three radii — the argument above against a fourth is
+     about the scale, not about the distance. */
+  --radius-control: 6px;
+  --radius-surface: 8px;
+  --radius-sheet: 12px;
+
+  /* Motion. The curve is right and is not touched; the distances are not. A
+     pointer is not a remote control — at a desk the animation is a thing the
+     reader is waiting to finish, and 420ms of sheet is a wait. */
+  --dur-fast: 100ms;
+  --dur-base: 150ms;
+  --dur-sheet: 260ms;
+  --dur-scene: 420ms;
+
+  /* Hairlines heavier, hover lighter, and they move in opposite directions for
+     opposite reasons. On a dense opaque workspace the border carries structure
+     that the glass edge used to carry, so it has to be findable; a 10% hover
+     fill running down a list of forty rows under a moving pointer is a strobe.
+
+     Measured on `--color-raised`, the band where a hairline has the least to
+     work with: line 1.322:1 against the sofa rung's 1.250:1, line-strong
+     1.757:1 against 1.510:1, hover 1.171:1 against 1.322:1. */
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.18);
+  --color-hover: rgb(255 255 255 / 0.06);
+
+  /* BUG-20260923-019 — the third level of text, raised to be read. On the sofa
+     `ink-3` is pinned to the other theme (3.25:1 against light's 3.18:1),
+     not to WCAG 1.4.3. At a desk it is metadata and empty-state copy read
+     at 60cm, and 4.5:1 is the bar. The quiet tone it used to be is
+     `--color-ink-4`, which this block does not touch.
+
+     0.53, and 0.64 in light, so the two themes still agree with each other
+     (5.33:1 on the dark ground, 5.32:1 on white) and each clears the bar on
+     every surface it is read on — page, card, both text-bearing glass rungs
+     over the page, and a hovered row. The table is below the light-desk
+     blocks. `desk.spec.ts` is the gate. */
+  --color-ink-3: rgb(242 242 246 / 0.53);
+
+  /* Density. The sofa values are named above; these are the desk's. A row at
+     32 and a control at 28 is what a workspace looks like when the reader is
+     close enough to aim a pointer at it.
+
+     `--size-tap` is deliberately absent, and `tokens.spec.ts` asserts the
+     absence rather than tolerating it. It is a hit area rather than a visual
+     size and a finger is the same size at either distance; overriding it here
+     would be this row quietly undoing the rule the README states. */
+  --size-row: 32px;
+  --size-control: 28px;
+  --size-field: 28px;
+  --size-nav: 28px;
+
+  /* FEAT-20260911-001 — the accent returns, desk-only.
+   *
+   * `E-92` retired it and this does not un-retire it. Above this line there is
+   * still no accent of any kind: the primary action is `bg-ink text-ground`,
+   * links are ink with an underline, and a media centre laid over other
+   * people's artwork takes its colour from the artwork. That was right and it
+   * stays right — for a media centre. A workspace has no artwork to take
+   * colour from, and twenty-one places to be with nothing but weight to tell
+   * the current one apart.
+   *
+   * So the accent exists only under this attribute, and `--color-accent` is
+   * **undefined** anywhere else — deliberately, so a component that reaches
+   * for it outside the desk profile gets nothing and shows it, rather than a
+   * fallback that hides the mistake until somebody sees the wrong colour.
+   *
+   * A cold blue-violet, from `design.md`'s "cool blues and violets going warm
+   * at the edge". The warm edge stays traded. Hue 247.2°, which is well clear
+   * of Notion's ~208° blue on purpose: the brief is "like Notion, not a copy
+   * of Notion".
+   *
+   * **Why the ink flips and the fill does not go the way you would expect.**
+   * In dark these two gates are mutually exclusive, for every colour of every
+   * hue: white text on the accent needs its luminance at or below 0.1833, and
+   * 4.5:1 against `--color-raised` needs it at or above 0.2150. There is no
+   * overlap. So dark takes a *bright* violet with near-black ink, and light
+   * takes a dark violet with white ink — which is not a compromise, it is
+   * exactly where `bg-ink text-ground` already lands in each theme. The accent
+   * sits in the system rather than beside it.
+   *
+   * `#6C5CE0` was the starting point and did not survive the measurement: it
+   * reads 3.60:1 on `--color-raised`, against the 4.5:1 this is gated on.
+   * `#806FFC` is the smallest lift along the same hue that clears it.
+   *
+   * **The measurement.** 2026-09-11. Sampled out of a headless Chrome
+   * screenshot rather than computed — the same method `material.css` used for
+   * the glass, and here it is also the check that the cascade above actually
+   * resolves, since an unresolved `var()` samples as the ground behind it.
+   * See the table below the light blocks for the numbers as sampled.
+   *
+   * `--color-accent-soft` is the selected-row tint. Alpha rather than a hex so
+   * it works over `ground`, `surface` and `raised` alike; at 14% dark and 12%
+   * light it reads 1.18:1 / 1.20:1 against the row beneath — the weight
+   * `--color-hover` already works at — and leaves `--color-ink` above 13:1 on
+   * every ground. It is a tint, not a fill: nothing is ever written on it in
+   * `--color-accent-ink`. */
+  --color-accent: #806ffc;
+  --color-accent-ink: #09090c;
+  --color-accent-soft: rgb(128 111 252 / 0.14);
+}
+
+/* The theme-dependent half, turned back over. Same two selectors as the light
+   palette above and for the same two reasons: the media block is the system
+   default, guarded so an explicit dark choice keeps dark, and the attribute
+   block follows it to win the tie. Both are the desk selector with the theme
+   condition folded into the same `:where()`, so they stay at (0,1,0).
+
+   The radii, the durations and the density are not repeated: a corner radius
+   and a row height are distances and do not know what colour the page is.
+
+   The two blocks are byte-identical and `tokens.spec.ts` asserts it, for the
+   reason it asserts it of the light pair — a drift between them fails in one
+   direction only, so it survives a review. */
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])[data-scale="desk"]) {
+    /* Black at the alphas the light block already uses as its ratio to dark:
+       1.0 for `line` and `hover`, 0.18/0.14 for `line-strong`. Checked the way
+       the light palette checks its own — on `--color-raised`, these land
+       1.248:1 / 1.728:1 / 1.145:1 against dark's 1.322 / 1.757 / 1.171, inside
+       the tolerance that set already ships (1.521 against 1.510). */
+    --color-line: rgb(0 0 0 / 0.1);
+    --color-line-strong: rgb(0 0 0 / 0.23);
+    --color-hover: rgb(0 0 0 / 0.06);
+
+    --color-ink-3: rgb(24 24 27 / 0.64);
+
+    --color-accent: #5b4bd1;
+    --color-accent-ink: #ffffff;
+    --color-accent-soft: rgb(91 75 209 / 0.12);
+  }
+}
+
+:root:where([data-theme="light"][data-scale="desk"]) {
+  /* Black at the alphas the light block already uses as its ratio to dark:
+     1.0 for `line` and `hover`, 0.18/0.14 for `line-strong`. Checked the way
+     the light palette checks its own — on `--color-raised`, these land
+     1.248:1 / 1.728:1 / 1.145:1 against dark's 1.322 / 1.757 / 1.171, inside
+     the tolerance that set already ships (1.521 against 1.510). */
+  --color-line: rgb(0 0 0 / 0.1);
+  --color-line-strong: rgb(0 0 0 / 0.23);
+  --color-hover: rgb(0 0 0 / 0.06);
+
+  --color-ink-3: rgb(24 24 27 / 0.64);
+
+  --color-accent: #5b4bd1;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: rgb(91 75 209 / 0.12);
+}
+
+/* BUG-20260923-019 — `--color-ink-3` at the desk, measured. 2026-09-23.
+ *
+ * Sampled from a headless Chrome screenshot of a probe page that loads this
+ * file (with `@theme static` read as a plain block, because the probe is not
+ * compiled through Tailwind). Each band is a surface with `--color-ink-3` and
+ * `--color-ink-4` painted over it as solid fills. The glass bands are
+ * `material.css`'s background and `backdrop-filter`, over the page. So every
+ * cell is an alpha resolved by the compositor, not by arithmetic.
+ *
+ *                         dark 0.53 / ink-4     light 0.64 / ink-4
+ *   ground                  5.33    3.23          5.32    3.19
+ *   canvas                  5.33    3.23          5.00    3.08
+ *   paper                   5.17    3.32          5.32    3.19
+ *   surface                 5.30    3.28          5.25    3.17
+ *   raised                  5.20    3.32          5.13    3.13
+ *   glass over a page       5.08 – 5.20           5.03
+ *   glass-strong            5.11 – 5.18           5.06
+ *   hover over any          4.79 – 5.20           4.74 – 5.03
+ *
+ * Worst case: a hovered row, 4.79:1 over dark `paper` and 4.74:1 over light
+ * `canvas`. The page, card and glass surfaces bottom out at 5.08:1 and 5.00:1.
+ * The arithmetic `desk.spec.ts` gates on agrees to within 0.05 on the opaque
+ * bands. It reads up to 0.10 *higher* on dark glass (5.28 against 5.18 for
+ * glass-strong over the ground), because the compositor rounds every layer,
+ * the brightness pass included, to 8 bits. The sampled numbers are the ones
+ * above. The gate has 0.29 of headroom in dark and 0.22 in light, so the gap
+ * does not decide anything.
+ *
+ * The audit's 0.62 for light was tried and rejected: it reads 4.44:1 on a
+ * hovered row over `canvas`. `glass-clear` is not in the table. It carries no
+ * body text, and its gate is 3:1.
+ *
+ * With `data-scale` unset the same probe resolves `--color-ink-3` to 0.38 and
+ * 0.48, as before, and `--color-ink-4` to the same values. The sofa does not
+ * move. */
+
+/* FEAT-20260911-001 — the accent, measured. 2026-09-11.
+ *
+ * Sampled out of a headless Chrome screenshot (152.0.7977.64) of a probe page
+ * built from this file compiled through Tailwind — so these are pixels drawn
+ * after the whole cascade resolved, not values computed from the source. That
+ * distinction is the point: an accent that lost a specificity fight, or a
+ * `var()` that resolved to nothing, samples as the ground behind it and shows
+ * up here as a ratio of 1.00:1 rather than as a table that looks fine.
+ *
+ * Three bands per theme — `--color-ground`, `--color-surface`, `--color-raised`
+ * — with the accent painted on each, `--color-accent-ink` painted on the
+ * accent, and `--color-accent-soft` painted on the ground beside it.
+ *
+ *                      dark (#806FFC / #09090C)    light (#5B4BD1 / #FFFFFF)
+ *                      accent   ink    ink/soft    accent   ink    ink/soft
+ *   on ground           5.30    5.30    15.63       6.23    6.23    14.81
+ *   on surface          5.06    5.30    14.61       5.97    6.23    14.15
+ *   on raised           4.75    5.30    13.56       5.67    6.23    13.51
+ *
+ * `accent` is `--color-accent` against that band — gated at 4.5:1, because a
+ * link is body text and a link is one of the four places this colour is
+ * allowed. `ink` is `--color-accent-ink` on the accent, gated at 4.5:1 for the
+ * same reason: the primary action's label is body text too. `ink/soft` is
+ * `--color-ink` over the selected-row tint, which is not gated — it is here
+ * because a tint that quietly ate seven points of contrast would be worth
+ * knowing about, and it does not.
+ *
+ * Worst case is dark on `--color-raised` at 4.75:1. That is the one to watch
+ * and the one the arithmetic predicted: see the note above the dark values for
+ * why dark has the least room, and why it is the theme whose ink is black.
+ *
+ * The sampled numbers agreed with the computed ones to the last digit in all
+ * eighteen cells, which is expected — every colour in this table is opaque, so
+ * there is nothing for a compositor to disagree about. The screenshot was run
+ * anyway, because agreeing is the evidence that the cascade resolved. The
+ * glass measurement in `material.css` is the case where they genuinely differ,
+ * and that is the case this method was borrowed from.
+ *
+ * Also verified on the same render, and not by eye: the system-default light
+ * block and the explicit-toggle light block sample byte-identically across all
+ * three bands, and the compiled stylesheet has no unresolved `var()` outside
+ * `--lit` / `--lx` / `--ly`, which `material.css` writes at runtime and gives
+ * fallbacks to. */

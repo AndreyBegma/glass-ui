@@ -112,6 +112,37 @@ describe('fields are 16px on a phone at the desk', () => {
 });
 
 /**
+ * BUG-20260925-707 — no ring around a dialog panel Radix focused itself.
+ *
+ * A Radix `Dialog` or `Sheet` with nothing focusable inside parks focus on its
+ * own content element (`role="dialog" tabindex="-1"`), and opened by a key
+ * that focus is `:focus-visible`: the base ring rang the whole panel instead
+ * of a control. Source-level for the reason given at the top of this file.
+ */
+describe('the focus ring exempts a dialog panel Radix focused itself', () => {
+  test('the exemption is scoped to a tabindex="-1" dialog role, after the ring it overrides', () => {
+    const ring = CSS.indexOf(':focus-visible {');
+    const rule = CSS.indexOf('[role="dialog"][tabindex="-1"]:focus-visible');
+    expect(ring).toBeGreaterThan(-1);
+    expect(rule).toBeGreaterThan(ring);
+  });
+
+  test('the exemption removes the outline', () => {
+    const rule = CSS.indexOf('[role="dialog"][tabindex="-1"]:focus-visible');
+    const openBrace = CSS.indexOf('{', rule);
+    const closeBrace = CSS.indexOf('}', openBrace);
+    const body = CSS.slice(openBrace + 1, closeBrace);
+    expect(body).toContain('outline: none;');
+  });
+
+  test('a real control is not exempted — no rule reaches beyond the panel container', () => {
+    // A button or field is neither role="dialog" nor tabindex="-1"; the
+    // selector's specificity comes from matching both attributes together.
+    expect(CSS.match(/\[role="dialog"\]\[tabindex="-1"\]/g)).toHaveLength(1);
+  });
+});
+
+/**
  * BUG-20260924-693 — opening a dialog does not move the fixed chrome.
  *
  * Radix's scroll lock hides the scrollbar and pays its width back as a

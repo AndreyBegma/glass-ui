@@ -215,6 +215,19 @@ select:focus-visible {
   outline: none;
 }
 
+/* BUG-20260925-707 — no ring around a dialog panel Radix focused itself.
+ *
+ * A Radix `Dialog` or `Sheet` with nothing focusable inside moves focus to its
+ * own content element (`role="dialog" tabindex="-1"`) so Escape and focus trap
+ * still work. Opened by a key, that focus is `:focus-visible`, and the base
+ * rule above rang the whole panel — a 3px line down its edge, not a ring
+ * around a control. This is the container Radix parks focus on when there is
+ * nothing else to park it on, never a real control: a button or field inside
+ * the same dialog keeps its ring untouched. */
+[role="dialog"][tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
 /* Hide scrollbar but keep scrollable */
 .scrollbar-hide {
   -ms-overflow-style: none;

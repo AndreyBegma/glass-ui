@@ -177,6 +177,41 @@ describe('the scrollbar is paid for once, by the gutter', () => {
 });
 
 /**
+ * BUG-20260925-708 — the gutter is not paid while the whole screen is the
+ * player.
+ *
+ * A desktop with a classic scrollbar left a 15px empty strip down the right
+ * edge of an element in fullscreen: the gutter above stays reserved even
+ * though the document cannot scroll past the fullscreen element. Dropping it
+ * for `:fullscreen` is a `:root:has()` override, which outranks the plain
+ * `html` rule by specificity and needs no `!important`. Source-level for the
+ * reason given at the top of this file; the measurements in a real Chromium
+ * are in the bug report.
+ */
+describe('the gutter is dropped while an element is fullscreen', () => {
+  const RULES = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const bodyOf = (selector: string) => {
+    const match = [...RULES.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
+      (m) => m[1].trim() === selector,
+    );
+    expect(match).toBeDefined();
+    return match?.[2] ?? '';
+  };
+
+  test('the override covers the standard pseudo-class and the pre-standard WebKit one', () => {
+    const selector = ':root:has(:fullscreen),\n:root:has(:-webkit-full-screen)';
+    expect(bodyOf(selector)).toContain('scrollbar-gutter: auto;');
+  });
+
+  test('it comes after the stable gutter, so it is the one that wins on a match', () => {
+    const stable = CSS.indexOf('scrollbar-gutter: stable;');
+    const auto = CSS.indexOf('scrollbar-gutter: auto;');
+    expect(stable).toBeGreaterThan(-1);
+    expect(auto).toBeGreaterThan(stable);
+  });
+});
+
+/**
  * BUG-20260924-698 — the page goes back around the middle of the viewport,
  * and nothing that is not the page moves with it.
  *

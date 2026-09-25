@@ -55,6 +55,25 @@ html body[data-scroll-locked] {
   margin-right: 0 !important;
 }
 
+/* BUG-20260925-708 — the gutter is not paid while the whole screen is the
+ * player.
+ *
+ * Element fullscreen (`requestFullscreen()` on the player, not the browser
+ * chrome's own F11) still measured against the gutter above: on a desktop
+ * with a classic scrollbar the fullscreen element was 1905px wide at a
+ * 1920px viewport, a 15px empty strip down the right edge. There is no
+ * scrollbar to reserve space for once the document cannot be scrolled past
+ * the fullscreen element, so the gutter is dropped for as long as `:fullscreen`
+ * matches. `:root:has(…)` outranks the plain `html` above by specificity, so
+ * this needs no `!important` and never touches the scroll-locked case: a
+ * sheet or dialog opened from inside the fullscreen element still gets the
+ * stable gutter it did before, unchanged. `:-webkit-full-screen` is the
+ * pre-standard form Safari used before it shipped `:fullscreen`. */
+:root:has(:fullscreen),
+:root:has(:-webkit-full-screen) {
+  scrollbar-gutter: auto;
+}
+
 /* FEAT-20260823-364 — the page goes back when something opens over it.
  *
  * This is the one piece of depth that is felt rather than seen. A sheet that

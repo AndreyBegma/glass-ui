@@ -184,9 +184,12 @@ describe('the scrollbar is paid for once, by the gutter', () => {
  * edge of an element in fullscreen: the gutter above stays reserved even
  * though the document cannot scroll past the fullscreen element. Dropping it
  * for `:fullscreen` is a `:root:has()` override, which outranks the plain
- * `html` rule by specificity and needs no `!important`. Source-level for the
- * reason given at the top of this file; the measurements in a real Chromium
- * are in the bug report.
+ * `html` rule by specificity and needs no `!important`. Two separate rules,
+ * not a selector list, because `:has()` drops the whole list if one branch's
+ * argument is unrecognised — a browser without `:-webkit-full-screen` support
+ * must still get the standard `:fullscreen` rule. Source-level for the reason
+ * given at the top of this file; the measurements in a real Chromium are in
+ * the bug report.
  */
 describe('the gutter is dropped while an element is fullscreen', () => {
   const RULES = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
@@ -198,12 +201,16 @@ describe('the gutter is dropped while an element is fullscreen', () => {
     return match?.[2] ?? '';
   };
 
-  test('the override covers the standard pseudo-class and the pre-standard WebKit one', () => {
-    const selector = ':root:has(:fullscreen),\n:root:has(:-webkit-full-screen)';
-    expect(bodyOf(selector)).toContain('scrollbar-gutter: auto;');
+  test('the standard pseudo-class is its own rule', () => {
+    expect(bodyOf(':root:has(:fullscreen)')).toContain('scrollbar-gutter: auto;');
   });
 
-  test('it comes after the stable gutter, so it is the one that wins on a match', () => {
+  test('the pre-standard WebKit pseudo-class is a separate rule, not joined by a comma', () => {
+    expect(bodyOf(':root:has(:-webkit-full-screen)')).toContain('scrollbar-gutter: auto;');
+    expect(RULES).not.toContain(':root:has(:fullscreen),');
+  });
+
+  test('both come after the stable gutter, so they are what wins on a match', () => {
     const stable = CSS.indexOf('scrollbar-gutter: stable;');
     const auto = CSS.indexOf('scrollbar-gutter: auto;');
     expect(stable).toBeGreaterThan(-1);

@@ -68,8 +68,18 @@ html body[data-scroll-locked] {
  * this needs no `!important` and never touches the scroll-locked case: a
  * sheet or dialog opened from inside the fullscreen element still gets the
  * stable gutter it did before, unchanged. `:-webkit-full-screen` is the
- * pre-standard form Safari used before it shipped `:fullscreen`. */
-:root:has(:fullscreen),
+ * pre-standard form Safari used before it shipped `:fullscreen`, and it is a
+ * separate rule rather than a selector list with the standard form: a
+ * selector list is one rule, and `:has()` is unforgiving of an argument it
+ * does not recognise — a browser without `:-webkit-full-screen` support would
+ * drop the whole list, including the `:fullscreen` half it does understand.
+ * Chromium below 105 (Tizen's 94, the television) does not support `:has()`
+ * at all and ignores both rules, which is harmless there: the television's
+ * scrollbar is an overlay with no gutter to drop. */
+:root:has(:fullscreen) {
+  scrollbar-gutter: auto;
+}
+
 :root:has(:-webkit-full-screen) {
   scrollbar-gutter: auto;
 }

@@ -177,6 +177,48 @@ describe('the scrollbar is paid for once, by the gutter', () => {
 });
 
 /**
+ * BUG-20260925-708 — the gutter is not paid while the whole screen is the
+ * player.
+ *
+ * A desktop with a classic scrollbar left a 15px empty strip down the right
+ * edge of an element in fullscreen: the gutter above stays reserved even
+ * though the document cannot scroll past the fullscreen element. Dropping it
+ * for `:fullscreen` is a `:root:has()` override, which outranks the plain
+ * `html` rule by specificity and needs no `!important`. Two separate rules,
+ * not a selector list, because `:has()` drops the whole list if one branch's
+ * argument is unrecognised — a browser without `:-webkit-full-screen` support
+ * must still get the standard `:fullscreen` rule. Source-level for the reason
+ * given at the top of this file; the measurements in a real Chromium are in
+ * the bug report.
+ */
+describe('the gutter is dropped while an element is fullscreen', () => {
+  const RULES = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const bodyOf = (selector: string) => {
+    const match = [...RULES.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(
+      (m) => m[1].trim() === selector,
+    );
+    expect(match).toBeDefined();
+    return match?.[2] ?? '';
+  };
+
+  test('the standard pseudo-class is its own rule', () => {
+    expect(bodyOf(':root:has(:fullscreen)')).toContain('scrollbar-gutter: auto;');
+  });
+
+  test('the pre-standard WebKit pseudo-class is a separate rule, not joined by a comma', () => {
+    expect(bodyOf(':root:has(:-webkit-full-screen)')).toContain('scrollbar-gutter: auto;');
+    expect(RULES).not.toContain(':root:has(:fullscreen),');
+  });
+
+  test('both come after the stable gutter, so they are what wins on a match', () => {
+    const stable = CSS.indexOf('scrollbar-gutter: stable;');
+    const auto = CSS.indexOf('scrollbar-gutter: auto;');
+    expect(stable).toBeGreaterThan(-1);
+    expect(auto).toBeGreaterThan(stable);
+  });
+});
+
+/**
  * BUG-20260924-698 — the page goes back around the middle of the viewport,
  * and nothing that is not the page moves with it.
  *

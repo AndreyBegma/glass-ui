@@ -2,7 +2,7 @@
   "name": "glass-ui",
   "version": "0.1.0",
   "description": "The Liquid Glass design system: tokens, the glass material, and the primitives built out of them.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "private": true,
   "repository": {
     "type": "git",

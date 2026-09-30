@@ -12,12 +12,13 @@ import { cn } from '../lib/cn';
  *
  * Three decisions worth knowing before adding a fifth variant:
  *
- * **The primary action is white, not coloured.** Luna shows other people's
+ * **The primary action is ink, not coloured.** Luna shows other people's
  * artwork, and every poster on screen is already fighting for attention. An
  * accent-coloured button competes with the content it is meant to launch, which
  * is why Apple TV, Netflix and Plex all land on a neutral primary. The violet
  * that used to be here was also the single loudest tell that nobody had chosen
- * a palette.
+ * a palette. Ink is white in dark and near-black in light, and the desk profile
+ * does not change that: the accent is not the primary's fill (SYS-02).
  *
  * **The focus ring is not defined here.** `globals.css` puts a 3px white
  * outline on `:focus-visible` globally, sized to be legible across a room on a
@@ -30,6 +31,9 @@ import { cn } from '../lib/cn';
  * every control to 44px — makes dense toolbars look like a phone keyboard. The
  * `after:` pseudo-element below extends the *touch* target to 44px without
  * changing a pixel of what is drawn, and disappears entirely on a fine pointer.
+ * It is at least 44px wide as well as tall, centred on the button, so an icon
+ * button drawn at the desk's 28px is still 44 by 44 under a thumb
+ * (BUG-20260930-001, SYS-14).
  */
 const button = tv({
   base: [
@@ -43,22 +47,35 @@ const button = tv({
     'transition-[background-color,border-color,color,opacity] duration-(--dur-fast)',
     'disabled:opacity-40 disabled:pointer-events-none',
     // The touch target, invisible and pointer-coarse only. See the note above.
-    "after:absolute after:left-0 after:top-1/2 after:h-(--size-tap) after:w-full after:-translate-y-1/2 after:content-['']",
+    "after:absolute after:left-1/2 after:top-1/2 after:h-(--size-tap) after:w-full after:min-w-(--size-tap) after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']",
     '[@media(pointer:fine)]:after:hidden',
   ],
   variants: {
     variant: {
-      /** The one action a screen most wants you to take. One per screen. */
-      solid: 'bg-ink text-ground hover:bg-white',
+      /** The one action a screen most wants you to take. One per screen.
+       *  BUG-20260930-001 — the hover was `bg-white`, which in light is the
+       *  label's own colour: the label vanished under the pointer. Ink at 90%
+       *  moves the fill a step toward whatever is behind it and keeps the
+       *  label above 13:1 over any backdrop, in both themes. */
+      solid: 'bg-ink text-ground hover:bg-ink/90',
       /** Everything alongside the primary. Needs content behind it to read. */
       glass: 'glass text-ink hover:bg-hover',
       /** Tertiary: toolbars, close buttons, anything that should recede. */
       ghost: 'text-ink-2 hover:text-ink hover:bg-hover',
-      /** Destructive. Tinted rather than filled, so it warns without shouting. */
-      danger: 'bg-danger/12 text-danger border border-danger/30 hover:bg-danger/20',
+      /** Destructive. Tinted rather than filled, so it warns without shouting.
+       *  BUG-20260930-001 — the label is ink, not `danger`. A tint in the
+       *  label's own hue eats the label's contrast: in light `text-danger` on
+       *  it read 3.4:1 at rest and 3.0:1 on hover. The tint and the border say
+       *  "destructive"; the label only has to be read. */
+      danger: 'bg-danger/12 text-ink border border-danger/30 hover:bg-danger/20',
     },
     size: {
-      sm: 'h-8 px-3 text-xs rounded-[calc(var(--radius-control)-4px)]',
+      // `--size-control-sm` is the rung below the control token, so `sm` stays
+      // under `md` at the desk (24 against 28) where it used to be 32 against
+      // 28. The radius is two thirds of the control's rather than 4px less, so
+      // it scales with the corner instead of vanishing at the desk's 6px:
+      // 8px on the sofa as before, 4px at the desk rather than 2.
+      sm: 'h-(--size-control-sm) px-3 text-xs rounded-[calc(var(--radius-control)*2/3)]',
       md: 'h-(--size-control) px-4 text-sm rounded-control',
       // One documented step above `md`: the control token plus 8px, the sofa
       // rung's 40 -> 48 kept as a formula rather than a second literal.

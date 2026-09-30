@@ -94,6 +94,11 @@
     --color-canvas: #ececef;
     --color-paper: #ffffff;
 
+    /* SYS-04 — the card is the ground's white, and its edge lifts it; see the
+       note after the explicit block for the measurement. */
+    --color-card: #ffffff;
+    --color-card-line: rgb(0 0 0 / 0.15);
+
     --color-ink: #18181b;
     --color-ink-2: rgb(24 24 27 / 0.72);
     --color-ink-3: rgb(24 24 27 / 0.48);
@@ -160,6 +165,11 @@
   --color-canvas: #ececef;
   --color-paper: #ffffff;
 
+  /* SYS-04 — the card is the ground's white, and its edge lifts it; see the
+     note after this block for the measurement. */
+  --color-card: #ffffff;
+  --color-card-line: rgb(0 0 0 / 0.15);
+
   --color-ink: #18181b;
   --color-ink-2: rgb(24 24 27 / 0.72);
   --color-ink-3: rgb(24 24 27 / 0.48);
@@ -219,3 +229,24 @@
    three places, and a value in three places is a value that will one day be
    two values — a drift no assertion about "declared in both sets" could see,
    because both sets would still declare it. */
+
+/* FEAT-20260930-004 (SYS-04) — the light card, measured. 2026-09-30.
+ *
+ * What a dark card does, in numbers: its fill `#17171e` sits 1.115:1 above the
+ * `#09090c` ground, and its edge — the 8% white hairline painted over that
+ * fill — sits 1.396:1 above it. Up, both times; that is "raised".
+ *
+ * Light cannot go up from `#ffffff`. `raised` there is `#f4f4f5`, 1.100:1
+ * *below* the ground, which is the sunken card the review photographed. So the
+ * surface value is not the step, and the measurement picks **both**, in the
+ * only arrangement that works: the fill goes to the ground's white (no longer
+ * below it), and the edge carries the whole lift. Its alpha is the smallest
+ * black that puts the edge at least as far from the ground as dark's edge is:
+ *
+ *                    edge on ground   against dark's
+ *   sofa   0.15         1.411:1          1.396:1
+ *   desk   0.17         1.482:1          1.468:1   (dark's desk line is 10%)
+ *
+ * 0.14 and 0.16 each land a hundredth under dark's; the rule is "not weaker
+ * than the other theme", the one the light palette's own hairlines follow.
+ * `tokens.spec.ts` recomputes both and fails if either drifts under. */

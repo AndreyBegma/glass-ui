@@ -109,10 +109,26 @@ export interface KeyHintProps extends Omit<ComponentProps<'kbd'>, 'className' | 
   keys: string;
   /** Overrides detection. `navigator.userAgentData.platform` or `navigator.platform` otherwise. */
   platform?: string;
+  /** Draw it under a coarse pointer too — for a hint that is about a
+   *  hardware keyboard the reader is known to have. */
+  always?: boolean;
   className?: string;
 }
 
-export function KeyHint({ keys, platform, className, ...props }: KeyHintProps) {
+/**
+ * FEAT-20260930-004 (SYS-33) — no keyboard, no hint.
+ *
+ * On a phone `⌘K` is a caption for a key that does not exist. Under
+ * `(pointer: coarse)` the hint is `display: none` — out of the layout and out
+ * of the accessibility tree — unless `always` says otherwise. CSS rather than
+ * a `matchMedia` read, because the server cannot know the pointer and a
+ * client-side correction would draw the hint and then take it away on every
+ * touch device. A tablet with a keyboard cover reports a coarse primary
+ * pointer too; that reader loses a hint, never a shortcut.
+ *
+ * 12px, not 11: U7's floor for text anywhere (`E-127` d3).
+ */
+export function KeyHint({ keys, platform, always = false, className, ...props }: KeyHintProps) {
   const detected = useSyncExternalStore(subscribe, detectPlatform, serverPlatform);
   const resolved = platform ?? detected;
   const apple = isApplePlatform(resolved);
@@ -121,7 +137,8 @@ export function KeyHint({ keys, platform, className, ...props }: KeyHintProps) {
   return (
     <kbd
       className={cn(
-        'inline-flex items-center gap-0.5 font-sans text-[11px] font-medium text-ink-3',
+        'inline-flex items-center gap-0.5 font-sans text-xs font-medium text-ink-3',
+        !always && '[@media(pointer:coarse)]:hidden',
         className,
       )}
       {...props}
@@ -133,7 +150,7 @@ export function KeyHint({ keys, platform, className, ...props }: KeyHintProps) {
           <kbd
             className={cn(
               'inline-flex h-5 min-w-5 items-center justify-center px-1',
-              'rounded-[calc(var(--radius-control)-4px)] border border-line',
+              'rounded-[calc(var(--radius-control)*2/3)] border border-line',
               'font-sans leading-none',
             )}
           >

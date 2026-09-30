@@ -19,12 +19,18 @@ import { cn } from '../lib/cn';
  * Never on a grid item. Fifty blurred surfaces in a catalogue is both the
  * cheap-looking version of this effect and the one that costs the television
  * its frame rate.
+ *
+ * FEAT-20260930-004 (SYS-04) — `raised` reads `card` and `card-line`, not
+ * `raised` and `line`. In dark they are the same values; in light `raised` is
+ * darker than the white ground and the card read as sunken. The light card is
+ * the ground's white with an edge measured to lift it as far as dark's does —
+ * the numbers are in `tokens/light.css`. Still flat: no shadow (`E-104`).
  */
 const card = tv({
   base: 'rounded-surface',
   variants: {
     variant: {
-      raised: 'bg-raised border border-line',
+      raised: 'bg-card border border-card-line',
       surface: 'bg-surface border border-line',
       glass: 'glass',
       /** No fill at all — for grouping without drawing a second box. */

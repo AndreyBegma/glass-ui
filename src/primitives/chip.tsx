@@ -39,9 +39,18 @@ const chip = tv({
       /** Selected state for a filter the user has switched on. */
       selected: 'bg-ink text-ground',
     },
+    // FEAT-20260930-004 — sized and rounded the way `Button sm` is since
+    // BUG-20260930-001, not by subtracting pixels. `md` reads `--size-chip`
+    // (28px sofa, 24px desk). The radii are fractions of the control's, which
+    // are the same 8px and 6px on the sofa as before and 4px and 3px at the
+    // desk, where `-4px` and `-6px` had left 2px and nothing at all.
+    //
+    // `sm` is 12px text, not 10: U7 sets 12px as the floor for text anywhere
+    // (`E-127` d3). At 12px the 20px pill still fits with 4px above and below
+    // the line box (`leading-none`), so its height does not move.
     size: {
-      sm: 'h-5 px-1.5 text-[10px] rounded-[calc(var(--radius-control)-6px)]',
-      md: 'h-7 px-2.5 text-xs rounded-[calc(var(--radius-control)-4px)]',
+      sm: 'h-5 px-1.5 text-xs rounded-[calc(var(--radius-control)/2)]',
+      md: 'h-(--size-chip) px-2.5 text-xs rounded-[calc(var(--radius-control)*2/3)]',
       lg: 'h-9 px-3.5 text-sm rounded-control',
     },
   },

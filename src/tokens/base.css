@@ -75,6 +75,24 @@
   --color-canvas: #09090c;
   --color-paper: #1a1a21;
 
+  /* FEAT-20260930-004 (SYS-04) — a card, and its edge, named apart from the
+   * chrome ladder.
+   *
+   * `Card` was `bg-raised border-line`. In dark `raised` is a step *up* from
+   * the ground, which is what a card is. In light the ground is `#ffffff`,
+   * so every fill that is not the ground is darker than it — `raised` at
+   * `#f4f4f5` read as a well pressed into the page, not a panel on it
+   * (`today-1440-light.png`). No surface value can fix that from the fill
+   * side: nothing is lighter than white. The flat material (`E-104`) rules
+   * out a shadow. So the light card takes the ground's own white and its edge
+   * does the lifting — see the light blocks for the measured alpha.
+   *
+   * Dark does not move. `--color-card` is `raised` to the digit, and the edge
+   * *is* `--color-line`, by reference, so the desk's heavier hairline and the
+   * high-contrast rung still reach it exactly as they reached `border-line`. */
+  --color-card: #17171e;
+  --color-card-line: var(--color-line);
+
   /* Text, three levels to read and a fourth that is not read. Anything that
      wants a shade between `ink-2` and `ink-3` wants one of them instead.
 
@@ -221,6 +239,15 @@
   --size-field: 44px;
   --size-nav: 40px;
   --size-tap: 44px;
+
+  /* FEAT-20260930-004 — `Chip md`'s height, named so the desk can move it.
+     It was `h-7`, the same fixed-literal pattern `Button sm` had before
+     `--size-control-sm`. Measured against that token rather than assumed to
+     be it: the chip is 28px and `control-sm` is 32px on the sofa, so they
+     are two values and one name would lie about one of them. At the desk the
+     chip takes `control-sm`'s 24px, so a chip beside a small button in a
+     toolbar is the same height as it. */
+  --size-chip: 28px;
 
   /* FEAT-20260823-364 — the layers, named.
    *

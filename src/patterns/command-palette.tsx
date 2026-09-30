@@ -17,6 +17,7 @@ import { cn } from '../lib/cn';
 import { DialogRoot } from '../primitives/dialog';
 import { SearchField } from '../primitives/field';
 import { Skeleton } from '../primitives/skeleton';
+import { KeyHint } from './key-hint';
 import '../primitives/motion.css';
 
 /**
@@ -102,7 +103,20 @@ export interface CommandPaletteProps {
    * Left out, the English below.
    */
   liveStatus?: CommandPaletteLiveStatus;
+  /**
+   * FEAT-20260930-004 (TOP-3) — one row of key hints under the list: open,
+   * navigate, close. The words are the consumer's, like `liveStatus`; the keys
+   * are the palette's. Left out, there is no footer. Never drawn under a
+   * coarse pointer, where there are no keys to hint at (SYS-33).
+   */
+  hints?: CommandPaletteHints;
   className?: string;
+}
+
+export interface CommandPaletteHints {
+  open: string;
+  navigate: string;
+  close: string;
 }
 
 export interface CommandPaletteLiveStatus {
@@ -125,6 +139,7 @@ export function CommandPalette({
   placeholder = 'Search',
   empty,
   liveStatus = ENGLISH_LIVE_STATUS,
+  hints,
   className,
 }: CommandPaletteProps) {
   const reduced = useReducedMotion();
@@ -350,7 +365,12 @@ export function CommandPalette({
               aria-controls={listId}
               aria-autocomplete="list"
               aria-activedescendant={activeRowId}
-              inputClassName="border-transparent bg-transparent"
+              // FEAT-20260930-004 (SYS-20) — one border between the field and
+              // the list, the wrapper's. The field is focused the whole time
+              // the palette is open, so `Input`'s focus border and ring drew a
+              // second box inside the first on every open. The caret is the
+              // focus indicator here; there is nowhere else focus could be.
+              inputClassName="border-transparent bg-transparent focus:border-transparent focus:ring-0"
               onChange={(event) => {
                 setQuery(event.target.value);
                 // A new query is a new list; the highlight goes back to the top
@@ -393,9 +413,12 @@ export function CommandPalette({
                 role="group"
                 aria-labelledby={`${rowIdPrefix}-g-${group.id}`}
               >
+                {/* FEAT-20260930-004 (TOP-3) — the label role, 12/500, in
+                    the consumer's own case. It was 10px, semibold, uppercase
+                    and tracked wide: under U7's floor, and shouting. */}
                 <p
                   id={`${rowIdPrefix}-g-${group.id}`}
-                  className="text-ink-3 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest"
+                  className="text-ink-3 px-3 py-2 text-xs font-medium"
                 >
                   {group.title}
                 </p>
@@ -443,6 +466,29 @@ export function CommandPalette({
               </div>
             ))}
           </div>
+
+          {hints ? (
+            // Hidden from a reader, who has the combobox's own semantics and
+            // would hear three captions for keys it already announces.
+            <div
+              aria-hidden="true"
+              className="border-line text-ink-3 flex shrink-0 items-center gap-4 border-t px-4 py-2 text-xs [@media(pointer:coarse)]:hidden"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <KeyHint keys="Enter" always />
+                {hints.open}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <KeyHint keys="Up" always />
+                <KeyHint keys="Down" always />
+                {hints.navigate}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <KeyHint keys="Esc" always />
+                {hints.close}
+              </span>
+            </div>
+          ) : null}
         </RadixDialog.Content>
       </RadixDialog.Portal>
     </DialogRoot>

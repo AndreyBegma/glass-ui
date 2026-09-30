@@ -72,4 +72,21 @@ describe('KeyHint', () => {
     const hint = document.querySelector('kbd');
     expect(hint?.className.split(' ')).toContain('text-ink-3');
   });
+
+  // FEAT-20260930-004 (SYS-33). happy-dom evaluates no media query, so this
+  // asserts the rule the browser is handed, not the pixels.
+  test('under a coarse pointer it is not drawn, unless `always`', () => {
+    const { container, rerender } = render(<KeyHint keys="Mod+K" platform="MacIntel" />);
+    const classes = () => container.querySelector('kbd')?.className.split(' ') ?? [];
+    expect(classes()).toContain('[@media(pointer:coarse)]:hidden');
+    rerender(<KeyHint keys="Mod+K" platform="MacIntel" always />);
+    expect(classes()).not.toContain('[@media(pointer:coarse)]:hidden');
+  });
+
+  test('its text is 12px, the floor (`E-127` d3)', () => {
+    render(<KeyHint keys="Mod+K" platform="MacIntel" />);
+    const hint = document.querySelector('kbd');
+    expect(hint?.className.split(' ')).toContain('text-xs');
+    expect(hint?.className).not.toMatch(/text-\[\d+px\]/);
+  });
 });

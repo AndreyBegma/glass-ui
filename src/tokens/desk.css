@@ -97,6 +97,7 @@
   --size-control-sm: 24px;
   --size-field: 28px;
   --size-nav: 28px;
+  --size-chip: 24px;
 
   /* FEAT-20260911-001 — the accent returns, desk-only.
    *
@@ -176,6 +177,10 @@
 
     --color-ink-3: rgb(24 24 27 / 0.64);
 
+    /* SYS-04 — the card's edge, lifted as far as the desk's dark card; the
+       measurement is in `light.css`. */
+    --color-card-line: rgb(0 0 0 / 0.17);
+
     --color-accent: #5b4bd1;
     --color-accent-ink: #ffffff;
     --color-accent-soft: rgb(91 75 209 / 0.12);
@@ -194,6 +199,10 @@
 
   --color-ink-3: rgb(24 24 27 / 0.64);
 
+  /* SYS-04 — the card's edge, lifted as far as the desk's dark card; the
+     measurement is in `light.css`. */
+  --color-card-line: rgb(0 0 0 / 0.17);
+
   --color-accent: #5b4bd1;
   --color-accent-ink: #ffffff;
   --color-accent-soft: rgb(91 75 209 / 0.12);
@@ -201,8 +210,21 @@
 
 /* BUG-20260930-001 (SYS-14) — a field has no invisible hit area the way
    `Button` does, so under a thumb the desk gives it back the sofa's 44px.
-   Last and at (0,1,0), so it wins on source order. */
-@media (pointer: coarse) { :root:where([data-scale="desk"]) { --size-field: 44px; } }
+   Last and at (0,1,0), so it wins on source order.
+
+   FEAT-20260930-004 — a row and a navigation item have no invisible hit area
+   either: a menu row, a tree row and a rail item are the whole target. So the
+   same block gives them 44px, `--size-tap`, which is touch size rather than
+   the sofa's 40 — the sofa's 40 is a visual size seen across a room, and
+   40 under a thumb is still a miss by U7's acceptance line 11. The sofa, with
+   `data-scale` unset, is not reached by this block and does not move. */
+@media (pointer: coarse) {
+  :root:where([data-scale="desk"]) {
+    --size-field: 44px;
+    --size-row: 44px;
+    --size-nav: 44px;
+  }
+}
 
 /* BUG-20260923-019 — `--color-ink-3` at the desk, measured on this line's own
  * material. 2026-09-23, backported from glass-ui#45 (`e3ffecb`).

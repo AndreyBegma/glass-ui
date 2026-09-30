@@ -56,8 +56,18 @@ const button = tv({
        *  BUG-20260930-001 — the hover was `bg-white`, which in light is the
        *  label's own colour: the label vanished under the pointer. Ink at 90%
        *  moves the fill a step toward whatever is behind it and keeps the
-       *  label above 13:1 over any backdrop, in both themes. */
-      solid: 'bg-ink text-ground hover:bg-ink/90',
+       *  label above 13:1 over any backdrop, in both themes.
+       *
+       *  FEAT-20260930-004 (SYS-03) — disabled, it is the hover fill with a
+       *  quiet label, not a 40% ink slab. The slab was the loudest thing on a
+       *  form that could not be submitted. The label is `ink-2`, not the
+       *  `ink-3` U7 proposed: `ink-3` measured 2.89–2.98:1 on the sofa's
+       *  light `canvas`, `raised` and `surface`, under the 3:1 floor.
+       *  `ink-2` clears it everywhere and stays far under the live primary
+       *  (`button.spec.ts`). Rarely needed: a primary stays enabled and
+       *  validates on submit (README). */
+      solid:
+        'bg-ink text-ground hover:bg-ink/90 disabled:bg-hover disabled:text-ink-2 disabled:opacity-100',
       /** Everything alongside the primary. Needs content behind it to read. */
       glass: 'glass text-ink hover:bg-hover',
       /** Tertiary: toolbars, close buttons, anything that should recede. */

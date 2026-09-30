@@ -1,0 +1,269 @@
+/**
+ * glass-ui — the base set: every token, at its sofa value, in the dark theme.
+ *
+ * FEAT-20260930-004 (u7-glass) split `tokens.css` by axis. This file is the one
+ * with no selector, so it is everything an application gets when it says
+ * nothing: dark, sofa, glass. The other three axes re-value names declared
+ * here and never declare a name of their own, except the accent, which is
+ * desk-only on purpose (`desk.css`).
+ *
+ * Imported first by `../tokens.css`. The order of the imports is the cascade:
+ * every block in these files weighs (0,1,0), so the last one wins.
+ */
+
+/* FEAT-20260823-362 — the design tokens.
+ *
+ * Before this block there were none. Every colour, radius, duration and font
+ * decision in the app was taken in place, inside a Tailwind class string, and
+ * the result was 11 greys for text, 17 surface values, two hues for every
+ * semantic meaning, five radii and no typeface at all. Not because anyone
+ * disagreed about the design — because there was nothing to disagree with.
+ *
+ * Tailwind 4 reads `@theme` and emits both the custom properties and the
+ * matching utilities, so `--color-ink` is usable as `text-ink` and as
+ * `var(--color-ink)`. Entries outside a known namespace — the `--glass-*` and
+ * `--dur-*` groups below — are emitted as plain custom properties, which is all
+ * they need to be.
+ *
+ * Tailwind's own palette is untouched, so every existing `zinc` and `violet`
+ * class keeps working. This block adds vocabulary; it does not restyle
+ * anything. The migration onto it happens in the pull requests after this one.
+ *
+ * `static`, deliberately. By default Tailwind emits only the theme variables it
+ * sees a utility for, so `--radius-surface` would resolve to nothing until the
+ * first `rounded-surface` appeared in a component — and any raw CSS reaching
+ * for `var(--radius-surface)` in the meantime would silently get an empty
+ * value. A token layer that is also read by hand-written CSS has to be present
+ * whether or not a utility happens to reference it yet.
+ */
+@theme static {
+  /* Ground. Cool near-black rather than `zinc`, because the glass tint below is
+     white and needs a ground with a blue bias to read as light rather than as
+     dirt. The difference from `zinc-950` is under a percent and deliberate. */
+  --color-ground: #09090c;
+  --color-surface: #101015;
+  --color-raised: #17171e;
+
+  /* FEAT-20260905-001 — the page, and the thing it lies on.
+   *
+   * `ground`/`surface`/`raised` are a ladder of *chrome*: how far a panel is
+   * from the back of the window. A document is not a rung on it. It is a sheet
+   * of paper with an edge, lying on a desk, and the desk is not "the ground
+   * one step down" — it is a different kind of thing, which is why an editor
+   * built out of `raised` on `ground` never quite looks like a page.
+   *
+   * So: two names, one meaning each. `canvas` is what a page lies on; `paper`
+   * is the page.
+   *
+   * Each theme grounds one end of the pair, and that is a symmetry rather than
+   * a coincidence to be tidied away. In dark the desk is the ground itself
+   * (`#09090c`, `--color-ground` to the digit) and the page is lifted off it;
+   * in light the page is the ground (`#ffffff`) and the desk is darkened
+   * behind it. Written as a literal here and not as `var(--color-ground)`:
+   * `@theme` entries that reference each other emit a utility whose value is a
+   * `var()` of a `var()`, and the light blocks have to break the reference
+   * anyway — one spelling in three places beats two spellings in three places.
+   *
+   * The dark `paper` is the one value in this pair that is a judgement rather
+   * than arithmetic, and `Q40` records it as the default with its trigger.
+   * Measured: `ink` `#f2f2f6` on it is 15.50:1, well past the 12:1 this had to
+   * clear, and it sits ΔL* 7.02 above `canvas` where light's page sits 6.53
+   * above its own — the two themes lift the page by the same amount. Against
+   * `raised` it is ΔL* 1.52, which is above it but by the narrowest step in
+   * the ladder; the two rungs are different kinds of thing and rarely touch,
+   * and if that ever stops being true this is the number that moves. */
+  --color-canvas: #09090c;
+  --color-paper: #1a1a21;
+
+  /* Text, three levels to read and a fourth that is not read. Anything that
+     wants a shade between `ink-2` and `ink-3` wants one of them instead.
+
+     BUG-20260923-019 — why a fourth now exists. `ink-3` is text somebody
+     reads (metadata, an empty state), and at the desk it is raised to clear
+     WCAG 1.4.3's 4.5:1; see the desk profile below. Some text is allowed to
+     be quiet: a decorative glyph, the label of a disabled control, which 1.4.3
+     exempts. `ink-4` is that tone, and it is today's `ink-3` to the digit in
+     every theme — so on the sofa the two are one colour, and nothing Luna
+     Watch renders moves. The desk leaves it alone. It is not gated, and it is
+     never the colour of anything a reader needs. */
+  --color-ink: #f2f2f6;
+  --color-ink-2: rgb(242 242 246 / 0.62);
+  --color-ink-3: rgb(242 242 246 / 0.38);
+  --color-ink-4: rgb(242 242 246 / 0.38);
+
+  /* Semantic, one hue per meaning. `emerald`, `rose` and `yellow` were the
+     second spelling of these three and are retired. */
+  --color-ok: #5fd3a0;
+  --color-warn: #e3b341;
+  --color-danger: #ff6b60;
+
+  /* FEAT-20260830-492 — a hairline and a hover fill, named.
+     337 `border-white/N` and `bg-white/N` values existed because there was
+     nowhere else to put a hairline or a hover state. `--color-line-strong`
+     matches `--glass-edge` on purpose: a border sitting next to the glass
+     edge should read as the same weight, not a second opinion about it. */
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+  --color-hover: rgb(255 255 255 / 0.1);
+
+  /* FEAT-20260902-004 — the focus ring, named.
+     It was `#fff` written into `base.css`, which is the one place a colour was
+     spelled outside this file and the two lines of `material.css`. On a white
+     ground a white ring is not a quiet ring, it is no ring: the value has to
+     be able to change with the theme, and a value that changes with the theme
+     is a token. Deliberately not `--color-ink`: a focus ring is not text, and
+     tying them would mean the dark ring quietly became `#f2f2f6`. */
+  --color-focus: #ffffff;
+
+  /* The material. See the `glass` utility below for what each part does. */
+
+  /* The sheen — a white film that gives the panel a surface of its own. Small,
+     because it lightens, and lightening is the wrong direction over artwork. */
+  --glass-sheen: rgb(255 255 255 / 0.06);
+
+  /* The floor. A dark layer that guarantees the panel is never brighter than
+     this no matter what is behind it. Both of these are alpha over the ground,
+     so a dark backdrop still shows through; a bright one is capped. */
+  --glass-scrim: rgb(9 9 12 / 0.72);
+  --glass-scrim-strong: rgb(9 9 12 / 0.8);
+
+  /* The ceiling, and the part that makes this adaptive rather than fixed.
+     `brightness()` is multiplicative, so it scales with what is actually
+     behind: a white poster loses nearly half its luminance, a dark frame loses
+     almost nothing it had. A fixed overlay cannot do that — it darkens the dark
+     frame just as much and the material turns into a painted panel. */
+  --glass-brightness: 0.55;
+  --glass-brightness-strong: 0.5;
+
+  --glass-edge: rgb(255 255 255 / 0.14);
+  --glass-spec: rgb(255 255 255 / 0.2);
+  --glass-blur: 26px;
+
+  /* FEAT-20260902-004 — the shadow's colour, and the pointer highlight's,
+     named for the same reason the four layers above already were.
+     Both were literals inside `material.css`: `rgb(0 0 0 / 0.45)` under the
+     two utilities and `rgb(255 255 255 / 0.12)` inside `.lit::before`. The
+     values here are those literals to the digit, so the dark material renders
+     byte for byte as it did. Only the geometry stayed behind — `0 16px 40px`
+     is a distance, not a colour, and it does not change with the theme. */
+  --glass-shadow: rgb(0 0 0 / 0.45);
+  --glass-shadow-strong: rgb(0 0 0 / 0.55);
+  --glass-lit: rgb(255 255 255 / 0.12);
+
+  /* The whole filter as one value, so a rung can switch it off rather than
+     leave a zero-radius blur behind. A `backdrop-filter` that resolves to
+     `blur(0px)` still asks the browser to prepare a backdrop pass; `none` does
+     not. */
+  --glass-filter: blur(var(--glass-blur)) saturate(180%)
+    brightness(var(--glass-brightness));
+  --glass-filter-strong: blur(40px) saturate(180%)
+    brightness(var(--glass-brightness-strong));
+
+  /* Three radii. A card at 12, its badge at 6 and the button under it at 16 is
+     what having five looks like. */
+  --radius-control: 12px;
+  --radius-surface: 18px;
+  --radius-sheet: 28px;
+
+  /* FEAT-20260911-001 — the density scale, named.
+   *
+   * Before this there was none: every control and row height was written where
+   * it was used, which is fine until a second product wants the same interface
+   * at a different distance. The desk profile at the bottom of this file is
+   * that second product, and a scale with one rung is not a scale — so naming
+   * the sofa values is half of this row rather than a tidy-up beside it.
+   *
+   * These five are **not** a redesign. Each one is the value the components
+   * already produced before anything here read the token, so an application
+   * that adopts the token renders exactly as it did — which is the whole
+   * reason Luna Watch can be handed this version without being in the wave
+   * that wrote it.
+   *
+   * FEAT-20260911-006 made four of the five consumers actually read theirs —
+   * row, control, field and tap; nav stays unclaimed — rather than merely
+   * matching the number. Where each one comes from, so the next reader does
+   * not have to go and measure it again:
+   *
+   *   --size-row     `MenuItem` reads it — `h-(--size-row)`, `items-center`
+   *                  centring the line box (`menu.tsx`). `Table`'s cell
+   *                  (`table.tsx`) still writes `px-3 py-2.5` — 10 + 20 + 10 —
+   *                  to the same number by hand; that consumer is unclaimed.
+   *   --size-control `Button size="md"` reads it — `h-(--size-control)`
+   *                  (`button.tsx`); was `h-10`. `lg` is one documented step
+   *                  above it, `calc(var(--size-control) + 8px)`.
+   *   --size-field   `Input` / `Select` / `SearchInput` read it —
+   *                  `h-(--size-field)` (`field.tsx`); was `h-11`.
+   *   --size-nav     `NavRail`'s item, `py-2.5` on the same line box; still
+   *                  unclaimed, like `Table`'s cell above.
+   *   --size-tap     `Button`'s invisible touch target reads it —
+   *                  `after:h-(--size-tap)` (`button.tsx`); was `after:h-11`.
+   *
+   * Two tokens for a control and a field, not one, because today they are 40
+   * and 44 and a single name would have to lie about one of them. A form field
+   * is taller than a toolbar button on purpose — it is a target you aim at and
+   * then type into.
+   *
+   * `--size-tap` is the odd one and stays odd: it is a *hit* area, not a visual
+   * size, it is already 44px for the reason the README gives, and the desk
+   * profile leaves it alone. A finger is the same size at either distance.
+   *
+   * `Button`'s `lg` (48px) is deliberately **not** here; it stays a formula
+   * over `--size-control`. `sm` was component-local too, until the desk put
+   * its fixed 32px above the desk's 28px `md` — BUG-20260930-001 (SYS-15)
+   * named it `--size-control-sm` so the desk can move it with the rest.
+   *
+   * `--size-*` is not one of Tailwind's theme namespaces, so these emit as
+   * plain custom properties the way `--glass-*` and `--dur-*` do. Read them as
+   * `h-[var(--size-row)]`. */
+  --size-row: 40px;
+  --size-control: 40px;
+  --size-control-sm: 32px;
+  --size-field: 44px;
+  --size-nav: 40px;
+  --size-tap: 44px;
+
+  /* FEAT-20260823-364 — the layers, named.
+   *
+   * There were ten z values in the app and no scheme behind them: `z-10`,
+   * `z-20`, `z-30`, `z-40`, `z-50`, and then `z-[60]`, `z-[70]`, `z-[100]`,
+   * `z-[9998]`, `z-[9999]` — each one chosen to beat whatever it collided with
+   * that day. That is not a hierarchy, it is a series of arguments won.
+   *
+   * These are the five layers the interface actually has. The gaps are wide on
+   * purpose: something can be slipped between two of them without another
+   * round of escalation.
+   */
+  --z-index-raised: 10; /* in-page: a badge over a poster, a sticky heading */
+  --z-index-chrome: 40; /* the header, the bottom capsule, the filter capsule */
+  --z-index-overlay: 60; /* sheets, dialogs, menus, and the scrim under them */
+  --z-index-transient: 80; /* toasts — outlive nothing, block nothing */
+  --z-index-top: 9999; /* the skip link, and anything that must beat all */
+
+  /* Motion. One curve — the one iOS sheets settle on — and three durations. */
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-sheet: 420ms;
+
+  /* Type. San Francisco where it exists, which is every Apple device this is
+     watched on, and the self-hosted Inter that `next/font` injects as
+     `--font-inter` everywhere else. Without this the app rendered in whatever
+     the browser defaulted to: fine on a Mac by accident, Arial on Windows. */
+  --font-sans:
+    "SF Pro Text", "SF Pro Display", var(--font-inter), system-ui,
+    -apple-system, "Segoe UI", sans-serif;
+}
+
+/* The page gutter. Shared because it is a measure of a reading column, not a
+   decision about a media centre.
+
+   `color-scheme` is here rather than in `base.css` because it is a property of
+   the theme rather than an opinion about the page: it is what makes the
+   browser's own furniture — scrollbars, form controls, autofill, the caret —
+   agree with the palette. Without it a light page renders dark scrollbars and
+   a dark date picker, and the application cannot fix that without knowing to.
+   It sits *above* the light blocks on purpose; see the cascade note there. */
+:root {
+  --safe: clamp(1rem, 4vw, 5rem);
+  color-scheme: dark;
+}

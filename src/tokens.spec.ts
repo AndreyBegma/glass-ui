@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
+import { readTokens } from './tokens/read';
 
 /**
  * FEAT-20260831-501 — the one rule that has to survive a second application.
@@ -130,7 +131,7 @@ describe('the palette is spelled once', () => {
  *  reader who trips over the exclusion cannot quietly satisfy it by copying. */
 const DERIVED = ['--glass-blur', '--glass-filter', '--glass-filter-strong'];
 
-const TOKENS = readFileSync(join(SRC, 'tokens.css'), 'utf8').replace(
+const TOKENS = readTokens().replace(
   /\/\*[\s\S]*?\*\//g,
   ' ',
 );

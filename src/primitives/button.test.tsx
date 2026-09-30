@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readTokens } from '../tokens/read';
 import { Button } from './button';
 
 /**
@@ -14,10 +13,7 @@ import { Button } from './button';
  * token nudged without the component in view, or a component detached from
  * the token, both fail here rather than only looking right in one file.
  */
-const TOKENS_CSS = readFileSync(
-  join(new URL('.', import.meta.url).pathname, '..', 'tokens.css'),
-  'utf8',
-).replace(/\/\*[\s\S]*?\*\//g, ' ');
+const TOKENS_CSS = readTokens().replace(/\/\*[\s\S]*?\*\//g, ' ');
 
 /** The body of the rule whose selector starts at `marker`, braces matched. */
 function block(marker: string): string {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { readTokens } from '../tokens/read';
 import { buttonClassName } from './button';
 
 /**
@@ -68,7 +69,7 @@ describe('button.tsx spells no colour', () => {
 /* The tokens, as the cascade stacks them.                                   */
 /* ------------------------------------------------------------------------ */
 
-const TOKENS = readFileSync(join(HERE, '..', 'tokens.css'), 'utf8').replace(
+const TOKENS = readTokens().replace(
   /\/\*[\s\S]*?\*\//g,
   ' ',
 );

@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readTokens } from '../tokens/read';
 import { Input, SearchField, Select } from './field';
 
 /**
@@ -9,10 +8,7 @@ import { Input, SearchField, Select } from './field';
  * why this reads `tokens.css` directly rather than trusting the class name on
  * its own.
  */
-const TOKENS_CSS = readFileSync(
-  join(new URL('.', import.meta.url).pathname, '..', 'tokens.css'),
-  'utf8',
-).replace(/\/\*[\s\S]*?\*\//g, ' ');
+const TOKENS_CSS = readTokens().replace(/\/\*[\s\S]*?\*\//g, ' ');
 
 function block(marker: string): string {
   const at = TOKENS_CSS.indexOf(marker);

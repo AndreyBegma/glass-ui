@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readTokens } from '../tokens/read';
 import { buttonClassName } from './button';
 
 /**
@@ -17,10 +16,7 @@ import { buttonClassName } from './button';
  * size ceiling.
  */
 
-const TOKENS = readFileSync(
-  join(new URL('.', import.meta.url).pathname, '..', 'tokens.css'),
-  'utf8',
-).replace(/\/\*[\s\S]*?\*\//g, ' ');
+const TOKENS = readTokens().replace(/\/\*[\s\S]*?\*\//g, ' ');
 
 /** The body of the rule whose selector starts at `from`, braces matched. */
 function block(from: number): { body: string; end: number } {

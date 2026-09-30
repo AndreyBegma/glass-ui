@@ -54,14 +54,33 @@ describe('Button reads the density scale', () => {
     );
   });
 
-  test('`sm` is unchanged — the scale gives it no rung', () => {
+  test('`sm` reads `--size-control-sm`, its own rung', () => {
     render(<Button size="sm">Save</Button>);
-    expect(screen.getByRole('button').className).toContain('h-8');
+    expect(screen.getByRole('button').className).toContain('h-(--size-control-sm)');
+  });
+
+  test('`sm` takes two thirds of the control radius, not 4px less', () => {
+    render(<Button size="sm">Save</Button>);
+    expect(screen.getByRole('button').className).toContain(
+      'rounded-[calc(var(--radius-control)*2/3)]',
+    );
   });
 
   test('the touch target follows `--size-tap`, the token named for it', () => {
     render(<Button size="md">Save</Button>);
     expect(screen.getByRole('button').className).toContain('after:h-(--size-tap)');
+  });
+
+  test('the touch target is `--size-tap` wide too, centred on the button', () => {
+    render(<Button size="sm" icon aria-label="Close" />);
+    const className = screen.getByRole('button').className;
+    expect(className).toContain('after:min-w-(--size-tap)');
+    expect(className).toContain('after:left-1/2');
+    expect(className).toContain('after:-translate-x-1/2');
+  });
+
+  test('the sofa `sm` still measures the 32px it drew as `h-8`', () => {
+    expect(tokenValue(SOFA, '--size-control-sm')).toBe('32px');
   });
 
   test('the sofa rung measures what `md` and `lg` drew before: 40px and 48px', () => {
@@ -70,5 +89,44 @@ describe('Button reads the density scale', () => {
 
   test('the desk rung measures 28px', () => {
     expect(tokenValue(DESK, '--size-control')).toBe('28px');
+  });
+});
+
+/**
+ * BUG-20260930-001 (SYS-15) — at the desk `sm` was a fixed 32px over a 28px
+ * `md`, and its radius, 4px under the desk's 6px, was 2px. Each size is
+ * resolved here from the tokens it reads, at both distances, so the ladder is
+ * checked as drawn rather than as named.
+ */
+const px = (value: string) => {
+  const found = value.match(/^(\d+)px$/);
+  if (!found) throw new Error(`\`${value}\` is not a px length`);
+  return Number(found[1]);
+};
+
+describe.each([
+  ['the sofa', [SOFA]],
+  ['the desk', [SOFA, DESK]],
+])('%s: the sizes step up and the corners follow', (_n, blocks) => {
+  const read = (name: string) => {
+    for (const body of [...blocks].reverse()) {
+      if (new RegExp(`${name}\\s*:`).test(body)) return px(tokenValue(body, name));
+    }
+    throw new Error(`no \`${name}\``);
+  };
+
+  test('sm < md < lg', () => {
+    const md = read('--size-control');
+    const sm = read('--size-control-sm');
+    const lg = md + 8;
+    expect(sm).toBeLessThan(md);
+    expect(md).toBeLessThan(lg);
+  });
+
+  test('the `sm` corner is at least 4px and no larger than `md`', () => {
+    const md = read('--radius-control');
+    const sm = (md * 2) / 3;
+    expect(sm).toBeGreaterThanOrEqual(4);
+    expect(sm).toBeLessThanOrEqual(md);
   });
 });

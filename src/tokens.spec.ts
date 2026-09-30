@@ -43,7 +43,6 @@ const LITERAL = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/g;
  * a new one fails the build.
  */
 const ALLOWED: Record<string, string[]> = {
-  'primitives/button.tsx': ['bg-white'],
   'primitives/chip.tsx': ['bg-black/55'],
   'primitives/dialog.tsx': ['bg-black/55'],
   'primitives/field.tsx': ['ring-white/22'],
@@ -342,6 +341,7 @@ const ADDED: Record<string, string> = {
   '--size-field': 'FEAT-20260911-001 decision 5 — the density scale',
   '--size-nav': 'FEAT-20260911-001 decision 5 — the density scale',
   '--size-tap': 'FEAT-20260911-001 decision 5 — the density scale',
+  '--size-control-sm': 'BUG-20260930-001 (SYS-15) — Button `sm`, named so the desk keeps it under `md`',
   '--color-ink-4': 'BUG-20260923-019 — the quiet tone, today\'s ink-3 kept by name when the desk raises ink-3',
 };
 
@@ -403,7 +403,7 @@ describe(`Luna Watch does not move (baseline ${BASELINE.commit})`, () => {
  * person to read `tokens.css` has no way to tell an intended asymmetry from an
  * accident unless every intended one is written down.
  *
- * Fourteen overrides and three definitions, and the split matters: an override
+ * Fifteen overrides and three definitions, and the split matters: an override
  * has a base value to fall back to, a definition does not. `--color-accent`
  * resolving to nothing outside the desk profile is the point of decision 6,
  * not a gap in it.
@@ -414,7 +414,7 @@ const DESK_OVERRIDES = [
   '--radius-control', '--radius-surface', '--radius-sheet',
   '--dur-fast', '--dur-base', '--dur-sheet',
   '--color-line', '--color-line-strong', '--color-hover',
-  '--size-row', '--size-control', '--size-field', '--size-nav',
+  '--size-row', '--size-control', '--size-control-sm', '--size-field', '--size-nav',
   // BUG-20260923-019 — raised to 4.5:1; the gate is `desk.spec.ts`.
   '--color-ink-3',
 ];

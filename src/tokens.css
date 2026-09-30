@@ -235,16 +235,17 @@
    * size, it is already 44px for the reason the README gives, and the desk
    * profile leaves it alone. A finger is the same size at either distance.
    *
-   * `Button`'s `sm` (32px) and `lg` (48px) are deliberately **not** here. The
-   * scale names the default rung; the other two stay component-local until
-   * something actually needs them from outside. That is a decision, not an
-   * omission.
+   * `Button`'s `lg` (48px) is deliberately **not** here; it stays a formula
+   * over `--size-control`. `sm` was component-local too, until the desk put
+   * its fixed 32px above the desk's 28px `md` — BUG-20260930-001 (SYS-15)
+   * named it `--size-control-sm` so the desk can move it with the rest.
    *
    * `--size-*` is not one of Tailwind's theme namespaces, so these emit as
    * plain custom properties the way `--glass-*` and `--dur-*` do. Read them as
    * `h-[var(--size-row)]`. */
   --size-row: 40px;
   --size-control: 40px;
+  --size-control-sm: 32px;
   --size-field: 44px;
   --size-nav: 40px;
   --size-tap: 44px;
@@ -597,6 +598,7 @@
      would be this row quietly undoing the rule the README states. */
   --size-row: 32px;
   --size-control: 28px;
+  --size-control-sm: 24px;
   --size-field: 28px;
   --size-nav: 28px;
 
@@ -628,6 +630,9 @@
    * takes a dark violet with white ink — which is not a compromise, it is
    * exactly where `bg-ink text-ground` already lands in each theme. The accent
    * sits in the system rather than beside it.
+   *
+   * The primary stays ink at the desk (BUG-20260930-001, SYS-02); the accent
+   * has three places and none carries a label, so `-ink` is kept and gated.
    *
    * `#6C5CE0` was the starting point and did not survive the measurement: it
    * reads 3.60:1 on `--color-raised`, against the 4.5:1 this is gated on.
@@ -698,6 +703,11 @@
   --color-accent-soft: rgb(91 75 209 / 0.12);
 }
 
+/* BUG-20260930-001 (SYS-14) — a field has no invisible hit area the way
+   `Button` does, so under a thumb the desk gives it back the sofa's 44px.
+   Last and at (0,1,0), so it wins on source order. */
+@media (pointer: coarse) { :root:where([data-scale="desk"]) { --size-field: 44px; } }
+
 /* BUG-20260923-019 — `--color-ink-3` at the desk, measured on this line's own
  * material. 2026-09-23, backported from glass-ui#45 (`e3ffecb`).
  *
@@ -763,7 +773,7 @@
  * `accent` is `--color-accent` against that band — gated at 4.5:1, because a
  * link is body text and a link is one of the four places this colour is
  * allowed. `ink` is `--color-accent-ink` on the accent, gated at 4.5:1 for the
- * same reason: the primary action's label is body text too. `ink/soft` is
+ * same reason: any label on the accent is body text. `ink/soft` is
  * `--color-ink` over the selected-row tint, which is not gated — it is here
  * because a tint that quietly ate seven points of contrast would be worth
  * knowing about, and it does not.

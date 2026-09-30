@@ -58,10 +58,13 @@ sheets, dialogs, menus, overlays and player controls use `glass` or
 is invisible against the flat ground and it costs a television its frame rate —
 two hundred glass tiles on one page is why this rule is written down.
 
-**The primary action is white** (`bg-ink text-ground`). The system was built for
-an interface that sits on top of other people's artwork, where every poster on
-screen is already competing for attention. Colour comes from the content. Under
-the desk profile it is the accent instead — see the two rules below.
+**The primary action is ink** (`bg-ink text-ground`): white in dark,
+near-black in light. The system was built for an interface that sits on top of
+other people's artwork, where every poster on screen is already competing for
+attention. Colour comes from the content. The desk profile does not change
+this: the primary is ink at either distance, and the accent is not its fill.
+Its hover is `ink/90`, never a raw `white`. A raw colour does not turn over
+with the theme, and in light a white hover was the label's own colour.
 
 **Three axes, each unset by default.** The document carries `data-theme`,
 `data-material` and `data-scale`, and every one of them does nothing until an
@@ -87,18 +90,19 @@ feels considered from a sofa is a wait at a desk. Radii go 6/8/12, durations
 100/150/260, hairlines get heavier and hover gets lighter, and the density
 scale drops a row from 40px to 32.
 
-**The accent is desk-only, and it has four places.** `--color-accent`,
+**The accent is desk-only, and it has three places.** `--color-accent`,
 `--color-accent-ink` and `--color-accent-soft` are defined under
 `data-scale="desk"` and are **undefined everywhere else** — a component that
 reads one outside the desk profile gets nothing, loudly, which is deliberate.
-The four places, and there is no fifth:
+The three places, and there is no fourth:
 
 | Where | Which token |
 |---|---|
 | The active navigation item | `--color-accent`, or `--color-accent-soft` behind it |
 | A selection — a chosen row, a picked option | `--color-accent-soft` |
-| The primary action's fill | `--color-accent`, label in `--color-accent-ink` |
 | A link | `--color-accent` |
+
+The primary action's fill is not one of them. It stays ink at the desk too.
 
 It is not a decorative colour. It does not go on a chart, a badge, an icon that
 is merely present, an empty state, or a border that wants to look important.
@@ -116,14 +120,20 @@ against it.
 
 **Hit area, visual size and the density scale are three different things.**
 `--size-row` (40px, a list row), `--size-control` (40px, a button),
-`--size-field` (44px, an input) and `--size-nav` (40px, a rail item) are the
-values the components produce, named so the desk profile can move them — it
-takes them to 32/28/28/28. `--size-tap` is 44px in both profiles and is not
-one of them; see the next rule.
+`--size-control-sm` (32px, a small button), `--size-field` (44px, an input)
+and `--size-nav` (40px, a rail item) are the values the components produce,
+named so the desk profile can move them — it takes them to 32/28/24/28/28.
+`--size-tap` is 44px in both profiles and is not one of them; see the next
+rule.
 
-- `Button`'s `md` reads `h-(--size-control)`; `lg` stays one documented step
-  above it, `calc(var(--size-control) + 8px)`, and is not part of the scale.
-- `Field`'s `Input`, `Select` and `SearchField` read `h-(--size-field)`.
+- `Button`'s `md` reads `h-(--size-control)` and `sm` reads
+  `h-(--size-control-sm)`, so `sm` stays under `md` at either distance. `lg`
+  stays one documented step above `md`, `calc(var(--size-control) + 8px)`, and
+  is not part of the scale. `sm`'s corner is two thirds of `--radius-control`:
+  8px on the sofa, 4px at the desk.
+- `Field`'s `Input`, `Select` and `SearchField` read `h-(--size-field)`. On a
+  coarse pointer the desk gives the field back its 44px. A field has no
+  invisible hit area to extend, so its drawn height is its target.
 - `Menu`'s rows read `h-(--size-row)`, the line box centred rather than
   pinned by padding, so it still centres at the desk rung's 32px.
 
@@ -135,8 +145,9 @@ and dimmer. Form elements and `contenteditable` editors are the only exemption
 state), and `base.css` already exempts them.
 
 **Hit area and visual size are separate.** `Button` carries an invisible `after:`
-pseudo-element that extends the touch target to 44px and disappears on a fine
-pointer. Forcing every control to 44px instead makes a dense toolbar look like a
+pseudo-element that extends the touch target to 44px, in height and in width,
+centred on the button, so a 28px icon button at the desk is still 44 by 44
+under a thumb. It disappears on a fine pointer. Forcing every control to 44px instead makes a dense toolbar look like a
 phone keyboard.
 
 **No emoji as iconography.** `lucide-react` is the icon set. Emoji render as

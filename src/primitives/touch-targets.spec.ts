@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readTokens } from '../tokens/read';
 import { buttonClassName } from './button';
 
 /**
@@ -17,10 +16,7 @@ import { buttonClassName } from './button';
  * size ceiling.
  */
 
-const TOKENS = readFileSync(
-  join(new URL('.', import.meta.url).pathname, '..', 'tokens.css'),
-  'utf8',
-).replace(/\/\*[\s\S]*?\*\//g, ' ');
+const TOKENS = readTokens().replace(/\/\*[\s\S]*?\*\//g, ' ');
 
 /** The body of the rule whose selector starts at `from`, braces matched. */
 function block(from: number): { body: string; end: number } {
@@ -50,14 +46,18 @@ describe('a field is a thumb’s size on a coarse pointer, at the desk too', () 
   const coarse = block(COARSE_AT).body;
   const tap = px(block(TOKENS.indexOf('@theme static')).body, '--size-tap');
 
-  test('it re-values the desk, and only the field', () => {
+  // FEAT-20260930-004 — rows and navigation items joined the field: like it,
+  // they are the whole target, with no invisible hit area to extend them.
+  const THUMB_SIZED = ['--size-field', '--size-row', '--size-nav'];
+
+  test('it re-values the desk, and only what has no hit area of its own', () => {
     expect(coarse).toContain(DESK_MARKER);
     const names = [...coarse.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]);
-    expect(names).toEqual(['--size-field']);
+    expect(names).toEqual(THUMB_SIZED);
   });
 
-  test('the field under a thumb is at least `--size-tap`', () => {
-    expect(px(coarse, '--size-field')).toBeGreaterThanOrEqual(tap);
+  test.each(THUMB_SIZED)('%s under a thumb is at least `--size-tap`', (token) => {
+    expect(px(coarse, token)).toBeGreaterThanOrEqual(tap);
   });
 
   test('the sofa field already is', () => {

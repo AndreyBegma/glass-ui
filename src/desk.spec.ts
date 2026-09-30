@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readTokens } from './tokens/read';
 
 /**
  * BUG-20260923-019 — the third level of text is readable at a desk.
@@ -26,10 +25,7 @@ import { join } from 'node:path';
  * another spec without registering its tests twice.
  */
 
-const TOKENS = readFileSync(
-  join(new URL('.', import.meta.url).pathname, 'tokens.css'),
-  'utf8',
-).replace(/\/\*[\s\S]*?\*\//g, ' ');
+const TOKENS = readTokens().replace(/\/\*[\s\S]*?\*\//g, ' ');
 
 /** Every custom property the rule starting at `marker` declares, as `name: value`. */
 function declarations(marker: string): string[] {

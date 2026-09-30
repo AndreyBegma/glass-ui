@@ -8,7 +8,7 @@ decline the third:
 
 | Import | What it is |
 |---|---|
-| `glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
+| `glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. An entry of three imports — `tokens/base.css`, `tokens/light.css`, `tokens/desk.css`, in that order, which is the cascade — and still the one file to import. |
 | `glass-ui/material.css` | `glass`, `glass-strong` and `lit`, and every fallback they need. |
 | `glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
 | `glass-ui` | The primitives and `cn`. |
@@ -52,6 +52,14 @@ carries the same weight in either theme. `ink` on `paper` measures 17.72:1 in
 light and 15.50:1 in dark, and `tokens.spec.ts` holds that above 12:1 in every
 value set.
 
+**A card is raised in both themes.** `Card raised` reads `card` and
+`card-line`. In dark they are `raised` and `line`, as they always were. In
+light nothing is lighter than the white ground, so any fill but white reads as
+sunken; the light card is the ground's white and its edge does the lifting — a
+black hairline at the smallest alpha that puts it as far from the ground as
+dark's card edge is (15% on the sofa, 17% at the desk). No shadow: the material
+is flat. `tokens.spec.ts` recomputes both.
+
 **New chrome is glass. Cards, grid items and rows are not.** Header, bottom bar,
 sheets, dialogs, menus, overlays and player controls use `glass` or
 `glass-strong`; anything carrying body text uses `glass-strong`. Glass on a card
@@ -65,6 +73,14 @@ attention. Colour comes from the content. The desk profile does not change
 this: the primary is ink at either distance, and the accent is not its fill.
 Its hover is `ink/90`, never a raw `white`. A raw colour does not turn over
 with the theme, and in light a white hover was the label's own colour.
+
+**A primary stays enabled and validates on submit; disabled only with a
+stated reason.** An incomplete form keeps its primary live and puts the error
+on the field. `disabled` is for an action that is impossible — a quota spent,
+a grant missing — and the reason is written beside it. When it is disabled,
+`solid` is the hover fill with an `ink-2` label, not a faded ink slab: at least
+3:1 on every surface in every set (5.52:1 at worst), and never the loudest
+thing on the form.
 
 **Three axes, each unset by default.** The document carries `data-theme`,
 `data-material` and `data-scale`, and every one of them does nothing until an
@@ -106,6 +122,7 @@ The primary action's fill is not one of them. It stays ink at the desk too.
 
 It is not a decorative colour. It does not go on a chart, a badge, an icon that
 is merely present, an empty state, or a border that wants to look important.
+An icon is never filled with the accent.
 `--color-ok`, `--color-warn` and `--color-danger` keep their meanings and the
 accent does not join them — **an accent is not a semantic**, and a colour that
 means both "primary" and "this one is fine" means neither.
@@ -135,7 +152,13 @@ rule.
   coarse pointer the desk gives the field back its 44px. A field has no
   invisible hit area to extend, so its drawn height is its target.
 - `Menu`'s rows read `h-(--size-row)`, the line box centred rather than
-  pinned by padding, so it still centres at the desk rung's 32px.
+  pinned by padding, so it still centres at the desk rung's 32px. On a coarse
+  pointer the desk gives rows and navigation items 44px, `--size-tap`, for the
+  field's reason: a row is its own whole target.
+- `Chip`'s `md` reads `h-(--size-chip)`: 28px on the sofa, 24px at the desk,
+  where it matches `--size-control-sm`. Its corners are fractions of
+  `--radius-control`, like `Button sm`'s. No text in the package is under
+  12px.
 
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
 `base.css` puts a 3px white outline on `:focus-visible`, sized to be read across
@@ -175,7 +198,7 @@ with the same capsule, the same rail and the same palette.
 |---|---|
 | `glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
 | `glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. |
-| `glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
+| `glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. One border between the field and the list; group headings at 12px, in the consumer's own case. Pass `hints` (`open`, `navigate`, `close`, in the reader's language) for one row of key hints under the list, which a coarse pointer never draws. |
 | `glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
 | `glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
 | `glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
@@ -263,6 +286,24 @@ and closed by this pull request. Each package answer:
 - `Progress` takes a `tone: neutral | ok | warn | danger` — the `Badge` set —
   on its fill; `neutral` is today's `bg-ink`.
 
+## Fixes from the design review
+
+`FEAT-20260930-004` (Denitsa's `U7`, the 2026-09-30 staging review) — the
+package's half, on `maint/v0.8`:
+
+- `Tabs` in a row too narrow for them scrolls sideways instead of clipping:
+  each item is at least its content's width, the row's bar is hidden,
+  `ScrollHintRow` fades the side that has more, and the current item scrolls
+  itself to the middle of the row on mount (the row only — never the page).
+  With room to spare, items still share it equally.
+- `DateInput` takes `locale` and sets it as the input's `lang` (an explicit
+  `lang` wins). Firefox and Safari order and name the date parts by it.
+  **Chromium does not**: it draws the field and its picker in the browser's
+  own UI language whatever `lang` says. That gap is accepted rather than
+  covered with a custom widget (`Q503`).
+- `Button solid`, `Card raised`, `Chip`, `KeyHint`, `CommandPalette` and the
+  density scale under a thumb: see the rules above and the tables below.
+
 ## The workspace patterns
 
 `E-104` makes Denitsa a workspace, and a workspace needs a two-level shell and
@@ -277,7 +318,7 @@ which had an ancestor in this package (`V2`). `E-92`'s line holds: these are
 | `glass-ui/breadcrumb` | `Breadcrumb` — the trail, with a measured collapsing middle behind an overflow `Menu` and the last item as the page. |
 | `glass-ui/row-actions` | `RowActions` and `rowActionsHost` — a row's affordances, revealed on hover, focus-within, selection, and always on a coarse pointer. |
 | `glass-ui/context-menu` | `ContextMenuRoot` / `Trigger` / `Content` / `Item` / `Separator` / `Label` / `RadioGroup` / `RadioItem` — the right-click menu on `Menu`'s exported styling. |
-| `glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. |
+| `glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. Not drawn under `(pointer: coarse)` — no keyboard, no hint — unless passed `always`. |
 
 Five rules, each the answer to something that was already going wrong.
 

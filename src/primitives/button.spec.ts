@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { readTokens } from '../tokens/read';
 import { buttonClassName } from './button';
 
 /**
@@ -68,7 +69,7 @@ describe('button.tsx spells no colour', () => {
 /* The tokens, as the cascade stacks them.                                   */
 /* ------------------------------------------------------------------------ */
 
-const TOKENS = readFileSync(join(HERE, '..', 'tokens.css'), 'utf8').replace(
+const TOKENS = readTokens().replace(
   /\/\*[\s\S]*?\*\//g,
   ' ',
 );
@@ -239,6 +240,42 @@ describe('every variant can be read, at rest and on hover', () => {
       expect(failing(sets, variant, true)).toEqual([]);
     });
   }
+});
+
+/**
+ * FEAT-20260930-004 (SYS-03) — a disabled primary is quiet, and still legible.
+ *
+ * It was the live primary at 40% opacity: an ink slab that out-shouted every
+ * enabled control beside it. Now it is the hover fill with `ink-2` on it —
+ * `ink-3` was tried first and read 2.89:1 on the sofa's light `canvas`.
+ * WCAG 1.4.3 exempts a disabled control's label, so the floor here is 3:1,
+ * the graphic floor, on every surface in every set — and the ceiling is the
+ * live primary's own ratio, so it can never be the loudest thing on a form.
+ */
+describe('a disabled primary is quiet and legible', () => {
+  const classes = buttonClassName({ variant: 'solid' }).split(/\s+/);
+
+  test('no opacity slab', () => {
+    expect(classes).toContain('disabled:opacity-100');
+    expect(classes).not.toContain('disabled:opacity-40');
+  });
+
+  test.each(SETS)('%s: ≥ 3:1 on its fill, and under the live primary', (_n, sets) => {
+    const fill = utility(classes, 'disabled:', 'bg');
+    const label = utility(classes, 'disabled:', 'text');
+    const liveFill = utility(classes, '', 'bg');
+    const liveLabel = utility(classes, '', 'text');
+    if (!fill || !label || !liveFill || !liveLabel) throw new Error('`solid` lost a layer');
+    const low = SURFACES.map((surface) => {
+      const page = colour(resolve(sets, surface)).rgb;
+      const behind = paint(sets, fill, page);
+      const live = paint(sets, liveFill, page);
+      const ratio = contrast(paint(sets, label, behind), behind);
+      const loud = contrast(paint(sets, liveLabel, live), live);
+      return { surface, ratio, loud };
+    }).filter(({ ratio, loud }) => ratio < 3 || ratio >= loud);
+    expect(low.map((l) => `${l.surface}: ${l.ratio.toFixed(2)}:1`)).toEqual([]);
+  });
 });
 
 /**

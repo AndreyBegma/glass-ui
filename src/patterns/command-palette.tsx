@@ -110,6 +110,13 @@ export interface CommandPaletteProps {
    * coarse pointer, where there are no keys to hint at (SYS-33).
    */
   hints?: CommandPaletteHints;
+  /**
+   * FEAT-20261001-012 (W7) — called with the field's key events before the
+   * palette's own handling, including when the list is empty. A handler that
+   * calls `event.preventDefault()` takes the key: Enter, Tab and the arrows are
+   * then not handled by the palette. Left out, nothing changes.
+   */
+  onInputKeyDown?: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
   className?: string;
 }
 
@@ -140,6 +147,7 @@ export function CommandPalette({
   empty,
   liveStatus = ENGLISH_LIVE_STATUS,
   hints,
+  onInputKeyDown,
   className,
 }: CommandPaletteProps) {
   const reduced = useReducedMotion();
@@ -275,6 +283,8 @@ export function CommandPalette({
 
   const onKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLInputElement>) => {
+      onInputKeyDown?.(event);
+      if (event.defaultPrevented) return;
       if (flat.length === 0) return;
       if (event.key === 'ArrowDown') {
         event.preventDefault();
@@ -287,7 +297,7 @@ export function CommandPalette({
         commit(activeIndex);
       }
     },
-    [flat.length, activeIndex, commit],
+    [flat.length, activeIndex, commit, onInputKeyDown],
   );
 
   /**

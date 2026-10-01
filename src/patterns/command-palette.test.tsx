@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useCallback, useState } from 'react';
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useState,
+} from 'react';
 import { useCommandPaletteShortcut } from '../hooks/use-command-palette-shortcut';
 import {
   CommandPalette,
@@ -32,11 +36,13 @@ const ACTIONS: CommandPaletteGroup = {
 function Shell({
   search,
   onPick,
+  onInputKeyDown,
 }: {
   search: (
     query: string,
   ) => CommandPaletteGroup[] | Promise<CommandPaletteGroup[]>;
   onPick?: (item: CommandPaletteItem, group: CommandPaletteGroup) => void;
+  onInputKeyDown?: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
 }) {
   const [open, setOpen] = useState(false);
   const onOpen = useCallback(() => setOpen(true), []);
@@ -57,6 +63,7 @@ function Shell({
         search={search}
         onSelect={(item, group) => onPick?.(item, group)}
         empty="Nothing matched."
+        onInputKeyDown={onInputKeyDown}
       />
     </div>
   );
@@ -189,6 +196,74 @@ describe('CommandPalette', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(picked).toEqual(['actions/capture']);
+  });
+
+  describe('onInputKeyDown', () => {
+    test('sees the key first, and a handler that does not prevent it changes nothing', async () => {
+      const seen: string[] = [];
+      const picked: string[] = [];
+      render(
+        <Shell
+          search={everything}
+          onPick={(item) => picked.push(item.id)}
+          onInputKeyDown={(event) => seen.push(event.key)}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Open palette' }));
+      await screen.findByRole('dialog');
+
+      const input = screen.getByRole('combobox');
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      await waitFor(() => expect(activeRow()?.textContent).toBe('NotesToday'));
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      expect(seen).toEqual(['ArrowDown', 'Enter']);
+      expect(picked).toEqual(['notes']);
+    });
+
+    test('preventDefault takes the key: Enter and the arrows are skipped', async () => {
+      const picked: string[] = [];
+      render(
+        <Shell
+          search={everything}
+          onPick={(item) => picked.push(item.id)}
+          onInputKeyDown={(event) => event.preventDefault()}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Open palette' }));
+      await screen.findByRole('dialog');
+
+      const input = screen.getByRole('combobox');
+      fireEvent.keyDown(input, { key: 'ArrowDown' });
+      expect(activeRow()?.textContent).toBe('TasksToday');
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(screen.getByRole('dialog')).toBeDefined();
+      expect(picked).toEqual([]);
+    });
+
+    test('Tab can be taken, and it is heard when nothing matched', async () => {
+      const tabs: string[] = [];
+      render(
+        <Shell
+          search={() => []}
+          onInputKeyDown={(event) => {
+            if (event.key === 'Tab') {
+              event.preventDefault();
+              tabs.push('tab');
+            }
+          }}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Open palette' }));
+      await screen.findByRole('dialog');
+
+      const notPrevented = fireEvent.keyDown(screen.getByRole('combobox'), {
+        key: 'Tab',
+      });
+      expect(tabs).toEqual(['tab']);
+      expect(notPrevented).toBe(false);
+    });
   });
 
   test('a click selects the row that was clicked', async () => {

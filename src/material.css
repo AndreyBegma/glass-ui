@@ -92,6 +92,34 @@
     0 24px 60px var(--glass-shadow-strong);
 }
 
+/* The hover response for a control that is itself glass.
+ *
+ * `hover:bg-hover` cannot do this: `glass` paints with `background`, a
+ * shorthand that replaces `background-color` outright, so a tint written as a
+ * colour sits under the scrim and never shows. This redraws `background` on
+ * `:hover` and `:focus-visible` with the tint as the top layer, above the
+ * material's own two. Pair it with `glass`; `glass-strong-hover` goes with
+ * `glass-strong`. */
+@utility glass-hover {
+  &:hover,
+  &:focus-visible {
+    background:
+      linear-gradient(var(--color-hover), var(--color-hover)),
+      linear-gradient(var(--glass-sheen), var(--glass-sheen)),
+      var(--glass-scrim);
+  }
+}
+
+@utility glass-strong-hover {
+  &:hover,
+  &:focus-visible {
+    background:
+      linear-gradient(var(--color-hover), var(--color-hover)),
+      linear-gradient(var(--glass-sheen), var(--glass-sheen)),
+      var(--glass-scrim-strong);
+  }
+}
+
 /* FEAT-20260823-364 — the material reacts to what is touching it.
  *
  * Two responses, and both are scoped to the moment rather than always on.

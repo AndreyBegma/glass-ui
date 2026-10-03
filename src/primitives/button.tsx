@@ -69,7 +69,7 @@ const button = tv({
       solid:
         'bg-ink text-ground hover:bg-ink/90 disabled:bg-hover disabled:text-ink-2 disabled:opacity-100',
       /** Everything alongside the primary. Needs content behind it to read. */
-      glass: 'glass text-ink hover:bg-hover',
+      glass: 'glass text-ink glass-hover',
       /** Tertiary: toolbars, close buttons, anything that should recede. */
       ghost: 'text-ink-2 hover:text-ink hover:bg-hover',
       /** Destructive. Tinted rather than filled, so it warns without shouting.

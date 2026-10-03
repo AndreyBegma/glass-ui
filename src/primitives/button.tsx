@@ -51,7 +51,7 @@ const button = tv({
       /** The one action a screen most wants you to take. One per screen. */
       solid: 'bg-ink text-ground hover:bg-white',
       /** Everything alongside the primary. Needs content behind it to read. */
-      glass: 'glass text-ink hover:bg-hover',
+      glass: 'glass text-ink glass-hover',
       /** Tertiary: toolbars, close buttons, anything that should recede. */
       ghost: 'text-ink-2 hover:text-ink hover:bg-hover',
       /** Destructive. Tinted rather than filled, so it warns without shouting. */

@@ -304,6 +304,7 @@ export { SplitPane, type SplitPaneProps } from './patterns/split-pane';
  */
 export {
   Chart,
+  type ChartLabels,
   type ChartPoint,
   type ChartProps,
   type ChartSeries,

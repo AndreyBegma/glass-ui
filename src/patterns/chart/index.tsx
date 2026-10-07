@@ -14,7 +14,7 @@ import { Button } from '../../primitives/button';
 import { ChartAxes } from './axes';
 import { buildModel, hasData, pickIndices } from './data';
 import { downsampleIndices, shouldDownsample } from './downsample';
-import { defaultFormatX, defaultFormatY, summarize } from './format';
+import { DEFAULT_LABELS, defaultFormatX, defaultFormatY, summarize } from './format';
 import { layoutChart } from './layout';
 import { ChartLegend } from './legend';
 import { seriesDash, seriesStyle } from './series-style';
@@ -23,6 +23,7 @@ import { ChartTooltip } from './tooltip';
 import type { ChartProps, ChartTooltipContext } from './types';
 
 export type {
+  ChartLabels,
   ChartPoint,
   ChartProps,
   ChartSeries,
@@ -68,8 +69,10 @@ export function Chart({
   emptyState,
   showTable,
   onShowTableChange,
+  labels: labelOverrides,
   className,
 }: ChartProps) {
+  const labels = { ...DEFAULT_LABELS, ...labelOverrides };
   const id = useId();
   const tableId = `${id}-table`;
   const clipId = `${id}-clip`;
@@ -125,7 +128,7 @@ export function Chart({
   const announce = (i: number) => {
     const c = contextAt(i);
     setAnnouncement(
-      `${fx(c.x)}: ${c.entries.map((e) => `${e.series.name} ${e.y === null ? 'no value' : fy(e.y)}`).join(', ')}`,
+      `${fx(c.x)}: ${c.entries.map((e) => `${e.series.name} ${e.y === null ? labels.noValue : fy(e.y)}`).join(', ')}`,
     );
   };
 
@@ -161,6 +164,7 @@ export function Chart({
     max,
     formatX: fx,
     formatY: fy,
+    labels,
   });
 
   const legendNode = legend ? <ChartLegend series={model.series} /> : null;
@@ -182,7 +186,7 @@ export function Chart({
           onClick={toggleTable}
           className="pointer-coarse:min-h-(--size-tap)"
         >
-          {tableOpen ? 'Hide table' : 'Show table'}
+          {tableOpen ? labels.hideTable : labels.showTable}
         </Button>
       </div>
 
@@ -305,7 +309,7 @@ export function Chart({
             data-chart-empty
             className="flex h-full items-center justify-center text-sm text-ink-3"
           >
-            {emptyState ?? 'No data'}
+            {emptyState ?? labels.empty}
           </div>
         )}
       </div>
@@ -321,6 +325,7 @@ export function Chart({
         label={label}
         model={model}
         kind={kind}
+        labels={labels}
         visible={tableOpen}
         downsampledFrom={downsampled ? full.xs.length : null}
         formatX={fx}

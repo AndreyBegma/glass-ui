@@ -1,6 +1,7 @@
 import { cn } from '../../lib/cn';
 import { Table, TableCell, TableHead, TableRow } from '../../primitives/table';
 import type { ChartModel } from './data';
+import type { ChartLabels } from './types';
 
 /**
  * #74 — the same data as a table (D6): one row per x, one column per series.
@@ -13,6 +14,7 @@ export function ChartTable({
   label,
   model,
   kind,
+  labels,
   visible,
   downsampledFrom,
   formatX,
@@ -22,6 +24,7 @@ export function ChartTable({
   label: string;
   model: ChartModel;
   kind: 'time' | 'category';
+  labels: Pick<ChartLabels, 'time' | 'category' | 'downsampled'>;
   visible: boolean;
   /** The x count before down-sampling, or `null` when nothing was dropped. */
   downsampledFrom: number | null;
@@ -34,13 +37,13 @@ export function ChartTable({
         <caption className={cn('text-left text-xs text-ink-3', visible ? 'pb-2' : undefined)}>
           {label}
           {downsampledFrom !== null
-            ? ` — down-sampled to ${model.xs.length} of ${downsampledFrom} points`
+            ? ` — ${labels.downsampled(model.xs.length, downsampledFrom)}`
             : null}
         </caption>
         <TableHead>
           <tr>
             <TableCell head scope="col">
-              {kind === 'time' ? 'Time' : 'Category'}
+              {kind === 'time' ? labels.time : labels.category}
             </TableCell>
             {model.series.map((s) => (
               <TableCell head scope="col" key={s.id} className="text-right">

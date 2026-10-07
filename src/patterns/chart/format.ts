@@ -5,7 +5,22 @@
  * `Intl.NumberFormat`, and a currency is never assumed.
  */
 
+import type { ChartLabels } from './types';
+
 const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
+
+/** Every rendered string can be overridden through `labels`, as in `LogViewer`. */
+export const DEFAULT_LABELS: ChartLabels = {
+  showTable: 'Show table',
+  hideTable: 'Hide table',
+  time: 'Time',
+  category: 'Category',
+  empty: 'No data',
+  downsampled: (kept, total) => `down-sampled to ${kept} of ${total} points`,
+  seriesCount: (count) => `${count} series`,
+  max: (value) => `max ${value}`,
+  noValue: 'no value',
+};
 
 export type FormatX = (x: Date | string | number) => string;
 export type FormatY = (y: number) => string;
@@ -43,6 +58,7 @@ export function summarize({
   max,
   formatX,
   formatY,
+  labels = DEFAULT_LABELS,
 }: {
   seriesCount: number;
   first: Date | string | number | undefined;
@@ -50,13 +66,14 @@ export function summarize({
   max: number | null;
   formatX: FormatX;
   formatY: FormatY;
+  labels?: Pick<ChartLabels, 'seriesCount' | 'max'>;
 }): string {
-  const parts = [`${seriesCount} series`];
+  const parts = [labels.seriesCount(seriesCount)];
   if (first !== undefined && last !== undefined) {
     const a = formatX(first);
     const b = formatX(last);
     parts.push(a === b ? a : `${a} – ${b}`);
   }
-  if (max !== null) parts.push(`max ${formatY(max)}`);
+  if (max !== null) parts.push(labels.max(formatY(max)));
   return parts.join(', ');
 }

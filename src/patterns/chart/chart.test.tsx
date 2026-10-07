@@ -278,6 +278,60 @@ describe('Chart', () => {
     expect(wrap().className).toContain('sr-only');
   });
 
+  test('labels override every rendered and announced string; the rest stay English', () => {
+    const gappy: ChartSeries[] = [
+      { id: 'c', name: 'Cost', kind: 'line', points: week([null, 2]) },
+    ];
+    const { container, rerender } = render(
+      <Chart
+        label="Kosten"
+        series={gappy}
+        x="time"
+        formatX={() => 'Tag'}
+        labels={{
+          showTable: 'Tabelle zeigen',
+          hideTable: 'Tabelle ausblenden',
+          time: 'Zeit',
+          seriesCount: (n) => `${n} Reihe`,
+          max: (v) => `Maximum ${v}`,
+          noValue: 'kein Wert',
+        }}
+      />,
+    );
+    expect(svgOf(container).getAttribute('aria-label')).toBe('Kosten. 1 Reihe, Tag, Maximum 2');
+    expect(container.querySelector('thead th')?.textContent).toBe('Zeit');
+    fireEvent.click(screen.getByRole('button', { name: 'Tabelle zeigen' }));
+    expect(screen.getByRole('button', { name: 'Tabelle ausblenden' })).toBeTruthy();
+    fireEvent.keyDown(svgOf(container), { key: 'Home' });
+    expect(live(container).textContent).toBe('Tag: Cost kein Wert');
+
+    rerender(
+      <Chart label="Kosten" series={[]} x="category" labels={{ empty: 'Keine Daten', category: 'Kategorie' }} />,
+    );
+    expect(container.querySelector('[data-chart-empty]')?.textContent).toBe('Keine Daten');
+    expect(container.querySelector('thead th')?.textContent).toBe('Kategorie');
+    // Not overridden, so still the default.
+    expect(screen.getByRole('button', { name: 'Hide table' })).toBeTruthy();
+
+    const big: ChartSeries[] = [
+      {
+        id: 'big',
+        name: 'Big',
+        kind: 'line',
+        points: Array.from({ length: 6_000 }, (_, i) => ({ x: START + i * 60_000, y: i % 7 })),
+      },
+    ];
+    rerender(
+      <Chart
+        label="Kosten"
+        series={big}
+        x="time"
+        labels={{ downsampled: (kept, total) => `${kept}/${total} Punkte` }}
+      />,
+    );
+    expect(container.querySelector('caption')?.textContent).toMatch(/^Kosten — \d+\/6000 Punkte$/);
+  });
+
   test('no data shows the empty state instead of a chart', () => {
     const { container, rerender } = render(<Chart label="Usage" series={[]} x="time" />);
     expect(svgOf(container)).toBeNull();

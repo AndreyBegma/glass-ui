@@ -36,6 +36,26 @@ export type ChartTooltipContext = {
   entries: { series: ChartSeries; y: number | null }[];
 };
 
+/** Every string the chart renders or announces, with English defaults. */
+export type ChartLabels = {
+  showTable: string;
+  hideTable: string;
+  /** The table's first column header on a time x-axis. */
+  time: string;
+  /** The table's first column header on a category x-axis. */
+  category: string;
+  /** Shown when there is no point to draw and no `emptyState` is given. */
+  empty: string;
+  /** Added to the table caption when the chart was down-sampled (D4). */
+  downsampled: (kept: number, total: number) => string;
+  /** The summary's first part: "3 series". */
+  seriesCount: (count: number) => string;
+  /** The summary's last part, given the formatted maximum: "max 12.4". */
+  max: (value: string) => string;
+  /** Announced for a series with no value at the focused x. */
+  noValue: string;
+};
+
 export type ChartProps = {
   /** Names the chart; the SVG's `aria-label` is this plus an auto summary. */
   label: string;
@@ -56,5 +76,7 @@ export type ChartProps = {
   /** The visually hidden table becomes visible. Controlled with the next prop. */
   showTable?: boolean;
   onShowTableChange?: (show: boolean) => void;
+  /** Overrides any of the strings above; the rest stay English. */
+  labels?: Partial<ChartLabels>;
   className?: string;
 };

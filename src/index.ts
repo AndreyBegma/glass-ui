@@ -285,6 +285,7 @@ export { Banner, type BannerProps } from './primitives/banner';
 export {
   type LogLine,
   LogViewer,
+  type LogViewerLabels,
   type LogViewerProps,
 } from './patterns/log-viewer';
 export {

@@ -798,3 +798,44 @@ plain text, through `navigator.clipboard.writeText` with an inline "Copied" and
 imports no `toast`. Virtualization is hand-rolled and fixed-height, so the
 package keeps its two runtime dependencies; with `wrap` on it switches off above
 5 000 lines.
+
+## Desk automation primitives
+
+`#74`. Three components a desk automation view needs — time-series charts, a
+cron schedule field and a terminal — built here so the next desk product starts
+with them. Each has its own subpath, tests beside it, and behaviour under
+`data-scale="desk"`, light, dark and `data-material="flat"`.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/chart` | `Chart` — area, line and bar series (stacked or grouped) on a time or category x-axis, as hand-rolled SVG with no dependency: axes, gridlines, legend, tooltip, and an accessible table fallback. Series are `ChartSeries`; `color` is one of `series-1` … `series-6`, `ok`, `warn` or `danger`. Formatting is the consumer's (`formatX`, `formatY`, `formatTooltip`). |
+| `glass-ui/cron-input` | `CronInput` — a 5-field cron expression with presets, a plain-language description, the next runs in an IANA time zone and validation. `onChange` fires with `{ expression, valid }`, valid or not. |
+| `glass-ui/terminal` | `Terminal` — an xterm.js wrapper themed from tokens, with fit-to-container, read-only mode and an imperative `write` / `writeln` / `clear` / `focus` / `fit` handle. It renders bytes and emits keystrokes; the consumer wires the socket. |
+
+**`CronInput` and `Terminal` are exported only from their subpaths.** The barrel
+exports `Chart` and its types and nothing else here, because the other two
+import optional peer dependencies and the barrel must never pull them in.
+
+**The peers are optional.** Install them only for the components you import:
+
+```sh
+bun add cron-parser cronstrue            # glass-ui/cron-input
+bun add @xterm/xterm @xterm/addon-fit    # glass-ui/terminal
+```
+
+They are declared in `peerDependencies` with `peerDependenciesMeta.optional`,
+so a consumer who never imports those subpaths installs nothing extra.
+Importing `glass-ui/cron-input` without its peers fails with a message naming
+them; `Terminal` loads xterm with a dynamic `import()` on mount, so the subpath
+is safe to import during SSR.
+
+**Series colours are tokens.** `--color-series-1` … `--color-series-6` exist in
+dark and light, chosen to stay apart under common colour-vision deficiencies
+and checked at 3:1 or better against `--color-surface` in `tokens.spec.ts`.
+Colour is never the only signal: the legend and tooltip name each series, and
+line series differ in dash pattern from series 4 onwards.
+
+**Charts, the cron preview and the terminal are solid surfaces, never glass.**
+A `Chart` tooltip uses the existing `Tooltip` material. At most 6 series and
+about 5 000 points per series render as SVG; above that the chart down-samples
+and says so in the table caption.

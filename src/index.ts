@@ -294,3 +294,19 @@ export {
   type TimelineProps,
 } from './patterns/timeline';
 export { SplitPane, type SplitPaneProps } from './patterns/split-pane';
+
+/**
+ * #74 — the desk automation primitives. Appended, as every block above is.
+ * `Chart` only: `CronInput` and `Terminal` are deliberately not here, because
+ * they import the optional peers `cron-parser`, `cronstrue`, `@xterm/xterm` and
+ * `@xterm/addon-fit`, and the barrel must never pull those in. Import them from
+ * `glass-ui/cron-input` and `glass-ui/terminal`.
+ */
+export {
+  Chart,
+  type ChartPoint,
+  type ChartProps,
+  type ChartSeries,
+  type ChartSeriesColor,
+  type ChartTooltipContext,
+} from './patterns/chart';

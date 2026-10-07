@@ -709,3 +709,49 @@ and 44px on a coarse pointer.
 **Grid items are not glass.** In arrange mode an item is `Card raised`'s
 surface. A test walks every item and everything inside it. The menu is glass,
 because it is a menu.
+
+## Desk dashboard primitives
+
+`#67`. Seven components a desk dashboard needs, built here so the next desk
+product starts with them. Each has its own subpath, tests beside it, and
+behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/spinner` | `Spinner` — a rotating arc in `currentColor`, three sizes (12 / 16 / 24 px) and four tones. `role="status"` with a `label` (default "Loading"); `label={null}` hides it inside a control that already announces state. Under reduced motion it is a static three-dot indicator with the same name. |
+| `glass-ui/sparkline` | `Sparkline` — an inline SVG polyline in `currentColor`, optional area fill. With `label` it is `role="img"`; without, `aria-hidden`. An empty or one-value series draws a flat baseline, never a `NaN` path. |
+| `glass-ui/stat-tile` | `StatTile` — label, value, optional delta, hint and a trend slot. Pressable only when given `href` or `onClick`. `loading` renders `Skeleton`s of the same height. |
+| `glass-ui/key-value-list` | `KeyValueList` — a `dl` of `dt`/`dd`, one or two columns, optional per-item copy button; long values truncate with the full text in a `Tooltip`. |
+| `glass-ui/code-block` | `CodeBlock` — `pre`/`code` in `font-mono`, a header with the language label, a wrap toggle (controlled or uncontrolled) and a copy button. No syntax highlighting. |
+| `glass-ui/data-table` | `DataTable` — `<table>` semantics over `Table`, with controlled sort, selection and hidden columns, sticky header, skeleton and empty states, and fixed-row-height windowing (`virtualize`). `sortRows` is exported for client-side sorting. |
+| `glass-ui/trace-tree` | `TraceTree` — a WAI-ARIA `treegrid` with `Tree`'s keyboard contract: a label column, a waterfall bar relative to the root's time span, and caller-supplied meta and totals. Bar colour by kind, tokens only: `turn` `ink-3`, `llm` `ink-2`, `tool` `accent` (under `data-scale="desk"`; `ink` elsewhere), `agent` `ok`, `other` `line-strong`; `status="error"` is `danger` on any kind. Colour is never alone: every row carries its kind's icon and name, an error its icon and "Error", a running node its icon and "Running". |
+
+Five rules.
+
+**Conventions are the package's own.** `tailwind-variants` for variants, `cn`
+for merging, tokens only — no raw colour, which `tokens.spec.ts` enforces —
+`'use client'` on anything with state or effects, every export on its own
+subpath.
+
+**Facts about the data are controlled.** Sort, selection, hidden columns and
+the expanded and selected trace nodes belong to the consumer and arrive as
+props with an `on…Change`. Only focus position and hover live inside, the rule
+`Tree`, `Board` and the shell patterns already follow.
+
+**Rows, tiles and cards are not glass.** They are solid surfaces. Glass
+appears only in a component's menus and popovers, through the existing `Menu`
+and `Popover`.
+
+**Formatting is the consumer's.** Values, deltas and totals are `ReactNode`;
+the components never format numbers, currency or durations. Numbers render
+with `tabular-nums`. Copy is the consumer's too, as `Progress` already says.
+
+**Colour is never the only signal.** A delta carries an arrow and its text, a
+trace bar a kind icon and a label. A delta's colour follows its `sentiment`,
+not its direction — cost going up is bad, merges going up are good.
+
+`DataTable` windowing is hand-rolled and fixed-height — `rowHeight` defaults to
+36 px at `data-scale="desk"` and 44 px elsewhere — so the package keeps its two
+runtime dependencies. Variable heights are out of scope, and `TraceTree` does
+not virtualize. `CodeBlock` copies through `navigator.clipboard.writeText` with
+an inline "Copied" for 1.5 s and imports no `toast`, so it does not load sonner.

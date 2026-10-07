@@ -242,3 +242,36 @@ export {
   tiltFromDirection,
   useTilt,
 } from './primitives/tilt';
+
+/**
+ * FEAT-20260930-067 — the desk dashboard primitives. Appended, for the reason
+ * every block above is: the seven are built in parallel worktrees and the
+ * barrel is the one file they would all otherwise collide on.
+ */
+export { Spinner, type SpinnerProps } from './primitives/spinner';
+export { Sparkline, type SparklineProps } from './primitives/sparkline';
+export {
+  KeyValueList,
+  type KeyValueItem,
+  type KeyValueListProps,
+} from './primitives/key-value-list';
+export { CodeBlock, type CodeBlockProps } from './primitives/code-block';
+export {
+  StatTile,
+  type StatTileDelta,
+  type StatTileProps,
+} from './patterns/stat-tile';
+export {
+  type Column,
+  DataTable,
+  type DataTableProps,
+  type DataTableSort,
+  sortRows,
+} from './patterns/data-table';
+export {
+  type TraceNode,
+  type TraceNodeKind,
+  TraceTree,
+  type TraceTreeLabels,
+  type TraceTreeProps,
+} from './patterns/trace-tree';

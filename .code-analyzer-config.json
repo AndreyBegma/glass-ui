@@ -1,0 +1,16 @@
+{
+  "exclusions": {
+    "directories": ["node_modules", "dist", "coverage", ".git"],
+    "files": ["*.lock", "*.log", ".DS_Store"],
+    "patterns": ["**/*.d.ts"]
+  },
+  "orchestrator": {
+    "base": "develop",
+    "maxSlots": 5,
+    "readyLabel": "cs:ready",
+    "install": "bun install",
+    "checks": ["bun run lint", "bun run test"],
+    "mergeMethod": "merge",
+    "autoMerge": true
+  }
+}

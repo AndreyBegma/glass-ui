@@ -825,8 +825,8 @@ bun add @xterm/xterm @xterm/addon-fit    # glass-ui/terminal
 
 They are declared in `peerDependencies` with `peerDependenciesMeta.optional`,
 so a consumer who never imports those subpaths installs nothing extra.
-Importing `glass-ui/cron-input` without its peers fails with a message naming
-them; `Terminal` loads xterm with a dynamic `import()` on mount, so the subpath
+`CronInput` loads its peers on mount and shows an error naming any that are
+missing; importing the subpath never fails. `Terminal` loads xterm with a dynamic `import()` on mount, so the subpath
 is safe to import during SSR.
 
 **Series colours are tokens.** `--color-series-1` … `--color-series-6` exist in
@@ -836,6 +836,6 @@ Colour is never the only signal: the legend and tooltip name each series, and
 line series differ in dash pattern from series 4 onwards.
 
 **Charts, the cron preview and the terminal are solid surfaces, never glass.**
-A `Chart` tooltip uses the existing `Tooltip` material. At most 6 series and
+A `Chart` tooltip is its own readout in the popover material (`glass-strong`). At most 6 series and
 about 5 000 points per series render as SVG; above that the chart down-samples
 and says so in the table caption.

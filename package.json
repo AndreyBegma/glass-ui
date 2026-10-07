@@ -71,7 +71,14 @@
     "./inline-edit": "./src/primitives/inline-edit.tsx",
     "./springs": "./src/primitives/springs.ts",
     "./flight": "./src/primitives/flight.tsx",
-    "./tilt": "./src/primitives/tilt.tsx"
+    "./tilt": "./src/primitives/tilt.tsx",
+    "./spinner": "./src/primitives/spinner.tsx",
+    "./sparkline": "./src/primitives/sparkline.tsx",
+    "./key-value-list": "./src/primitives/key-value-list.tsx",
+    "./code-block": "./src/primitives/code-block.tsx",
+    "./stat-tile": "./src/patterns/stat-tile.tsx",
+    "./data-table": "./src/patterns/data-table.tsx",
+    "./trace-tree": "./src/patterns/trace-tree.tsx"
   },
   "files": [
     "src"

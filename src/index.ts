@@ -275,3 +275,22 @@ export {
   type TraceTreeLabels,
   type TraceTreeProps,
 } from './patterns/trace-tree';
+
+/**
+ * FEAT-20260930-070 — the desk activity primitives. Appended, for the reason
+ * every block above is: the four are built in parallel worktrees and the
+ * barrel is the one file they would all otherwise collide on.
+ */
+export { Banner, type BannerProps } from './primitives/banner';
+export {
+  type LogLine,
+  LogViewer,
+  type LogViewerLabels,
+  type LogViewerProps,
+} from './patterns/log-viewer';
+export {
+  Timeline,
+  type TimelineItem,
+  type TimelineProps,
+} from './patterns/timeline';
+export { SplitPane, type SplitPaneProps } from './patterns/split-pane';

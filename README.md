@@ -755,3 +755,46 @@ not its direction — cost going up is bad, merges going up are good.
 runtime dependencies. Variable heights are out of scope, and `TraceTree` does
 not virtualize. `CodeBlock` copies through `navigator.clipboard.writeText` with
 an inline "Copied" for 1.5 s and imports no `toast`, so it does not load sonner.
+
+## Desk activity primitives
+
+`#70`. Four components a desk activity view needs — a live worker pane, an
+activity feed, notifications and a resizable layout — built here so the next
+desk product starts with them. Each has its own subpath, tests beside it, and
+behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
+
+| Import | What it is |
+|---|---|
+| `glass-ui/log-viewer` | `LogViewer` — a `role="log"` line viewer in `font-mono`: SGR-only ANSI colours mapped to tokens, fixed-height windowing, follow-tail with a "N new lines" pill, case-insensitive search and copy. Lines are `LogLine`s; the consumer owns the stream. Every string it renders is overridable through the optional `labels` prop (`LogViewerLabels`), with English defaults. |
+| `glass-ui/timeline` | `Timeline` — items grouped by local calendar day ("Today", "Yesterday" or a date), each a link, a button or plain; tone as a dot plus icon; a "N new" pill and a "Load more" button. `dayHeadingLevel` (default 3) sets the day headers' level so the feed slots under the page's headings; `loadMoreLabel` and `newLabel` override the two English strings. |
+| `glass-ui/banner` | `Banner` — an inline, full-width tinted notice in `info`, `ok`, `warn` or `danger`. `role="alert"` for `warn` / `danger`, `role="status"` for the others; optional dismiss. |
+| `glass-ui/split-pane` | `SplitPane` — two panes and a `role="separator"`, resizable by pointer or keyboard; the size persists under a required `storageKey`. |
+
+Five rules.
+
+**Conventions are the package's own.** `tailwind-variants` for variants, `cn`
+for merging, tokens only — no raw colour, which `tokens.spec.ts` enforces, the
+ANSI colour map included — `'use client'` on anything with state or effects,
+every export on its own subpath.
+
+**The consumer owns the data; the component owns the view.** `LogViewer`
+receives `lines` and never owns the stream; its own state is follow mode,
+scroll position, the search cursor and wrap when uncontrolled. `Timeline`
+receives `items` and calls `onLoadMore`. `SplitPane` owns and persists its size,
+the rule `SidePanel` follows.
+
+**Lines, items and banners are not glass.** They are solid surfaces, and a
+`SplitPane` has no material of its own — its panes carry whatever the consumer
+puts in them. Glass appears only through `Menu`, `Popover` and `Tooltip`.
+
+**Colour is never the only signal.** A log line carries a gutter mark from its
+`level`, a timeline item a dot plus its icon, a banner an icon per tone. ANSI
+sequences beyond SGR are stripped, and 256-colour and truecolour render as
+default ink.
+
+**Copy is the consumer's, and the components stay light.** `Timeline` formats
+times through `formatTime`. `LogViewer` copies the selection, or all lines as
+plain text, through `navigator.clipboard.writeText` with an inline "Copied" and
+imports no `toast`. Virtualization is hand-rolled and fixed-height, so the
+package keeps its two runtime dependencies; with `wrap` on it switches off above
+5 000 lines.

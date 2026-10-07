@@ -724,7 +724,7 @@ behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
 | `glass-ui/key-value-list` | `KeyValueList` — a `dl` of `dt`/`dd`, one or two columns, optional per-item copy button; long values truncate with the full text in a `Tooltip`. |
 | `glass-ui/code-block` | `CodeBlock` — `pre`/`code` in `font-mono`, a header with the language label, a wrap toggle (controlled or uncontrolled) and a copy button. No syntax highlighting. |
 | `glass-ui/data-table` | `DataTable` — `<table>` semantics over `Table`, with controlled sort, selection and hidden columns, sticky header, skeleton and empty states, and fixed-row-height windowing (`virtualize`). `sortRows` is exported for client-side sorting. |
-| `glass-ui/trace-tree` | `TraceTree` — a WAI-ARIA `treegrid` with `Tree`'s keyboard contract: a label column, a waterfall bar relative to the root's time span, and caller-supplied meta and totals. |
+| `glass-ui/trace-tree` | `TraceTree` — a WAI-ARIA `treegrid` with `Tree`'s keyboard contract: a label column, a waterfall bar relative to the root's time span, and caller-supplied meta and totals. Bar colour by kind, tokens only: `turn` `ink-3`, `llm` `ink-2`, `tool` `accent` (under `data-scale="desk"`; `ink` elsewhere), `agent` `ok`, `other` `line-strong`; `status="error"` is `danger` on any kind. Colour is never alone: every row carries its kind's icon and name, an error its icon and "Error", a running node its icon and "Running". |
 
 Five rules.
 

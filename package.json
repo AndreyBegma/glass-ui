@@ -78,7 +78,11 @@
     "./code-block": "./src/primitives/code-block.tsx",
     "./stat-tile": "./src/patterns/stat-tile.tsx",
     "./data-table": "./src/patterns/data-table.tsx",
-    "./trace-tree": "./src/patterns/trace-tree.tsx"
+    "./trace-tree": "./src/patterns/trace-tree.tsx",
+    "./banner": "./src/primitives/banner.tsx",
+    "./log-viewer": "./src/patterns/log-viewer.tsx",
+    "./timeline": "./src/patterns/timeline.tsx",
+    "./split-pane": "./src/patterns/split-pane.tsx"
   },
   "files": [
     "src"

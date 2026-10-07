@@ -808,9 +808,9 @@ with them. Each has its own subpath, tests beside it, and behaviour under
 
 | Import | What it is |
 |---|---|
-| `glass-ui/chart` | `Chart` — area, line and bar series (stacked or grouped) on a time or category x-axis, as hand-rolled SVG with no dependency: axes, gridlines, legend, tooltip, and an accessible table fallback. Series are `ChartSeries`; `color` is one of `series-1` … `series-6`, `ok`, `warn` or `danger`. Formatting is the consumer's (`formatX`, `formatY`, `formatTooltip`). |
-| `glass-ui/cron-input` | `CronInput` — a 5-field cron expression with presets, a plain-language description, the next runs in an IANA time zone and validation. `onChange` fires with `{ expression, valid }`, valid or not. |
-| `glass-ui/terminal` | `Terminal` — an xterm.js wrapper themed from tokens, with fit-to-container, read-only mode and an imperative `write` / `writeln` / `clear` / `focus` / `fit` handle. It renders bytes and emits keystrokes; the consumer wires the socket. |
+| `glass-ui/chart` | `Chart` — area, line and bar series (stacked or grouped) on a time or category x-axis, as hand-rolled SVG with no dependency: axes, gridlines, legend, tooltip, and an accessible table fallback. Series are `ChartSeries`; `color` is one of `series-1` … `series-6`, `ok`, `warn` or `danger`. Formatting is the consumer's (`formatX`, `formatY`, `formatTooltip`), and so is every string it renders or announces: `labels` (`ChartLabels`) overrides any of them, with English defaults. |
+| `glass-ui/cron-input` | `CronInput` — a 5-field cron expression with presets, a plain-language description, the next runs in an IANA time zone and validation. `onChange` fires with `{ expression, valid }`, valid or not. Its peers load when it mounts, not when it is imported, so a static import of the subpath never fails at import time. When `cron-parser` or `cronstrue` is missing it shows an error naming them. Until the peers have loaded, the preview is empty and `onChange` reports `valid: false`. |
+| `glass-ui/terminal` | `Terminal` — an xterm.js wrapper themed from tokens, with fit-to-container, read-only mode and an imperative `write` / `writeln` / `clear` / `focus` / `fit` handle. It renders bytes and emits keystrokes; the consumer wires the socket. The consumer must also import xterm's stylesheet, `@xterm/xterm/css/xterm.css`, or the terminal renders broken. |
 
 **`CronInput` and `Terminal` are exported only from their subpaths.** The barrel
 exports `Chart` and its types and nothing else here, because the other two
@@ -825,8 +825,8 @@ bun add @xterm/xterm @xterm/addon-fit    # glass-ui/terminal
 
 They are declared in `peerDependencies` with `peerDependenciesMeta.optional`,
 so a consumer who never imports those subpaths installs nothing extra.
-Importing `glass-ui/cron-input` without its peers fails with a message naming
-them; `Terminal` loads xterm with a dynamic `import()` on mount, so the subpath
+`CronInput` loads its peers on mount and shows an error naming any that are
+missing; importing the subpath never fails. `Terminal` loads xterm with a dynamic `import()` on mount, so the subpath
 is safe to import during SSR.
 
 **Series colours are tokens.** `--color-series-1` … `--color-series-6` exist in
@@ -836,6 +836,6 @@ Colour is never the only signal: the legend and tooltip name each series, and
 line series differ in dash pattern from series 4 onwards.
 
 **Charts, the cron preview and the terminal are solid surfaces, never glass.**
-A `Chart` tooltip uses the existing `Tooltip` material. At most 6 series and
+A `Chart` tooltip is its own readout in the popover material (`glass-strong`). At most 6 series and
 about 5 000 points per series render as SVG; above that the chart down-samples
 and says so in the table caption.

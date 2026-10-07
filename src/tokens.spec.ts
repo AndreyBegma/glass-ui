@@ -315,6 +315,28 @@ describe('a page can be read', () => {
 });
 
 /**
+ * #74 D5 — a series colour is a graphical object, and WCAG 1.4.11 asks 3:1 of
+ * those against what they sit on. A chart draws on a solid surface (D12), so
+ * `--color-surface` is the one to measure against, in every value set.
+ */
+describe('the series colours can be seen on a surface', () => {
+  test.each([
+    ['the dark set', DARK],
+    ['the system default', declarations(SYSTEM)],
+    ['the explicit toggle', declarations(EXPLICIT)],
+  ])('%s: series 1-6 clear 3:1 against surface', (_n, decls) => {
+    const surface = value(decls, '--color-surface');
+    for (const n of [1, 2, 3, 4, 5, 6]) {
+      const token = `--color-series-${n}`;
+      expect({ token, ratio: contrast(value(decls, token), surface) >= 3 }).toEqual({
+        token,
+        ratio: true,
+      });
+    }
+  });
+});
+
+/**
  * FEAT-20260911-001 — the Luna Watch guard.
  *
  * `E-104` splits one token layer between two products: Denitsa is read at a
@@ -362,6 +384,12 @@ const ADDED: Record<string, string> = {
   '--dur-scene': 'FEAT-20260924-680 — motion round 2; the fourth duration, for a change that covers the viewport',
   '--tilt-angle': 'FEAT-20260924-680 — motion round 2; how far `.luna-tilt` leans at most',
   '--tilt-depth': 'FEAT-20260924-680 — motion round 2; the perspective `.luna-tilt` leans in',
+  ...Object.fromEntries(
+    [1, 2, 3, 4, 5, 6].map((n) => [
+      `--color-series-${n}`,
+      '#74 D5 — the categorical series colours for Chart',
+    ]),
+  ),
 };
 
 const BASELINE: {

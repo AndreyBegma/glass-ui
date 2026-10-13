@@ -133,6 +133,11 @@
      tying them would mean the dark ring quietly became `#f2f2f6`. */
   --color-focus: #ffffff;
 
+  /* W237 — the ring's geometry, named so the desk can thin it. These are the
+     sofa's values, which `base.css` used to spell, so the sofa does not move. */
+  --focus-width: 3px;
+  --focus-offset: 4px;
+
   /* The material. See the `glass` utility below for what each part does. */
 
   /* The sheen — a white film that gives the panel a surface of its own. Small,

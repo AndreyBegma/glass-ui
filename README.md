@@ -102,9 +102,9 @@ halves of that claim fail a build rather than a review.
 What the desk profile is for: this system was designed to be read across a room
 from a television, and Denitsa is read at 60cm. A radius that gives a card a
 silhouette at four metres reads as a toy at arm's length; a 420ms sheet that
-feels considered from a sofa is a wait at a desk. Radii go 6/8/12, durations
+feels considered from a sofa is a wait at a desk. Radii go 8/12/16, durations
 100/150/260, hairlines get heavier and hover gets lighter, and the density
-scale drops a row from 40px to 32.
+scale drops a row from 40px to 36.
 
 **The accent is desk-only, and it has three places.** `--color-accent`,
 `--color-accent-ink` and `--color-accent-soft` are defined under
@@ -139,7 +139,8 @@ against it.
 `--size-row` (40px, a list row), `--size-control` (40px, a button),
 `--size-control-sm` (32px, a small button), `--size-field` (44px, an input)
 and `--size-nav` (40px, a rail item) are the values the components produce,
-named so the desk profile can move them — it takes them to 32/28/24/28/28.
+named so the desk profile can move them — it takes the row, control, small control, field and nav to 36/32/28/32/32
+(`--size-chip` stays 24).
 `--size-tap` is 44px in both profiles and is not one of them; see the next
 rule.
 
@@ -147,23 +148,25 @@ rule.
   `h-(--size-control-sm)`, so `sm` stays under `md` at either distance. `lg`
   stays one documented step above `md`, `calc(var(--size-control) + 8px)`, and
   is not part of the scale. `sm`'s corner is two thirds of `--radius-control`:
-  8px on the sofa, 4px at the desk.
+  8px on the sofa, 5.33px at the desk.
 - `Field`'s `Input`, `Select` and `SearchField` read `h-(--size-field)`. On a
   coarse pointer the desk gives the field back its 44px. A field has no
   invisible hit area to extend, so its drawn height is its target.
 - `Menu`'s rows read `h-(--size-row)`, the line box centred rather than
-  pinned by padding, so it still centres at the desk rung's 32px. On a coarse
+  pinned by padding, so it still centres at the desk rung's 36px. On a coarse
   pointer the desk gives rows and navigation items 44px, `--size-tap`, for the
   field's reason: a row is its own whole target.
 - `Chip`'s `md` reads `h-(--size-chip)`: 28px on the sofa, 24px at the desk,
-  where it matches `--size-control-sm`. Its corners are fractions of
+  a step under `--size-control-sm`. Its corners are fractions of
   `--radius-control`, like `Button sm`'s. No text in the package is under
   12px.
 
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
-`base.css` puts a 3px white outline on `:focus-visible`, sized to be read across
-a room from a television. Every hand-written ring that preceded it was thinner
-and dimmer. Form elements and `contenteditable` editors are the only exemption
+`base.css` puts an outline on `:focus-visible` whose width and offset are
+`--focus-width` and `--focus-offset`: 3px at 4px on the sofa, sized to be read
+across a room from a television, and 2px at 2px at the desk, in a softened ink
+(`--color-focus`, 0.72 alpha — not the accent), gated at 3:1 by `desk.spec.ts`.
+Every hand-written ring that preceded it was thinner and dimmer. Form elements and `contenteditable` editors are the only exemption
 — they draw their own focus indicator (a caret, or a consumer's selected-node
 state), and `base.css` already exempts them.
 

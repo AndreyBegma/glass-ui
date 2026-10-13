@@ -110,7 +110,7 @@ describe('MenuItem reads the density scale', () => {
     expect(tokenValue(SOFA, '--size-row')).toBe('40px');
   });
 
-  test('the desk rung measures 32px', () => {
-    expect(tokenValue(DESK, '--size-row')).toBe('32px');
+  test('the desk rung measures 36px', () => {
+    expect(tokenValue(DESK, '--size-row')).toBe('36px');
   });
 });

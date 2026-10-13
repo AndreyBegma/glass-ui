@@ -96,8 +96,8 @@ body[data-scroll-locked] #main-content {
  * The light value is `--color-ink`'s colour rather than the token itself, and
  * deliberately so — see the note in `tokens.css`. */
 :focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 4px;
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
 }
 
 /* Form elements manage their own focus style */

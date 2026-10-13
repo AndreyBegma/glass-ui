@@ -61,7 +61,7 @@ describe('the field controls read the density scale', () => {
     expect(tokenValue(SOFA, '--size-field')).toBe('44px');
   });
 
-  test('the desk rung measures 28px', () => {
-    expect(tokenValue(DESK, '--size-field')).toBe('28px');
+  test('the desk rung measures 32px', () => {
+    expect(tokenValue(DESK, '--size-field')).toBe('32px');
   });
 });

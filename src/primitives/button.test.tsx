@@ -83,8 +83,8 @@ describe('Button reads the density scale', () => {
     expect(tokenValue(SOFA, '--size-control')).toBe('40px');
   });
 
-  test('the desk rung measures 28px', () => {
-    expect(tokenValue(DESK, '--size-control')).toBe('28px');
+  test('the desk rung measures 32px', () => {
+    expect(tokenValue(DESK, '--size-control')).toBe('32px');
   });
 });
 

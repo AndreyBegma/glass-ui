@@ -136,9 +136,14 @@ function deskSurfaces(sets: string[][]): [string, number[]][] {
   ];
 }
 
-function failing(sets: string[][], token: string, floor: number): string[] {
+function failing(
+  sets: string[][],
+  token: string,
+  floor: number,
+  surfaces: [string, number[]][] = deskSurfaces(sets),
+): string[] {
   const ink = colour(resolve(sets, token));
-  return deskSurfaces(sets)
+  return surfaces
     .map(([name, bg]) => [name, contrast(over(ink, bg), bg)] as const)
     .filter(([, ratio]) => ratio < floor)
     .map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}:1`);
@@ -155,6 +160,34 @@ describe('the third level of text clears 4.5:1 at a desk', () => {
     const page = colour(resolve(sets, '--color-ground')).rgb;
     const ratio = (token: string) => contrast(over(colour(resolve(sets, token)), page), page);
     expect(ratio('--color-ink-2')).toBeGreaterThan(ratio('--color-ink-3') + 1);
+  });
+});
+
+/**
+ * W237 — the workspace ring is 2px at a 2px offset, in a softened ink, and it
+ * must still be seen: WCAG 1.4.11 asks 3:1 for a graphical object. Composited
+ * on the ground, on every card and on a hovered row, in both themes. The sofa
+ * keeps its 3px ring at 4px, so `data-scale` unset does not move.
+ */
+describe('the desk focus ring is a workspace ring that is still seen', () => {
+  test.each(AT_DESK)('%s: the ring clears 3:1 on the ground, a card and a hovered row', (_n, sets) => {
+    const surfaces = deskSurfaces(sets).filter(
+      ([name]) => !name.startsWith('glass'),
+    );
+    expect(surfaces.length).toBeGreaterThan(0);
+    expect(failing(sets, '--color-focus', 3, surfaces)).toEqual([]);
+  });
+
+  test.each(AT_DESK)('%s: 2px at a 2px offset', (_n, sets) => {
+    expect(resolve(sets, '--focus-width')).toBe('2px');
+    expect(resolve(sets, '--focus-offset')).toBe('2px');
+  });
+
+  test.each(AT_SOFA)('%s: the sofa keeps 3px at 4px', (_n, sets) => {
+    expect(resolve(sets, '--focus-width')).toBe('3px');
+    expect(resolve(sets, '--focus-offset')).toBe('4px');
+    // Opaque: the softened 0.72 ink is the desk's alone.
+    expect(resolve(sets, '--color-focus')).toMatch(/^#[0-9a-f]{6}$/i);
   });
 });
 

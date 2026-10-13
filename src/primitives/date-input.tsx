@@ -17,13 +17,13 @@ import { Input } from './field';
  * the `ink-3` weight of `Select`'s caret and lifts to full ink under the
  * pointer, instead of the platform's full-strength black or white. The edit
  * box loses the padding Chromium adds, so the text sits where `Input`'s
- * does. `min-w-0` lets the field shrink in a grid track: a native date
- * input otherwise holds its intrinsic width and pushes the column out.
- * Firefox and Safari draw no such pseudo-elements and are left alone; the
+ * does. It keeps its intrinsic minimum width on purpose: letting it shrink
+ * in a narrow grid track clips the value ("09:" of a time). Firefox and
+ * Safari draw no such pseudo-elements and are left alone; the
  * picker's colours already follow `color-scheme`, which the theme sets.
  */
 const NATIVE_PARTS = [
-  'min-w-0 tabular-nums',
+  'tabular-nums',
   '[&::-webkit-datetime-edit]:p-0',
   '[&::-webkit-datetime-edit-fields-wrapper]:p-0',
   '[&::-webkit-calendar-picker-indicator]:cursor-pointer',

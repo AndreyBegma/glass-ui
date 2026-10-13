@@ -21,7 +21,8 @@ describe('DateInput', () => {
       const { container, unmount } = render(<DateInput type={type} aria-label={type} />);
       const classes = Array.from(container.querySelector('input')?.classList ?? []);
       expect(classes).toContain('tabular-nums');
-      expect(classes).toContain('min-w-0');
+      // Never shrunk below its value: a narrow track would clip the time.
+      expect(classes).not.toContain('min-w-0');
       expect(classes).toContain('[&::-webkit-calendar-picker-indicator]:opacity-55');
       expect(classes).toContain('hover:[&::-webkit-calendar-picker-indicator]:opacity-100');
       unmount();

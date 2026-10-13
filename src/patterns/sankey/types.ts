@@ -72,6 +72,8 @@ export type SankeyLabels = {
   more: (count: number) => string;
   /** The summary after the label: "5 columns, 14 nodes, 21 links". */
   summary: (columns: number, nodes: number, links: number) => string;
+  /** The graph's ARIA description, given the column names in order. */
+  description: (columns: string[]) => string;
   /** A link's accessible name: "Main agent to Explore, 45". */
   link: (source: string, target: string, value: string) => string;
   /** A node's accessible name: "Explore, Subagent types, 45". */

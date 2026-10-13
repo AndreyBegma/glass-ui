@@ -24,6 +24,9 @@ export const DEFAULT_LABELS: SankeyLabels = {
   more: (count) => `+${count} more`,
   summary: (columns, nodes, links) =>
     `${columns} ${columns === 1 ? 'column' : 'columns'}, ${nodes} ${nodes === 1 ? 'node' : 'nodes'}, ${links} ${links === 1 ? 'link' : 'links'}`,
+  description: (columns) =>
+    `Flows left to right through ${columns.join(', ')}. A link is as wide as its value. ` +
+    'The arrow keys move between nodes, and the table after the graph lists every link.',
   link: (source, target, value) => `${source} to ${target}, ${value}`,
   node: (label, column, value) => `${label}, ${column}, ${value}`,
 };

@@ -2,11 +2,18 @@
 
 import type { LucideIcon } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 import { cn } from '../lib/cn';
 import { Badge } from '../primitives/badge';
 import { Tooltip } from '../primitives/tooltip';
 import type { NavLinkRender } from './nav-link';
+import {
+  hasBadge,
+  type RailBadge,
+  RailBadgeMark,
+  RailBadgeSpeech,
+  useScrollFade,
+} from './nav-rail-parts';
 
 /**
  * FEAT-20260911-002 — the level above the rail (`V2` decision 1, `E-104`).
@@ -55,6 +62,8 @@ export interface AppRailItem {
    * consumer's words, because only the consumer knows which it is.
    */
   unavailable?: string;
+  /** A count or a dot on the glyph, in a status tone. A zero count draws nothing. */
+  badge?: RailBadge;
 }
 
 export interface AppRailProps {
@@ -92,6 +101,8 @@ export function AppRail({
   className,
 }: AppRailProps) {
   const reduced = useReducedMotion();
+  const scrollRef = useRef<HTMLUListElement>(null);
+  const fade = useScrollFade(scrollRef);
 
   /**
    * One element, one `layoutId`, `NavRail`'s spring: switching applications
@@ -141,11 +152,18 @@ export function AppRail({
               dot
               tone="warn"
               aria-hidden="true"
-              className="absolute -right-1 -top-1 size-1.5"
+              className={cn(
+                'absolute -right-1 size-1.5',
+                hasBadge(app.badge) ? '-bottom-1' : '-top-1',
+              )}
             />
+          ) : null}
+          {hasBadge(app.badge) ? (
+            <RailBadgeMark badge={app.badge} placement="corner" />
           ) : null}
         </span>
         <span className="sr-only">{app.label}</span>
+        {hasBadge(app.badge) ? <RailBadgeSpeech badge={app.badge} /> : null}
         {app.unavailable ? (
           // The marker's meaning, for a reader: a coloured dot is nothing
           // at all in the accessibility tree, and this is the half of it
@@ -190,7 +208,11 @@ export function AppRail({
     >
       {head ? <div className="flex shrink-0 justify-center">{head}</div> : null}
 
-      <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      <ul
+        ref={scrollRef}
+        style={fade}
+        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
+      >
         {apps.map(renderItem)}
       </ul>
 

@@ -125,6 +125,19 @@
   --color-warn: #e3b341;
   --color-danger: #ff6b60;
 
+  /* #74 — categorical series, for a chart that has to tell six
+     things apart. The Okabe-Ito palette (distinguishable under protanopia,
+     deuteranopia and tritanopia), with the hues that fail on one theme nudged
+     rather than replaced. Every value is >= 3:1 against `--color-surface` in
+     its own theme (WCAG 1.4.11); `tokens.spec.ts` asserts it. Order is the
+     assignment order: series 1 is the one that has to carry a chart alone. */
+  --color-series-1: #56b4e9;
+  --color-series-2: #e69f00;
+  --color-series-3: #2fbf94;
+  --color-series-4: #cc79a7;
+  --color-series-5: #f0e442;
+  --color-series-6: #e8743b;
+
   /* FEAT-20260830-492 — a hairline and a hover fill, named.
      337 `border-white/N` and `bg-white/N` values existed because there was
      nowhere else to put a hairline or a hover state. `--color-line-strong`
@@ -487,6 +500,13 @@
     --color-warn: #b45309;
     --color-danger: #dc2626;
 
+    --color-series-1: #0072b2;
+    --color-series-2: #b36b00;
+    --color-series-3: #00805e;
+    --color-series-4: #b0457f;
+    --color-series-5: #8a7d00;
+    --color-series-6: #c24e00;
+
     --color-line: rgb(0 0 0 / 0.08);
     --color-line-strong: rgb(0 0 0 / 0.18);
     --color-hover: rgb(0 0 0 / 0.1);
@@ -561,6 +581,13 @@
   --color-ok: #0a8156;
   --color-warn: #b45309;
   --color-danger: #dc2626;
+
+  --color-series-1: #0072b2;
+  --color-series-2: #b36b00;
+  --color-series-3: #00805e;
+  --color-series-4: #b0457f;
+  --color-series-5: #8a7d00;
+  --color-series-6: #c24e00;
 
   --color-line: rgb(0 0 0 / 0.08);
   --color-line-strong: rgb(0 0 0 / 0.18);

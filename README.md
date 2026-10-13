@@ -8,10 +8,70 @@ decline the third:
 
 | Import | What it is |
 |---|---|
-| `glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
-| `glass-ui/material.css` | `glass`, `glass-strong`, `glass-clear` and `lit`, and every fallback they need. |
-| `glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
-| `glass-ui` | The primitives and `cn`. |
+| `@andrewbehma/glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
+| `@andrewbehma/glass-ui/material.css` | `glass`, `glass-strong`, `glass-clear` and `lit`, and every fallback they need. |
+| `@andrewbehma/glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
+| `@andrewbehma/glass-ui` | The primitives and `cn`. |
+
+## Install
+
+```sh
+npm i @andrewbehma/glass-ui
+# or: bun add @andrewbehma/glass-ui / pnpm add @andrewbehma/glass-ui
+```
+
+The package ships compiled ESM and type declarations in `dist/`, one file per
+source module, with every subpath (`@andrewbehma/glass-ui/button`,
+`@andrewbehma/glass-ui/dialog`, `@andrewbehma/glass-ui/tokens.css`, …) in its
+`exports` map. The client components keep their `'use client'` directive, so
+they can be rendered straight from a React Server Component. **No
+`transpilePackages` is needed** in Next.
+
+**Peer dependencies.** The application provides these:
+
+```sh
+npm i react react-dom tailwindcss lucide-react motion sonner \
+  @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-popover \
+  @radix-ui/react-tooltip @radix-ui/react-context-menu @radix-ui/react-slider
+```
+
+`cron-parser`, `cronstrue`, `@xterm/xterm` and `@xterm/addon-fit` are optional,
+needed only by `@andrewbehma/glass-ui/cron-input` and
+`@andrewbehma/glass-ui/terminal` — see [Desk automation
+primitives](#desk-automation-primitives).
+
+`lucide-react` is a peer dependency on a permissive range on purpose: its icon
+names have moved between major versions, and an application should be able to
+upgrade its icons without waiting for this package.
+
+**Stylesheets and Tailwind 4.** Import the layers from the application's global
+stylesheet, after Tailwind:
+
+```css
+@import "tailwindcss";
+@import "@andrewbehma/glass-ui/tokens.css";
+@import "@andrewbehma/glass-ui/material.css";
+@import "@andrewbehma/glass-ui/base.css"; /* optional */
+```
+
+The components carry Tailwind class names, and Tailwind does not scan
+`node_modules` on its own. `tokens.css` declares `@source "."` relative to
+itself, so importing it is enough: Tailwind scans the package's `dist/`. An
+application that does not import `tokens.css` adds the scan path itself,
+relative to its own stylesheet:
+
+```css
+@source "../node_modules/@andrewbehma/glass-ui/dist";
+```
+
+Both were verified against a Next 16.4 + Tailwind 4.3 application installing the
+packed tarball: with either, the classes used only inside the package's
+components are generated; with neither, they are not.
+
+**Git dependencies.** Up to `v0.22.0` the package was consumed as
+`github:AndreyBegma/glass-ui#v0.22.0` and shipped its TypeScript source. A git
+dependency on any later commit gets no `dist/` — it is built at publish time and
+is not in the repository — so use the npm package.
 
 ## The rules
 
@@ -180,7 +240,7 @@ aligned.
 
 FEAT-20260916-598. Motion is a vocabulary, not a set of effects: a load, a
 list and a swap are the same gesture in every application built on this
-package, and the gesture is declared once, in `glass-ui/motion.css`.
+package, and the gesture is declared once, in `@andrewbehma/glass-ui/motion.css`.
 
 **The rule.** Only `opacity` and `transform` animate — both are composited,
 so a television pays one layer per animated item and nothing per frame after
@@ -190,7 +250,7 @@ nothing translates or scales, and nothing can stay hidden. Keyframes are
 declared in `motion.css` and nowhere else, under the `luna` prefix — and in
 the two files it imports first (FEAT-20260924-680): `motion-drift.css`, the
 closed ambient paths, and `motion-scroll.css`, the scroll-linked family.
-Importing `glass-ui/motion.css` brings all three.
+Importing `@andrewbehma/glass-ui/motion.css` brings all three.
 
 **Nothing rests with a transform.** An entrance keyframe has a `from` and no
 `to`, so it lands on the element's own computed values and leaves nothing
@@ -277,8 +337,8 @@ end-stretch iOS does is deliberately not built: it needs a frame loop.
 
 | Import | What it is |
 |---|---|
-| `glass-ui/slider` | `Slider` — one thumb, the native `<input type="range">` with its props untouched: `value`, `onChange(event)`, `min`/`max`/`step`, `disabled`, `aria-*`, and the caller's `className` on the element itself. A remote and a screen reader already understand it. |
-| `glass-ui/range-slider` | `RangeSlider` — two thumbs on one track, on Radix `Slider` (a peer). `value: [lo, hi]`, `onValueChange`, `onValueCommit` (the release, and every keyboard step — fetch on this one), `min`/`max`/`step`, `thumbLabels` (required, the two accessible names in the application's language), `formatValue(value, thumb)` for `aria-valuetext`, `disabled`. |
+| `@andrewbehma/glass-ui/slider` | `Slider` — one thumb, the native `<input type="range">` with its props untouched: `value`, `onChange(event)`, `min`/`max`/`step`, `disabled`, `aria-*`, and the caller's `className` on the element itself. A remote and a screen reader already understand it. |
+| `@andrewbehma/glass-ui/range-slider` | `RangeSlider` — two thumbs on one track, on Radix `Slider` (a peer). `value: [lo, hi]`, `onValueChange`, `onValueCommit` (the release, and every keyboard step — fetch on this one), `min`/`max`/`step`, `thumbLabels` (required, the two accessible names in the application's language), `formatValue(value, thumb)` for `aria-valuetext`, `disabled`. |
 
 **The thumbs never cross.** `value[0] <= value[1]` always. With a pointer a
 thumb dragged into the other stops there and the drag continues on the
@@ -303,23 +363,14 @@ reduced-motion gate; every duration, curve and colour a token.
 
 | Import | What it is |
 |---|---|
-| `glass-ui/scroll-hint-row` | `ScrollHintRow` — a horizontal scroll box with `scrollbar-hide` that fades its left and right edges only while there is more on that side. |
-| `glass-ui/scroll-hint-column` | `ScrollHintColumn` — the same on the vertical axis: a capped scroll box (a sticky filter rail) that fades its top and bottom edges only while there is more. `wrapperClassName` takes a `rounded-*` so the fades stay inside a card's corners. |
-| `glass-ui/use-scroll-edges` | `useScrollEdges(axis)` — the one measurement both read: `{ ref, edges: { start, end }, onScroll }`, under a `ResizeObserver` on the box and its children, with four pixels of slack for rounding. |
+| `@andrewbehma/glass-ui/scroll-hint-row` | `ScrollHintRow` — a horizontal scroll box with `scrollbar-hide` that fades its left and right edges only while there is more on that side. |
+| `@andrewbehma/glass-ui/scroll-hint-column` | `ScrollHintColumn` — the same on the vertical axis: a capped scroll box (a sticky filter rail) that fades its top and bottom edges only while there is more. `wrapperClassName` takes a `rounded-*` so the fades stay inside a card's corners. |
+| `@andrewbehma/glass-ui/use-scroll-edges` | `useScrollEdges(axis)` — the one measurement both read: `{ ref, edges: { start, end }, onScroll }`, under a `ResizeObserver` on the box and its children, with four pixels of slack for rounding. |
 
 The fades are `aria-hidden`, `pointer-events-none`, always mounted, and move
 only their opacity over `--dur-fast`; `edgeClassName` is the `from-*` token of
 the surface behind the box. `scroll-hint.spec.ts` holds that contract for
 both.
-
-## Consuming it
-
-The package ships TypeScript source and is not built. A bundler must be told to
-transpile it — in Next, `transpilePackages: ['glass-ui']`.
-
-`lucide-react` is a peer dependency on a permissive range on purpose: its icon
-names have moved between major versions, and an application should be able to
-upgrade its icons without waiting for this package.
 
 ## The shell patterns
 
@@ -331,13 +382,13 @@ with the same capsule, the same rail and the same palette.
 
 | Import | What it is |
 |---|---|
-| `glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
-| `glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. |
-| `glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
-| `glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
-| `glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
-| `glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
-| `glass-ui/tree` | `Tree` — the WAI-ARIA tree: nested rows, controlled expansion and selection, one tab stop, arrows / Home / End / type-ahead, a per-row actions slot, and drag-to-reorder that is off until `enableReorder` says otherwise. |
+| `@andrewbehma/glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
+| `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. |
+| `@andrewbehma/glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
+| `@andrewbehma/glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
+| `@andrewbehma/glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
+| `@andrewbehma/glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
+| `@andrewbehma/glass-ui/tree` | `Tree` — the WAI-ARIA tree: nested rows, controlled expansion and selection, one tab stop, arrows / Home / End / type-ahead, a per-row actions slot, and drag-to-reorder that is off until `enableReorder` says otherwise. |
 
 Three rules run through all of them, and each one is the answer to something
 that went wrong before the pattern existed.
@@ -494,12 +545,12 @@ which had an ancestor in this package (`V2`). `E-92`'s line holds: these are
 
 | Import | What it is |
 |---|---|
-| `glass-ui/app-rail` | `AppRail` — the strip of applications above the rail: icon-only, always visible, the active item carrying the accent. |
-| `glass-ui/side-panel` | `SidePanel` — a collapsible, resizable column with its width and collapse state persisted; `useSidePanel()` for a consumer's own control. |
-| `glass-ui/breadcrumb` | `Breadcrumb` — the trail, with a measured collapsing middle behind an overflow `Menu` and the last item as the page. |
-| `glass-ui/row-actions` | `RowActions` and `rowActionsHost` — a row's affordances, revealed on hover, focus-within, selection, and always on a coarse pointer. |
-| `glass-ui/context-menu` | `ContextMenuRoot` / `Trigger` / `Content` / `Item` / `Separator` / `Label` / `RadioGroup` / `RadioItem` — the right-click menu on `Menu`'s exported styling. |
-| `glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. |
+| `@andrewbehma/glass-ui/app-rail` | `AppRail` — the strip of applications above the rail: icon-only, always visible, the active item carrying the accent. |
+| `@andrewbehma/glass-ui/side-panel` | `SidePanel` — a collapsible, resizable column with its width and collapse state persisted; `useSidePanel()` for a consumer's own control. |
+| `@andrewbehma/glass-ui/breadcrumb` | `Breadcrumb` — the trail, with a measured collapsing middle behind an overflow `Menu` and the last item as the page. |
+| `@andrewbehma/glass-ui/row-actions` | `RowActions` and `rowActionsHost` — a row's affordances, revealed on hover, focus-within, selection, and always on a coarse pointer. |
+| `@andrewbehma/glass-ui/context-menu` | `ContextMenuRoot` / `Trigger` / `Content` / `Item` / `Separator` / `Label` / `RadioGroup` / `RadioItem` — the right-click menu on `Menu`'s exported styling. |
+| `@andrewbehma/glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. |
 
 Five rules, each the answer to something that was already going wrong.
 
@@ -578,10 +629,10 @@ the controls a list of records needs and the package did not have.
 
 | Import | What it is |
 |---|---|
-| `glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
-| `glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
-| `glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
-| `glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
+| `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
+| `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
+| `@andrewbehma/glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
+| `@andrewbehma/glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
 
 Three rules, and the first is the acceptance criterion the specification
 says gets dropped.
@@ -640,7 +691,7 @@ to `develop`.
 
 | Import | What it is |
 |---|---|
-| `glass-ui/widget-grid` | `WidgetGrid` is a controlled grid of 1–4 columns. The person reorders its items with a grip (pointer and touch) or a menu, and makes them wider or narrower with a separator (pointer and keys) or the same menu. `resolveWidgetMove` and `resolveWidgetResize` are the reducers. `applyWidgetMove` is the remove-then-insert that a consumer's state needs. |
+| `@andrewbehma/glass-ui/widget-grid` | `WidgetGrid` is a controlled grid of 1–4 columns. The person reorders its items with a grip (pointer and touch) or a menu, and makes them wider or narrower with a separator (pointer and keys) or the same menu. `resolveWidgetMove` and `resolveWidgetResize` are the reducers. `applyWidgetMove` is the remove-then-insert that a consumer's state needs. |
 
 ```tsx
 const columns = useColumns(); // the consumer's breakpoint: 4 · 2 · 1
@@ -718,13 +769,13 @@ behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
 
 | Import | What it is |
 |---|---|
-| `glass-ui/spinner` | `Spinner` — a rotating arc in `currentColor`, three sizes (12 / 16 / 24 px) and four tones. `role="status"` with a `label` (default "Loading"); `label={null}` hides it inside a control that already announces state. Under reduced motion it is a static three-dot indicator with the same name. |
-| `glass-ui/sparkline` | `Sparkline` — an inline SVG polyline in `currentColor`, optional area fill. With `label` it is `role="img"`; without, `aria-hidden`. An empty or one-value series draws a flat baseline, never a `NaN` path. |
-| `glass-ui/stat-tile` | `StatTile` — label, value, optional delta, hint and a trend slot. Pressable only when given `href` or `onClick`. `loading` renders `Skeleton`s of the same height. |
-| `glass-ui/key-value-list` | `KeyValueList` — a `dl` of `dt`/`dd`, one or two columns, optional per-item copy button; long values truncate with the full text in a `Tooltip`. |
-| `glass-ui/code-block` | `CodeBlock` — `pre`/`code` in `font-mono`, a header with the language label, a wrap toggle (controlled or uncontrolled) and a copy button. No syntax highlighting. |
-| `glass-ui/data-table` | `DataTable` — `<table>` semantics over `Table`, with controlled sort, selection and hidden columns, sticky header, skeleton and empty states, and fixed-row-height windowing (`virtualize`). `sortRows` is exported for client-side sorting. |
-| `glass-ui/trace-tree` | `TraceTree` — a WAI-ARIA `treegrid` with `Tree`'s keyboard contract: a label column, a waterfall bar relative to the root's time span, and caller-supplied meta and totals. Bar colour by kind, tokens only: `turn` `ink-3`, `llm` `ink-2`, `tool` `accent` (under `data-scale="desk"`; `ink` elsewhere), `agent` `ok`, `other` `line-strong`; `status="error"` is `danger` on any kind. Colour is never alone: every row carries its kind's icon and name, an error its icon and "Error", a running node its icon and "Running". |
+| `@andrewbehma/glass-ui/spinner` | `Spinner` — a rotating arc in `currentColor`, three sizes (12 / 16 / 24 px) and four tones. `role="status"` with a `label` (default "Loading"); `label={null}` hides it inside a control that already announces state. Under reduced motion it is a static three-dot indicator with the same name. |
+| `@andrewbehma/glass-ui/sparkline` | `Sparkline` — an inline SVG polyline in `currentColor`, optional area fill. With `label` it is `role="img"`; without, `aria-hidden`. An empty or one-value series draws a flat baseline, never a `NaN` path. |
+| `@andrewbehma/glass-ui/stat-tile` | `StatTile` — label, value, optional delta, hint and a trend slot. Pressable only when given `href` or `onClick`. `loading` renders `Skeleton`s of the same height. |
+| `@andrewbehma/glass-ui/key-value-list` | `KeyValueList` — a `dl` of `dt`/`dd`, one or two columns, optional per-item copy button; long values truncate with the full text in a `Tooltip`. |
+| `@andrewbehma/glass-ui/code-block` | `CodeBlock` — `pre`/`code` in `font-mono`, a header with the language label, a wrap toggle (controlled or uncontrolled) and a copy button. No syntax highlighting. |
+| `@andrewbehma/glass-ui/data-table` | `DataTable` — `<table>` semantics over `Table`, with controlled sort, selection and hidden columns, sticky header, skeleton and empty states, and fixed-row-height windowing (`virtualize`). `sortRows` is exported for client-side sorting. |
+| `@andrewbehma/glass-ui/trace-tree` | `TraceTree` — a WAI-ARIA `treegrid` with `Tree`'s keyboard contract: a label column, a waterfall bar relative to the root's time span, and caller-supplied meta and totals. Bar colour by kind, tokens only: `turn` `ink-3`, `llm` `ink-2`, `tool` `accent` (under `data-scale="desk"`; `ink` elsewhere), `agent` `ok`, `other` `line-strong`; `status="error"` is `danger` on any kind. Colour is never alone: every row carries its kind's icon and name, an error its icon and "Error", a running node its icon and "Running". |
 
 Five rules.
 
@@ -765,10 +816,10 @@ behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
 
 | Import | What it is |
 |---|---|
-| `glass-ui/log-viewer` | `LogViewer` — a `role="log"` line viewer in `font-mono`: SGR-only ANSI colours mapped to tokens, fixed-height windowing, follow-tail with a "N new lines" pill, case-insensitive search and copy. Lines are `LogLine`s; the consumer owns the stream. Every string it renders is overridable through the optional `labels` prop (`LogViewerLabels`), with English defaults. |
-| `glass-ui/timeline` | `Timeline` — items grouped by local calendar day ("Today", "Yesterday" or a date), each a link, a button or plain; tone as a dot plus icon; a "N new" pill and a "Load more" button. `dayHeadingLevel` (default 3) sets the day headers' level so the feed slots under the page's headings; `loadMoreLabel` and `newLabel` override the two English strings. |
-| `glass-ui/banner` | `Banner` — an inline, full-width tinted notice in `info`, `ok`, `warn` or `danger`. `role="alert"` for `warn` / `danger`, `role="status"` for the others; optional dismiss. |
-| `glass-ui/split-pane` | `SplitPane` — two panes and a `role="separator"`, resizable by pointer or keyboard; the size persists under a required `storageKey`. |
+| `@andrewbehma/glass-ui/log-viewer` | `LogViewer` — a `role="log"` line viewer in `font-mono`: SGR-only ANSI colours mapped to tokens, fixed-height windowing, follow-tail with a "N new lines" pill, case-insensitive search and copy. Lines are `LogLine`s; the consumer owns the stream. Every string it renders is overridable through the optional `labels` prop (`LogViewerLabels`), with English defaults. |
+| `@andrewbehma/glass-ui/timeline` | `Timeline` — items grouped by local calendar day ("Today", "Yesterday" or a date), each a link, a button or plain; tone as a dot plus icon; a "N new" pill and a "Load more" button. `dayHeadingLevel` (default 3) sets the day headers' level so the feed slots under the page's headings; `loadMoreLabel` and `newLabel` override the two English strings. |
+| `@andrewbehma/glass-ui/banner` | `Banner` — an inline, full-width tinted notice in `info`, `ok`, `warn` or `danger`. `role="alert"` for `warn` / `danger`, `role="status"` for the others; optional dismiss. |
+| `@andrewbehma/glass-ui/split-pane` | `SplitPane` — two panes and a `role="separator"`, resizable by pointer or keyboard; the size persists under a required `storageKey`. |
 
 Five rules.
 
@@ -798,3 +849,88 @@ plain text, through `navigator.clipboard.writeText` with an inline "Copied" and
 imports no `toast`. Virtualization is hand-rolled and fixed-height, so the
 package keeps its two runtime dependencies; with `wrap` on it switches off above
 5 000 lines.
+
+## Desk automation primitives
+
+`#74`. Three components a desk automation view needs — time-series charts, a
+cron schedule field and a terminal — built here so the next desk product starts
+with them. Each has its own subpath, tests beside it, and behaviour under
+`data-scale="desk"`, light, dark and `data-material="flat"`.
+
+| Import | What it is |
+|---|---|
+| `@andrewbehma/glass-ui/chart` | `Chart` — area, line and bar series (stacked or grouped) on a time or category x-axis, as hand-rolled SVG with no dependency: axes, gridlines, legend, tooltip, and an accessible table fallback. Series are `ChartSeries`; `color` is one of `series-1` … `series-6`, `ok`, `warn` or `danger`. Formatting is the consumer's (`formatX`, `formatY`, `formatTooltip`), and so is every string it renders or announces: `labels` (`ChartLabels`) overrides any of them, with English defaults. |
+| `@andrewbehma/glass-ui/cron-input` | `CronInput` — a 5-field cron expression with presets, a plain-language description, the next runs in an IANA time zone and validation. `onChange` fires with `{ expression, valid }`, valid or not. Its peers load when it mounts, not when it is imported, so a static import of the subpath never fails at import time. When `cron-parser` or `cronstrue` is missing it shows an error naming them. Until the peers have loaded, the preview is empty and `onChange` reports `valid: false`. |
+| `@andrewbehma/glass-ui/terminal` | `Terminal` — an xterm.js wrapper themed from tokens, with fit-to-container, read-only mode and an imperative `write` / `writeln` / `clear` / `focus` / `fit` handle. It renders bytes and emits keystrokes; the consumer wires the socket. The consumer must also import xterm's stylesheet, `@xterm/xterm/css/xterm.css`, or the terminal renders broken. |
+
+**`CronInput` and `Terminal` are exported only from their subpaths.** The barrel
+exports `Chart` and its types and nothing else here, because the other two
+import optional peer dependencies and the barrel must never pull them in.
+
+**The peers are optional.** Install them only for the components you import:
+
+```sh
+bun add cron-parser cronstrue            # @andrewbehma/glass-ui/cron-input
+bun add @xterm/xterm @xterm/addon-fit    # @andrewbehma/glass-ui/terminal
+```
+
+They are declared in `peerDependencies` with `peerDependenciesMeta.optional`,
+so a consumer who never imports those subpaths installs nothing extra.
+`CronInput` loads its peers on mount and shows an error naming any that are
+missing; importing the subpath never fails. `Terminal` loads xterm with a dynamic `import()` on mount, so the subpath
+is safe to import during SSR.
+
+**Series colours are tokens.** `--color-series-1` … `--color-series-6` exist in
+dark and light, chosen to stay apart under common colour-vision deficiencies
+and checked at 3:1 or better against `--color-surface` in `tokens.spec.ts`.
+Colour is never the only signal: the legend and tooltip name each series, and
+line series differ in dash pattern from series 4 onwards.
+
+**Charts, the cron preview and the terminal are solid surfaces, never glass.**
+A `Chart` tooltip is its own readout in the popover material (`glass-strong`). At most 6 series and
+about 5 000 points per series render as SVG; above that the chart down-samples
+and says so in the table caption.
+
+## Developing
+
+```sh
+bun install
+bun run lint     # Biome, over src/ and scripts/
+bun run test     # bun test, with the DOM from src/test-setup.ts
+bun run build    # dist/: tsc emit, relative specifiers made Node-resolvable, CSS copied
+bun run smoke    # packs the tarball and checks it as a consumer would get it
+```
+
+`bun run smoke` runs after `bun run build`. It packs the package with
+`npm pack`, unpacks the tarball under `.smoke/` and checks it as a consumer
+would see it:
+
+- the tarball holds only `dist/`, `README.md`, `LICENSE` and `package.json`;
+- every `exports` target exists;
+- every built file whose source starts with `'use client'` starts with it
+  too;
+- every JS subpath imports under Node with `--conditions=import`.
+
+Woodpecker runs lint, test, build and smoke on every pull request and every
+push to `develop` and `main` (`.woodpecker/ci.yml`).
+
+## Releasing
+
+The version in `package.json` is the release. A `vX.Y.Z` tag publishes exactly
+that version, and CI refuses a tag that does not match it.
+
+1. Branch `release/vX.Y.Z` from `develop`, set `"version": "X.Y.Z"` in
+   `package.json`, and open a pull request into `main`.
+2. Merge it into `main`.
+3. Tag the merge commit `vX.Y.Z` and push the tag:
+   `git tag vX.Y.Z && git push origin vX.Y.Z`.
+4. `.woodpecker/release.yml` does the rest. It checks the tag against
+   `package.json`, then installs, lints, tests, builds and smoke-tests, and
+   runs `npm publish`. The `npm_token` secret is available only to tag and
+   manual runs. Re-running a tag that already published passes without
+   publishing again.
+
+To rehearse without a tag, start a manual pipeline in Woodpecker with
+`[glass-release]` in its message. It runs the same steps and ends in
+`npm publish --dry-run`. A manual run without that marker does not start the
+release workflow.

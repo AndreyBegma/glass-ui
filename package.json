@@ -298,6 +298,14 @@
       "types": "./dist/patterns/terminal.d.ts",
       "import": "./dist/patterns/terminal.js"
     },
+    "./select": {
+      "types": "./dist/primitives/select.d.ts",
+      "import": "./dist/primitives/select.js"
+    },
+    "./tab-bar": {
+      "types": "./dist/patterns/tab-bar.d.ts",
+      "import": "./dist/patterns/tab-bar.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

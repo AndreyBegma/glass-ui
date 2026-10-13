@@ -109,8 +109,8 @@ describe('the field tone', () => {
         `${SURFACE_BASE} h-(--size-field) px-3 text-sm`,
         'appearance-none pr-9 cursor-pointer bg-no-repeat',
         'bg-[linear-gradient(45deg,transparent_50%,var(--color-ink-3)_50%),linear-gradient(135deg,var(--color-ink-3)_50%,transparent_50%)]',
-        'bg-[position:calc(100%-1.125rem)_55%,calc(100%-0.8125rem)_55%]',
-        'bg-[length:5px_5px,5px_5px]',
+        'bg-[position:calc(100%-1.25rem)_55%,calc(100%-0.875rem)_55%]',
+        'bg-[length:6px_6px,6px_6px]',
         'forced-colors:appearance-auto',
       ].join(' '),
     );

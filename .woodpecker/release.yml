@@ -121,9 +121,15 @@ steps:
         else
           echo "$${name}@$${version} is already published"
         fi
+      # What this step decided, for `tag`. Written only after the publish
+      # succeeded, and read from the shared workspace: `tag` runs right after
+      # and the registry can still answer "not found" for a fresh version.
+      - mkdir -p .release
+      - printf 'publish=%s\nversion=%s\n' "$${publish}" "$${version}" > .release/decision
 
-  # Pushes the tag v<version> for a version that is on npm and has no tag yet.
-  # Needs github_token: a token with contents:write on this repository, in a
+  # Pushes the tag v<version> for a version the publish step published (or found
+  # already published) and that has no tag yet. It decides from .release/decision,
+  # never from `npm view` (#121). Needs github_token: a token with contents:write on this repository, in a
   # secret restricted to the push event. Without it the step says so and passes.
   # The tag it pushes starts the tag pipeline, which finds the version on npm
   # and publishes nothing.
@@ -140,17 +146,18 @@ steps:
           echo "github_token is not available to push events; the tag is not created"
           exit 0
         fi
-      - name=$(node -p "require('./package.json').name")
-      - version=$(node -p "require('./package.json').version")
       - |
-        if ! npm view "$${name}@$${version}" version >/dev/null 2>&1; then
-          echo "$${name}@$${version} is not on npm; no tag"
+        if [ ! -f .release/decision ]; then
+          echo "the publish step recorded no decision; no tag"
           exit 0
         fi
+      - . .release/decision
       - remote="https://x-access-token:$${GITHUB_TOKEN}@github.com/$${CI_REPO}.git"
+      - tag_exists=no
+      - if git ls-remote --exit-code --tags "$${remote}" "refs/tags/v$${version}" >/dev/null 2>&1; then tag_exists=yes; fi
       - |
-        if git ls-remote --exit-code --tags "$${remote}" "refs/tags/v$${version}" >/dev/null 2>&1; then
-          echo "tag v$${version} already exists"
+        if [ "$(sh scripts/release/should-tag.sh .release/decision "$${tag_exists}")" != tag=yes ]; then
+          echo "v$${version}: nothing to tag (no version bump, or the tag exists)"
           exit 0
         fi
       - git tag "v$${version}"

@@ -1,6 +1,6 @@
 {
   "name": "@andrewbehma/glass-ui",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "description": "The Liquid Glass design system: tokens, the glass material, and the primitives built out of them.",
   "license": "MIT",
   "repository": {
@@ -322,6 +322,42 @@
       "types": "./dist/patterns/file-item.d.ts",
       "import": "./dist/patterns/file-item.js"
     },
+    "./status-pill": {
+      "types": "./dist/primitives/status-pill.d.ts",
+      "import": "./dist/primitives/status-pill.js"
+    },
+    "./prompt-input": {
+      "types": "./dist/primitives/prompt-input.d.ts",
+      "import": "./dist/primitives/prompt-input.js"
+    },
+    "./node-card": {
+      "types": "./dist/patterns/node-card.d.ts",
+      "import": "./dist/patterns/node-card.js"
+    },
+    "./chat-thread": {
+      "types": "./dist/patterns/chat-thread.d.ts",
+      "import": "./dist/patterns/chat-thread.js"
+    },
+    "./meta-bar": {
+      "types": "./dist/patterns/meta-bar.d.ts",
+      "import": "./dist/patterns/meta-bar.js"
+    },
+    "./dock-tabs": {
+      "types": "./dist/patterns/dock-tabs.d.ts",
+      "import": "./dist/patterns/dock-tabs.js"
+    },
+    "./action-list": {
+      "types": "./dist/patterns/action-list.d.ts",
+      "import": "./dist/patterns/action-list.js"
+    },
+    "./sankey": {
+      "types": "./dist/patterns/sankey/index.d.ts",
+      "import": "./dist/patterns/sankey/index.js"
+    },
+    "./flow-graph": {
+      "types": "./dist/patterns/flow-graph/index.d.ts",
+      "import": "./dist/patterns/flow-graph/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -359,13 +395,17 @@
     "@xterm/addon-fit": ">=0.11.0",
     "@xterm/xterm": ">=6.0.0",
     "cron-parser": ">=5.0.0",
-    "cronstrue": ">=3.0.0"
+    "cronstrue": ">=3.0.0",
+    "@xyflow/react": ">=12.0.0",
+    "@dagrejs/dagre": ">=3.0.0"
   },
   "peerDependenciesMeta": {
     "@xterm/addon-fit": { "optional": true },
     "@xterm/xterm": { "optional": true },
     "cron-parser": { "optional": true },
-    "cronstrue": { "optional": true }
+    "cronstrue": { "optional": true },
+    "@xyflow/react": { "optional": true },
+    "@dagrejs/dagre": { "optional": true }
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
@@ -378,6 +418,8 @@
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "cron-parser": "^5.0.0",
-    "cronstrue": "^3.0.0"
+    "cronstrue": "^3.0.0",
+    "@xyflow/react": "12.12.0",
+    "@dagrejs/dagre": "3.1.1"
   }
 }

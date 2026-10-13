@@ -150,6 +150,82 @@ describe('AppRail', () => {
     expect(classes.filter((c) => /^(h|w|size)-\d/.test(c))).toEqual([]);
   });
 
+  describe('labels="below"', () => {
+    test('each name is visible once, at text-xs, with no sr-only duplicate', () => {
+      render(
+        <AppRail aria-label="Applications" link={link} apps={apps} activeId="today" labels="below" />,
+      );
+      for (const app of apps) {
+        const item = screen.getByRole('link', {
+          name: app.unavailable ? `${app.label} ${app.unavailable}` : app.label,
+        });
+        const name = [...item.querySelectorAll('span')].filter((s) => s.textContent === app.label);
+        expect(name).toHaveLength(1);
+        expect(name[0]?.className.split(' ')).toEqual(
+          expect.arrayContaining(['text-xs', 'leading-4', 'max-w-14', 'truncate']),
+        );
+        expect(name[0]?.classList.contains('sr-only')).toBe(false);
+        // The only sr-only text left is the unavailable phrase, if any.
+        expect([...item.querySelectorAll('span.sr-only')].map((s) => s.textContent)).toEqual(
+          app.unavailable ? [app.unavailable] : [],
+        );
+      }
+    });
+
+    test('items stack icon over name in a fixed-width column', () => {
+      render(
+        <AppRail aria-label="Applications" link={link} apps={apps} activeId="today" labels="below" />,
+      );
+      const classes = screen.getByRole('link', { name: 'Work' }).className.split(' ');
+      expect(classes).toEqual(
+        expect.arrayContaining(['flex-col', 'w-16', 'gap-1', 'py-1.5', 'items-center']),
+      );
+      expect(classes).not.toContain('h-[var(--size-nav)]');
+    });
+
+    test('the tooltip stays, it reads a truncated name', async () => {
+      render(
+        <AppRail aria-label="Applications" link={link} apps={apps} activeId="today" labels="below" />,
+      );
+      fireEvent.focus(screen.getByRole('link', { name: 'Work' }));
+      expect((await screen.findByRole('tooltip')).textContent).toBe('Work');
+    });
+
+    test('the capsule, the accent and the warn dot are the same', () => {
+      render(
+        <AppRail aria-label="Applications" link={link} apps={apps} activeId="recipes" labels="below" />,
+      );
+      const recipes = screen.getByRole('link', { name: 'Recipes unavailable' });
+      expect(recipes.getAttribute('aria-current')).toBe('page');
+      expect(capsulesIn(recipes)).toHaveLength(1);
+      expect(recipes.querySelectorAll('.bg-warn')).toHaveLength(1);
+      expect(recipes.className).toContain('text-[var(--color-accent,var(--color-ink))]');
+    });
+
+    test('footer items take the same label', () => {
+      render(
+        <AppRail
+          aria-label="Applications"
+          link={link}
+          apps={apps}
+          footerApps={[{ id: 'settings', label: 'Settings', icon: BookOpen, href: '/settings' }]}
+          activeId="settings"
+          labels="below"
+        />,
+      );
+      const settings = screen.getByRole('link', { name: 'Settings' });
+      expect(settings.querySelector('span.sr-only')).toBeNull();
+      expect(settings.textContent).toBe('Settings');
+    });
+  });
+
+  test('the default is unchanged: the name is sr-only, never visible text', () => {
+    render(<AppRail aria-label="Applications" link={link} apps={apps} activeId="today" />);
+    const work = screen.getByRole('link', { name: 'Work' });
+    expect(work.querySelectorAll('span.sr-only')).toHaveLength(1);
+    expect(work.querySelector('.truncate')).toBeNull();
+  });
+
   test('head and footer are drawn where they are given', () => {
     render(
       <AppRail

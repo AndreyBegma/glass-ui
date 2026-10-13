@@ -310,6 +310,18 @@
       "types": "./dist/patterns/canvas.d.ts",
       "import": "./dist/patterns/canvas.js"
     },
+    "./file-dropzone": {
+      "types": "./dist/primitives/file-dropzone.d.ts",
+      "import": "./dist/primitives/file-dropzone.js"
+    },
+    "./use-file-upload": {
+      "types": "./dist/hooks/use-file-upload.d.ts",
+      "import": "./dist/hooks/use-file-upload.js"
+    },
+    "./file-item": {
+      "types": "./dist/patterns/file-item.d.ts",
+      "import": "./dist/patterns/file-item.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

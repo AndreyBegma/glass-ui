@@ -326,3 +326,28 @@ export {
 } from './patterns/tab-bar';
 /** #93 — `g93-material`'s canvas layer; the barrel is this slot's file. */
 export { Canvas } from './patterns/canvas';
+
+/**
+ * #110 — file input. Appended, as every block above is. `FileDropzone` and
+ * `FileItem` hold no product copy; `useFileUpload` holds no UI.
+ */
+export {
+  FileDropzone,
+  type FileDropzoneProps,
+  type FileDropzoneState,
+  type FileRejection,
+  sortFiles,
+} from './primitives/file-dropzone';
+export {
+  type UploadItem,
+  type UploadState,
+  type UseFileUpload,
+  type UseFileUploadOptions,
+  useFileUpload,
+} from './hooks/use-file-upload';
+export {
+  FileItem,
+  type FileItemProps,
+  type FileItemStatus,
+  formatBytes,
+} from './patterns/file-item';

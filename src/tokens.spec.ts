@@ -615,10 +615,18 @@ describe('the accent is defined in every theme (#93)', () => {
     expect(declarations(EXPLICIT).map((d) => d.split(':')[0])).toContain(token);
   });
 
+  // #110 — this used to count three declarations per token. A preset under
+  // `data-accent` is a fourth place on purpose, so the assertion is now about
+  // *which* blocks: the three base sets, and blocks gated on `data-accent`.
   test('no other block re-values it', () => {
-    for (const token of ACCENT) {
-      const everywhere = [...TOKENS.matchAll(new RegExp(`${token}\\s*:`, 'g'))];
-      expect(everywhere).toHaveLength(3);
+    for (const rule of RULES) {
+      const names = declarations(rule.body).map((d) => d.split(':')[0]);
+      if (!ACCENT.some((t) => names.includes(t))) continue;
+      const base = rule.selector === '@theme static' || LIGHT_SELECTORS.includes(rule.selector);
+      expect({ selector: rule.selector, allowed: base || rule.selector.includes('[data-accent=') }).toEqual({
+        selector: rule.selector,
+        allowed: true,
+      });
     }
   });
 
@@ -706,6 +714,270 @@ describe('the accent clears its contrast gates in both themes (#93)', () => {
       expect(contrast(focus, value(decls, surface))).toBeGreaterThanOrEqual(3);
     }
   });
+});
+
+/**
+ * #110 — the accent axis, `data-accent="<preset>"`, resolved rather than read.
+ *
+ * Every assertion above reads one block at a time. A preset is only correct
+ * as a *cascade*: the plain block has to lose to its own light pair, win over
+ * the desk blocks, and reach nothing when the attribute is absent — and all
+ * of that is source order between blocks of equal weight, which no single
+ * block can show. So this resolves the file the way a browser would for a
+ * given set of attributes: every rule whose conditions hold, in source order,
+ * last declaration wins. All the selectors here weigh (0,1,0) (`@theme`
+ * emits `:root`), so order is the whole cascade.
+ *
+ * Decision 4 of #110 asked that "the accent is undefined when `data-scale` is
+ * unset" be rewritten, not deleted. #93 had already made the accent global
+ * (indigo, in every set), so "undefined" is no longer true of the no-attribute
+ * page and cannot be made true without undoing #93. What the test still
+ * proves is the part that protects an application: with neither attribute
+ * set, no preset value reaches it — the accent is the base set's to the
+ * digit.
+ */
+
+type Attrs = { theme?: 'light' | 'dark'; scale?: 'desk'; accent?: string; prefersLight: boolean };
+
+/** Each `@media` this file uses, and when it holds. A new one fails loudly. */
+const MEDIA: Record<string, (a: Attrs) => boolean> = {
+  '@media (prefers-color-scheme: light)': (a) => a.prefersLight,
+};
+
+/** `:root:where(...)`'s conditions, as `[data-x="y"]` and `:not([data-x="y"])`. */
+function matches(selector: string, a: Attrs): boolean {
+  if (selector === '@theme static' || selector === ':root') return true;
+  const where = /^:root:where\((.*)\)$/.exec(selector);
+  if (!where) throw new Error(`the resolver does not know \`${selector}\``);
+  const attrs: Record<string, string | undefined> = {
+    'data-theme': a.theme,
+    'data-scale': a.scale,
+    'data-accent': a.accent,
+  };
+  for (const m of where[1].matchAll(/:not\(\[([a-z-]+)="([^"]+)"\]\)/g)) {
+    if (attrs[m[1]] === m[2]) return false;
+  }
+  const rest = where[1].replace(/:not\(\[[^\]]+\]\)/g, '');
+  for (const m of rest.matchAll(/\[([a-z-]+)="([^"]+)"\]/g)) {
+    if (attrs[m[1]] !== m[2]) return false;
+  }
+  return true;
+}
+
+type Rule = { selector: string; media?: string; body: string };
+
+/** Every innermost rule in `tokens.css`, in source order, with its `@media`. */
+const RULES: Rule[] = (() => {
+  const out: Rule[] = [];
+  const open: { at: number; head: string }[] = [];
+  for (let i = 0; i < TOKENS.length; i++) {
+    if (TOKENS[i] === '{') {
+      const before = TOKENS.slice(0, i);
+      const from = Math.max(
+        before.lastIndexOf('{'),
+        before.lastIndexOf('}'),
+        before.lastIndexOf(';'),
+      );
+      open.push({ at: i, head: before.slice(from + 1).trim() });
+    } else if (TOKENS[i] === '}') {
+      const rule = open.pop();
+      if (!rule) throw new Error('unbalanced braces in tokens.css');
+      const body = TOKENS.slice(rule.at + 1, i);
+      if (body.includes('{')) continue;
+      out.push({ selector: rule.head, media: open.at(-1)?.head, body });
+    }
+  }
+  return out;
+})();
+
+const LIGHT_SELECTORS = [
+  ':root:where(:not([data-theme="dark"]))',
+  ':root:where([data-theme="light"])',
+];
+
+function resolve(a: Attrs): string[] {
+  const live = new Map<string, string>();
+  for (const rule of RULES) {
+    if (rule.media) {
+      const holds = MEDIA[rule.media];
+      if (!holds) throw new Error(`the resolver does not know \`${rule.media}\``);
+      if (!holds(a)) continue;
+    }
+    if (!matches(rule.selector, a)) continue;
+    for (const d of declarations(rule.body)) {
+      const at = d.indexOf(':');
+      live.set(d.slice(0, at), d.slice(at + 1).trim());
+    }
+  }
+  return [...live].map(([k, v]) => `${k}: ${v}`);
+}
+
+/** What a preset re-values: the accent family, and the ring that takes it. */
+const PRESET_TOKENS = [...ACCENT, '--color-focus'];
+
+const PRESETS = [
+  ...new Set(
+    RULES.flatMap((r) =>
+      [...r.selector.matchAll(/\[data-accent="([^"]+)"\]/g)].map((m) => m[1]),
+    ),
+  ),
+];
+
+type Lighting = Omit<Attrs, 'scale' | 'accent'>;
+
+/** The four ways a page can be lit: unset in either OS mode, and each toggle. */
+const LIGHTING: [string, Lighting][] = [
+  ['dark (no attribute, dark OS)', { prefersLight: false }],
+  ['light (no attribute, light OS)', { prefersLight: true }],
+  ['dark (explicit, light OS)', { theme: 'dark', prefersLight: true }],
+  ['light (explicit, dark OS)', { theme: 'light', prefersLight: false }],
+];
+
+const isLight = (l: Lighting) =>
+  l.theme === 'light' || (l.theme === undefined && l.prefersLight);
+
+const pick = (decls: string[], names: string[]) =>
+  Object.fromEntries(names.map((n) => [n, raw(decls, n)]));
+
+describe('the accent axis (#110)', () => {
+  test('the resolver sees the file: the plain page is the base set', () => {
+    // A resolver that silently matched nothing would pass every assertion
+    // below by agreeing with itself.
+    expect(pick(resolve({ prefersLight: false }), PRESET_TOKENS)).toEqual(
+      pick(DARK, PRESET_TOKENS),
+    );
+    expect(pick(resolve({ prefersLight: true }), PRESET_TOKENS)).toEqual(
+      pick(declarations(SYSTEM), PRESET_TOKENS),
+    );
+  });
+
+  test('amber is a preset', () => {
+    expect(PRESETS).toContain('amber');
+  });
+
+  test.each(LIGHTING)(
+    '%s: with neither data-scale="desk" nor data-accent set, no preset reaches the accent',
+    (_n, lighting) => {
+      const base = isLight(lighting) ? declarations(SYSTEM) : DARK;
+      const page = resolve(lighting);
+      expect(pick(page, PRESET_TOKENS)).toEqual(pick(base, PRESET_TOKENS));
+      for (const preset of PRESETS) {
+        const theirs = Object.values(
+          pick(resolve({ ...lighting, accent: preset }), ACCENT),
+        );
+        for (const token of ACCENT) expect(theirs).not.toContain(raw(page, token));
+      }
+    },
+  );
+
+  test.each(PRESETS)(
+    '%s re-values exactly the accent family and the ring, in three blocks',
+    (preset) => {
+      const blocks = RULES.filter((r) =>
+        r.selector.includes(`[data-accent="${preset}"]`),
+      );
+      // The plain block and the light pair, the shape the desk uses.
+      expect(blocks).toHaveLength(3);
+      for (const b of blocks) {
+        expect(
+          declarations(b.body)
+            .map((d) => d.split(':')[0])
+            .sort(),
+        ).toEqual([...PRESET_TOKENS].sort());
+      }
+      for (const token of PRESET_TOKENS) expect(Object.keys(LIVE)).toContain(token);
+    },
+  );
+
+  test.each(PRESETS)('%s: its two light blocks are the same block twice', (preset) => {
+    const light = RULES.filter(
+      (r) =>
+        r.selector.includes(`[data-accent="${preset}"]`) &&
+        r.selector.includes('data-theme'),
+    );
+    expect(light).toHaveLength(2);
+    expect(declarations(light[0].body)).toEqual(declarations(light[1].body));
+  });
+
+  test('every preset block comes after the desk blocks, which is what makes it win', () => {
+    const lastDesk = TOKENS.lastIndexOf('[data-scale="desk"]');
+    expect(lastDesk).toBeGreaterThan(0);
+    expect(TOKENS.indexOf('[data-accent=')).toBeGreaterThan(lastDesk);
+  });
+
+  const GATED = PRESETS.flatMap((preset) =>
+    LIGHTING.map(
+      ([n, l]) => [`${preset}, ${n}`, resolve({ ...l, accent: preset })] as const,
+    ),
+  );
+  /** The opaque bands an accent is drawn on. The worst one decides. */
+  const BANDS = [
+    '--color-ground',
+    '--color-canvas',
+    '--color-surface',
+    '--color-raised',
+    '--color-paper',
+  ];
+
+  test.each(GATED)('%s: the accent clears 3:1 against the worst band', (_n, decls) => {
+    const accent = value(decls, '--color-accent');
+    const worst = Math.min(...BANDS.map((b) => contrast(accent, value(decls, b))));
+    expect(worst).toBeGreaterThanOrEqual(3);
+  });
+
+  // The issue phrases this as `--color-accent-ink` on `--color-accent`, which
+  // is what accent-ink meant under the desk before #93. Text on the fill is
+  // `--color-on-accent` now, and that is the pair a label is drawn in.
+  test.each(GATED)('%s: the label on the accent clears 4.5:1', (_n, decls) => {
+    expect(
+      contrast(value(decls, '--color-on-accent'), value(decls, '--color-accent')),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test.each(GATED)(
+    '%s: accent ink clears 4.5:1 on every band and on the tint over it',
+    (_n, decls) => {
+      const ink = value(decls, '--color-accent-ink');
+      const soft = raw(decls, '--color-accent-soft');
+      for (const band of BANDS) {
+        const under = value(decls, band);
+        expect({ band, ok: contrast(ink, under) >= 4.5 }).toEqual({ band, ok: true });
+        expect({ band, tinted: contrast(ink, over(soft, under)) >= 4.5 }).toEqual({
+          band,
+          tinted: true,
+        });
+      }
+    },
+  );
+
+  test.each(GATED)('%s: the focus ring clears 3:1 on every band', (_n, decls) => {
+    const focus = value(decls, '--color-focus');
+    for (const band of BANDS) {
+      expect({ band, ok: contrast(focus, value(decls, band)) >= 3 }).toEqual({
+        band,
+        ok: true,
+      });
+    }
+  });
+
+  test.each(LIGHTING)(
+    '%s: with data-scale="desk" and data-accent="amber" both set, the accent is amber\'s and every desk token is unchanged',
+    (_n, lighting) => {
+      const both = resolve({ ...lighting, scale: 'desk', accent: 'amber' });
+      const desk = resolve({ ...lighting, scale: 'desk' });
+      const amber = resolve({ ...lighting, accent: 'amber' });
+      expect(pick(both, PRESET_TOKENS)).toEqual(pick(amber, PRESET_TOKENS));
+      const rest = desk
+        .map((d) => d.split(':')[0])
+        .filter((n) => !PRESET_TOKENS.includes(n));
+      expect(rest.length).toBeGreaterThan(30);
+      expect(pick(both, rest)).toEqual(pick(desk, rest));
+      // The desk really is in effect, and amber really differs from the base,
+      // so neither comparison above is vacuous.
+      expect(raw(both, '--size-row')).toBe('32px');
+      expect(raw(both, '--color-accent')).not.toBe(raw(desk, '--color-accent'));
+    },
+  );
 });
 
 /**

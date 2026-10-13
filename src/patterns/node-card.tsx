@@ -14,6 +14,7 @@ import {
 } from '../primitives/menu';
 import { Progress } from '../primitives/progress';
 import { type Status, StatusPill, statusTone } from '../primitives/status-pill';
+import { NODE_TILE, type NodeCardColor } from './node-card-tile';
 
 /**
  * #94 — a card for a thing that runs: an agent, a job, a service, a branch.
@@ -45,39 +46,7 @@ import { type Status, StatusPill, statusTone } from '../primitives/status-pill';
  * anything else interactive sit above that layer, so a click on the prompt box
  * types into it rather than selecting the card.
  */
-export type NodeCardColor =
-  | 'series-1'
-  | 'series-2'
-  | 'series-3'
-  | 'series-4'
-  | 'series-5'
-  | 'series-6'
-  | 'ok'
-  | 'warn'
-  | 'danger'
-  | 'info'
-  | 'neutral';
-
-/** Spelled out in full so Tailwind's scan finds every one. */
-const TILE: Record<NodeCardColor, string> = {
-  'series-1':
-    'text-series-1 bg-[color-mix(in_oklab,var(--color-series-1)_18%,transparent)]',
-  'series-2':
-    'text-series-2 bg-[color-mix(in_oklab,var(--color-series-2)_18%,transparent)]',
-  'series-3':
-    'text-series-3 bg-[color-mix(in_oklab,var(--color-series-3)_18%,transparent)]',
-  'series-4':
-    'text-series-4 bg-[color-mix(in_oklab,var(--color-series-4)_18%,transparent)]',
-  'series-5':
-    'text-series-5 bg-[color-mix(in_oklab,var(--color-series-5)_18%,transparent)]',
-  'series-6':
-    'text-series-6 bg-[color-mix(in_oklab,var(--color-series-6)_18%,transparent)]',
-  ok: 'text-ok bg-ok/14',
-  warn: 'text-warn bg-warn/14',
-  danger: 'text-danger bg-danger/14',
-  info: 'text-info bg-info-soft',
-  neutral: 'text-ink-2 bg-hover',
-};
+export type { NodeCardColor } from './node-card-tile';
 
 /** `Progress` speaks `Badge`'s four tones; a status maps onto them. */
 const PROGRESS_TONE = {
@@ -220,7 +189,7 @@ export function NodeCard({
           <span
             data-node-tile={color}
             aria-hidden="true"
-            className={cn(s.tile(), TILE[color])}
+            className={cn(s.tile(), NODE_TILE[color])}
           >
             <Icon size={compact ? 16 : 20} />
           </span>

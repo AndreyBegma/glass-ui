@@ -125,6 +125,25 @@
   --color-warn: #e3b341;
   --color-danger: #ff6b60;
 
+  /* #94 — `info`, the fourth semantic: something is in hand and nothing is
+     wrong — a status of "waiting", a notice that is only news. It existed only
+     as a neutral grey, so a waiting agent read exactly like an idle one.
+
+     A calm sky blue, hue ≈205°, deliberately clear of the accent's indigo
+     (≈240°) and much lighter than it: an accent is not a semantic, and a blue
+     that could be mistaken for the selection colour would mean both.
+     `info-soft` is its tint, alpha like `accent-soft`, for a pill or a tile.
+
+     WCAG 2.x, as text (`tokens.spec.ts` gates both at 4.5:1 on every
+     surface and on the tint laid over it):
+
+                                 dark #5fb4f0     light #03629a
+       info on ground / paper     8.78 / 7.64      6.53 / 6.53
+       info on raised             7.87             5.94
+       info on soft over raised   5.91             4.96          */
+  --color-info: #5fb4f0;
+  --color-info-soft: rgb(95 180 240 / 0.16);
+
   /* #74 — categorical series, for a chart that has to tell six
      things apart. The Okabe-Ito palette (distinguishable under protanopia,
      deuteranopia and tritanopia), with the hues that fail on one theme nudged
@@ -642,6 +661,10 @@
     --color-warn: #b45309;
     --color-danger: #dc2626;
 
+    /* #94 — `info`, the sky blue pitched for white; see the dark set. */
+    --color-info: #03629a;
+    --color-info-soft: rgb(3 98 154 / 0.12);
+
     --color-series-1: var(--color-accent);
     --color-series-2: #b36b00;
     --color-series-3: #00805e;
@@ -733,6 +756,10 @@
   --color-ok: #0a8156;
   --color-warn: #b45309;
   --color-danger: #dc2626;
+
+  /* #94 — `info`, the sky blue pitched for white; see the dark set. */
+  --color-info: #03629a;
+  --color-info-soft: rgb(3 98 154 / 0.12);
 
   --color-series-1: var(--color-accent);
   --color-series-2: #b36b00;

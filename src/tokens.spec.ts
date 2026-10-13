@@ -399,6 +399,8 @@ const ADDED: Record<string, string> = {
       (t) => [t, '#93 — the accent, global; reverses E-92 / FEAT-20260911-001 decision 6'],
     ),
   ),
+  '--color-info': '#94 — the fourth semantic, a status of "waiting"',
+  '--color-info-soft': '#94 — the fourth semantic, its tint',
   '--color-content': '#93 — the content surface, near-opaque paper',
   '--color-scrim': '#93 — the lighter dialog and sheet scrim',
   '--blur-scrim': '#93 — the scrim blur, much less than `backdrop-blur-sm`',
@@ -978,6 +980,39 @@ describe('the accent axis (#110)', () => {
       expect(raw(both, '--color-accent')).not.toBe(raw(desk, '--color-accent'));
     },
   );
+});
+
+/**
+ * #94 — `info` is text: a status pill's label, on its own tint. It is held to
+ * 4.5:1 on every surface and on `info-soft` laid over each, in every set, and
+ * it is never the accent — a waiting status that looked selected would mean
+ * both.
+ */
+describe('the info tone reads, and is not the accent (#94)', () => {
+  const SURFACES = ['--color-ground', '--color-surface', '--color-raised', '--color-paper'];
+  const SETS = [
+    ['dark', DARK],
+    ['light', declarations(SYSTEM)],
+    ['light (explicit)', declarations(EXPLICIT)],
+  ] as const;
+
+  test.each(SETS)('%s: info reads on every surface and on its tint over it', (_n, decls) => {
+    const info = value(decls, '--color-info');
+    const soft = raw(decls, '--color-info-soft');
+    for (const surface of SURFACES) {
+      const under = value(decls, surface);
+      expect({ surface, ok: contrast(info, under) >= 4.5 }).toEqual({ surface, ok: true });
+      expect({ surface, tinted: contrast(info, over(soft, under)) >= 4.5 }).toEqual({
+        surface,
+        tinted: true,
+      });
+    }
+  });
+
+  test.each(SETS)('%s: info is its own colour, not the accent', (_n, decls) => {
+    expect(value(decls, '--color-info')).not.toBe(value(decls, '--color-accent'));
+    expect(value(decls, '--color-info')).not.toBe(value(decls, '--color-accent-ink'));
+  });
 });
 
 /**

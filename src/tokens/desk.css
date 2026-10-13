@@ -160,6 +160,31 @@
   --color-accent: #806ffc;
   --color-accent-ink: #09090c;
   --color-accent-soft: rgb(128 111 252 / 0.14);
+
+  /* FEAT-20261013-709 (W359) — eight mark colours, for categorical dots.
+   *
+   * Desk-only, like the accent, and for the same reason: a media centre takes
+   * its colour from the artwork, and outside this profile these resolve to
+   * nothing. Read as `var(--color-mark-1)` — not a Tailwind utility, because a
+   * dot picks its colour from an index and `bg-mark-${n}` is a class no
+   * scanner can see.
+   *
+   * oklch, eight hues 45° apart starting at the accent's own (284.5°), so
+   * `mark-1` sits beside the brand. One lightness and one chroma per theme, so
+   * no mark is louder than another: the chroma is the largest at which all
+   * eight stay inside sRGB (teal, at 194.5°, is the one that sets it).
+   * Dark L 0.72 C 0.122; light L 0.58 C 0.099. A mark is not text, so the
+   * gate is 3:1 (WCAG 1.4.11) on ground, surface and raised. Worst case:
+   * `mark-3` on dark raised, 6.79:1; `mark-6` on light raised, 3.71:1. The
+   * table is below the accent's. `desk-profile.spec.ts` is the gate. */
+  --color-mark-1: #9c99ee;
+  --color-mark-2: #cf88ca;
+  --color-mark-3: #e6838d;
+  --color-mark-4: #dc9150;
+  --color-mark-5: #b1a844;
+  --color-mark-6: #69ba7a;
+  --color-mark-7: #09bcbb;
+  --color-mark-8: #52aee9;
 }
 
 /* The theme-dependent half, turned back over. Same two selectors as the light
@@ -195,6 +220,16 @@
     --color-accent: #5b4bd1;
     --color-accent-ink: #ffffff;
     --color-accent-soft: rgb(91 75 209 / 0.12);
+
+    /* W359 — the marks at L 0.58 C 0.099, the same eight hues. */
+    --color-mark-1: #7472b3;
+    --color-mark-2: #9b6497;
+    --color-mark-3: #ad6068;
+    --color-mark-4: #a56b39;
+    --color-mark-5: #847d2f;
+    --color-mark-6: #4c8b5a;
+    --color-mark-7: #008c8c;
+    --color-mark-8: #3b82af;
   }
 }
 
@@ -218,6 +253,16 @@
   --color-accent: #5b4bd1;
   --color-accent-ink: #ffffff;
   --color-accent-soft: rgb(91 75 209 / 0.12);
+
+  /* W359 — the marks at L 0.58 C 0.099, the same eight hues. */
+  --color-mark-1: #7472b3;
+  --color-mark-2: #9b6497;
+  --color-mark-3: #ad6068;
+  --color-mark-4: #a56b39;
+  --color-mark-5: #847d2f;
+  --color-mark-6: #4c8b5a;
+  --color-mark-7: #008c8c;
+  --color-mark-8: #3b82af;
 }
 
 /* BUG-20260930-001 (SYS-14) — a field has no invisible hit area the way
@@ -324,3 +369,25 @@
  * three bands, and the compiled stylesheet has no unresolved `var()` outside
  * `--lit` / `--lx` / `--ly`, which `material.css` writes at runtime and gives
  * fallbacks to. */
+
+/* FEAT-20261013-709 (W359) — the marks, measured. 2026-10-13.
+ *
+ * Computed, not sampled: every value is an opaque hex on an opaque ground, so
+ * there is nothing for a compositor to disagree about (see the accent's note
+ * above), and `desk-profile.spec.ts` runs this same arithmetic as the gate.
+ * The hexes are oklch → sRGB rounded to the byte; the ratios are of the hexes.
+ *
+ *              dark L 0.72 C 0.122               light L 0.58 C 0.099
+ *        hue   hex      ground surface raised    hex      ground surface raised
+ *   1  284.5   #9c99ee   7.77   7.41   6.97      #7472b3   4.37   4.19   3.98
+ *   2  329.5   #cf88ca   7.60   7.25   6.82      #9b6497   4.50   4.31   4.10
+ *   3   14.5   #e6838d   7.57   7.22   6.79      #ad6068   4.52   4.33   4.11
+ *   4   59.5   #dc9150   7.77   7.42   6.97      #a56b39   4.41   4.22   4.01
+ *   5  104.5   #b1a844   8.10   7.73   7.26      #847d2f   4.24   4.06   3.86
+ *   6  149.5   #69ba7a   8.43   8.04   7.56      #4c8b5a   4.08   3.91   3.71
+ *   7  194.5   #09bcbb   8.45   8.06   7.58      #008c8c   4.09   3.92   3.72
+ *   8  239.5   #52aee9   8.13   7.76   7.29      #3b82af   4.20   4.03   3.82
+ *
+ * Light has the least room, and it was spent on purpose: a lighter L buys
+ * chroma (0.105 at L 0.62) but leaves `mark-6` at 3.15:1 on raised, which is
+ * no margin for a dot drawn over a hovered or selected row. */

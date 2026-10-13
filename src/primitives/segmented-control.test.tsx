@@ -154,10 +154,78 @@ describe('SegmentedControl sizing', () => {
     }
   });
 
+  test('by default the list does not wrap: it is as wide as its items, inside the scroller', () => {
+    const { container } = control();
+    const list = screen.getByRole('list');
+    expect(list.className).toContain('w-max');
+    expect(list.className).not.toContain('flex-wrap');
+    expect(container.querySelector('.overflow-x-auto')?.contains(list)).toBe(true);
+  });
+
   test('the active pill uses the tabs radius', () => {
     const { container } = control();
     expect(container.querySelector('.bg-raised')?.className).toContain(
       'rounded-[calc(var(--radius-control)*2/3)]',
     );
+  });
+});
+
+/** FEAT-20261013-709 (W359) — `wrap`: the row breaks, a label does not. */
+describe('SegmentedControl wrap', () => {
+  function control(props: { full?: boolean; className?: string } = {}) {
+    return render(
+      <SegmentedControl aria-label="Order" wrap {...props}>
+        {['Name', 'Last seen', 'Created'].map((label, i) => (
+          <SegmentedControlItem key={label} active={i === 0} layoutId="wrap">
+            <button type="button">{label}</button>
+          </SegmentedControlItem>
+        ))}
+      </SegmentedControl>,
+    );
+  }
+
+  test('the list wraps and is as wide as its row allows, not as its items', () => {
+    control();
+    const list = screen.getByRole('list', { name: 'Order' });
+    expect(list.className).toContain('flex-wrap');
+    expect(list.className).toContain('w-auto');
+    expect(list.className).not.toContain('w-max');
+    expect(list.className).not.toContain('min-w-full');
+  });
+
+  test('there is no scroller and no edge fades', () => {
+    const { container } = control();
+    expect(container.querySelector('.overflow-x-auto')).toBeNull();
+    expect(container.querySelector('.scrollbar-hide')).toBeNull();
+    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(0);
+    const box = screen.getByRole('list').parentElement;
+    expect(box?.className).toContain('overflow-visible');
+    expect(box?.className).toContain('w-fit');
+    expect(box?.className).toContain('max-w-full');
+  });
+
+  test('a label still never breaks, and an item never shrinks below it', () => {
+    control();
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item.className).toContain('[&>*]:whitespace-nowrap');
+      expect(item.className).toContain('flex-none');
+      expect(item.className).not.toContain('min-w-0');
+    }
+  });
+
+  test('with `full`, `full` decides the width and items stretch per line', () => {
+    control({ full: true });
+    const box = screen.getByRole('list').parentElement;
+    expect(box?.className).toContain('w-full');
+    expect(box?.className).not.toContain('w-fit');
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item.className).toContain('flex-1');
+      expect(item.className).toContain('min-w-fit');
+    }
+  });
+
+  test('a consumer `className` lands on the box, as it does on the scroller', () => {
+    control({ className: 'mt-2' });
+    expect(screen.getByRole('list').parentElement?.className).toContain('mt-2');
   });
 });

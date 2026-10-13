@@ -21,8 +21,9 @@ dense desktop dashboard, without writing their own primitives.
 ## What is in it
 
 - **Tokens** — palette, radius, motion, density and type scales, a z-index
-  ladder, and three independent switches (`data-theme`, `data-material`,
-  `data-scale`) for light/dark, glass/flat and sofa/desk density.
+  ladder, and four independent switches (`data-theme`, `data-material`,
+  `data-scale`, `data-accent`) for light/dark, glass/flat, sofa/desk density
+  and a named accent preset.
 - **The material** — `glass`, `glass-strong`, `glass-clear` and `lit` for
   chrome, `surface-content` for content, and the `.canvas` behind them, with
   the fallbacks they need.
@@ -30,11 +31,11 @@ dense desktop dashboard, without writing their own primitives.
   Select, Combobox, Checkbox, Radio group, Toggle, Slider and Range slider,
   Number, Date and Cron inputs, Dialog, Sheet, Menu, Context menu, Tooltip,
   Tabs, Segmented control, Table, Progress, Spinner, Skeleton, Sparkline,
-  Toast, Code block and more.
+  Toast, Code block, File dropzone and more.
 - **Patterns** — app and nav rails, bottom capsule, breadcrumb, command
   palette, toolbar, popover, side panel, split pane, data table, tree, trace
-  tree, timeline, board, stat tile, widget grid, log viewer, terminal and a
-  dependency-free SVG chart.
+  tree, timeline, board, stat tile, widget grid, log viewer, terminal, a file
+  upload row and a dependency-free SVG chart.
 - **Shipped as compiled ESM** with type declarations and one subpath per
   module; client components keep `'use client'`, so they render from React
   Server Components with no `transpilePackages`.
@@ -44,7 +45,7 @@ decline the third:
 
 | Import | What it is |
 |---|---|
-| `@andrewbehma/glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
+| `@andrewbehma/glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the four axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
 | `@andrewbehma/glass-ui/material.css` | `glass`, `glass-strong`, `glass-clear` and `lit`, `surface-content`, the `.canvas` layer, and every fallback they need. |
 | `@andrewbehma/glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
 | `@andrewbehma/glass-ui` | The primitives and `cn`. |
@@ -58,6 +59,7 @@ decline the third:
 [Desk dashboard primitives](#desk-dashboard-primitives) ·
 [Desk activity primitives](#desk-activity-primitives) ·
 [Desk automation primitives](#desk-automation-primitives) ·
+[File input](#file-input) ·
 [Developing](#developing) · [Releasing](#releasing) · [License](#license)
 
 ## Install
@@ -296,9 +298,9 @@ was white, for an interface laid over other people's artwork; for a workspace
 with no artwork, a black primary button made the system read as a grey
 template. One primary per screen.
 
-**Three axes, each unset by default.** The document carries `data-theme`,
-`data-material` and `data-scale`, and every one of them does nothing until an
-application sets it. That is not politeness, it is how two products share one
+**Four axes, each unset by default.** The document carries `data-theme`,
+`data-material`, `data-scale` and `data-accent`, and every one of them does
+nothing until an application sets it. That is not politeness, it is how two products share one
 token layer without either being able to move the other.
 
 | Attribute | Unset | Set | What it changes |
@@ -306,6 +308,7 @@ token layer without either being able to move the other.
 | `data-theme` | follows the system | `light` / `dark` | the palette |
 | `data-material` | glass | `flat` | the material, and nothing else |
 | `data-scale` | the sofa | `desk` | radii, motion, hairlines and density |
+| `data-accent` | the indigo accent | a preset name: `amber` | the four accent tokens and the focus ring, and nothing else |
 
 `data-scale="desk"` is Denitsa's. Luna Watch never sets it and is therefore
 untouched by everything under it — structurally, not by agreement.
@@ -349,6 +352,42 @@ is the one measured against it. The pairs, computed and held by
 | `accent` against `raised` (a graphic, 3:1) | 3.63:1 | 5.72:1 |
 | `accent-ink` | `#b4b2ff`, 10.18:1 on the ground | `#4338ca`, 7.90:1 on white |
 | `accent-ink` on `accent-soft` over `raised` | 7.47:1 | 5.87:1 |
+
+**Accent presets: `data-accent` (#110).** An application that wants an accent
+of its own sets `data-accent="<preset>"` on `<html>`. It never passes a colour
+in: the presets are defined in `tokens.css`, so "no raw colour outside
+`tokens.css`" stays true and `tokens.spec.ts` gates every preset in both
+themes at the same bars as the indigo (fill 3:1 against every band, label and
+ink 4.5:1, ink on the tint 4.5:1, ring 3:1). A preset re-values
+`--color-accent`, `--color-on-accent`, `--color-accent-soft`,
+`--color-accent-ink` and `--color-focus`; series 1 and the canvas glow follow
+because they read `var(--color-accent)`. It is a separate axis rather than a
+desk sub-mode because `data-scale="desk"` also changes radii, motion, hairlines
+and density, which an app outside the desk must not inherit. A new preset is
+a pull request to `tokens.css` with its measurements.
+
+This amends FEAT-20260911-001 decision 6 a second time. The accent tokens are
+defined in the base sets (the indigo, since #93) and re-valued only under
+`data-accent="<preset>"`. With no `data-accent` set, no preset value reaches
+the page, and `tokens.spec.ts` resolves the cascade to prove it. With
+`data-scale="desk"` and `data-accent` both set, the preset wins for the accent
+tokens and the desk keeps every other token. The short list of places above
+holds under every preset. A second way to get an accent is a second place a
+component can quietly start depending on one, so that list matters more now,
+not less.
+
+| `amber` | dark | light |
+|---|---|---|
+| `accent` | `#f2c14e` | `#b07a00` |
+| `on-accent` on `accent` | 10.56:1 (`#18181b`) | 4.75:1 (`#18181b`) |
+| `accent` against the worst band (3:1) | 10.31:1 (`paper`) | 3.16:1 (`canvas`) |
+| `accent-ink` on the worst band | `#f7d47c`, 12.08:1 | `#7c4a03`, 6.28:1 |
+| `accent-ink` on `accent-soft`, worst band | 7.67:1 | 5.44:1 |
+
+`amber` is FilesDrop's, measured against its mascot's eye (`#e9d54a`). The dark
+fill is 1.13:1 from it. The light fill is darker, because an amber that shows
+on white at 3:1 is a brown-gold. White text fails on amber in both themes, so
+the label is near-black.
 
 **Breaking in 0.24.0.** Under the desk profile, `--color-accent-ink` used to be
 the text *on* the accent fill (near-black in dark). It is now the text on the
@@ -1078,6 +1117,44 @@ Send every bucket. The chart cannot know your bucket size: a missing day is not 
 ### Sparkline
 
 The default `tone` is `accent`. `tone="neutral"` is the old `ink-2`.
+
+## File input
+
+`#110`. A drop zone, an upload hook and an upload row, built neutral so the
+application brings its own illustration and copy through slots. Each has its
+own subpath and tests beside it.
+
+| Import | What it is |
+|---|---|
+| `@andrewbehma/glass-ui/file-dropzone` | `FileDropzone`: a `glass-strong` zone with a dashed hairline rim. It takes files by drop, by the native picker (click, Enter or Space) and by paste. `pasteTarget` is `'self'` (the default, while the zone has focus), `'document'` (Ctrl+V anywhere on the page) or `'none'`. `accept` (MIME types, `type/*` or extensions), `maxSize` (bytes per file) and `maxFiles` (per drop) split every drop into `onFiles(files)` and `onReject([{ file, reason }])`, where `reason` is `'type'`, `'too-large'` or `'too-many'`. A drag or paste of text or a link does nothing. `children` is a node or a function of `{ dragging, disabled }`, so each state can have its own art. `label` is required and is the zone's accessible name. |
+| `@andrewbehma/glass-ui/use-file-upload` | `useFileUpload({ url, field, extraFields, headers, concurrency, withCredentials })` returns `{ items, add, cancel, retry, remove }`. It sends multipart `POST`s over `XMLHttpRequest`, because `fetch` has no upload progress. Each item's `state` is `queued`, `uploading` (`loaded`/`total`), `done` (`response`, JSON-parsed when it is JSON), `error` (`httpStatus`, `body`) or `canceled`. At most `concurrency` (3) run at once. Progress commits at most once per animation frame. Unmounting aborts what is running. |
+| `@andrewbehma/glass-ui/file-item` | `FileItem`: one upload as a row. It shows the name, the size (formatted with `Intl` in the reader's locale) and a `role="progressbar"` in `Progress`'s fill while `uploading`, which is indeterminate when `progress` is omitted. It shows `errorText` when `status` is `error`. Thumbnails are a decorative `img`, with a `Skeleton` while an image's thumbnail is pending. `meta` and `actions` are slots, and the row wears `rowActionsHost` so a `RowActions` inside it reveals as in any row. |
+
+```tsx
+const upload = useFileUpload({ url: '/api/files' });
+
+<FileDropzone label="Upload files" maxSize={200 * 1024 * 1024} onFiles={upload.add}>
+  {({ dragging }) => (dragging ? <DropArt /> : <IdleArt />)}
+</FileDropzone>;
+
+{upload.items.map(({ id, file, state }) => (
+  <FileItem
+    key={id}
+    name={file.name}
+    size={file.size}
+    mime={file.type}
+    status={state.status === 'queued' ? 'uploading' : state.status}
+    progress={state.status === 'uploading' ? state.loaded / state.total : undefined}
+    errorText={state.status === 'error' ? 'Upload failed' : undefined}
+  />
+))}
+```
+
+**The row is not glass.** Rows are content. The zone is chrome that carries a
+label, so it is `glass-strong`. Its lift while dragging is a scale and an
+opacity, both `motion-safe`, so they are off under `prefers-reduced-motion`.
+`dragging` is counted across `dragenter`/`dragleave`, so moving onto the art
+inside the zone does not flicker it, and any `drop` or `dragend` resets it.
 
 ## Developing
 

@@ -70,10 +70,10 @@ describe('edgeStyle', () => {
     expect(style.linecap).toBe('round');
     expect(style.tone).toBe('blocked');
     expect(style.classes).toBe(flowTone('blocked'));
-    expect(style.classes.stroke).toBe('stroke-danger');
+    expect(style.classes.stroke).toBe('stroke-status-blocked');
   });
 
-  test('the edge reads StatusPill’s palette, plus the SVG classes of its family', () => {
+  test('the edge reads StatusPill’s palette, plus the SVG classes of its state', () => {
     for (const tone of STATUS_TONES) {
       const flow = flowTone(tone);
       const pill = statusTone(tone);
@@ -83,7 +83,12 @@ describe('edgeStyle', () => {
       expect(flow.stroke).toMatch(/^stroke-/);
       expect(flow.fill).toMatch(/^fill-/);
     }
-    expect(flowTone('waiting').stroke).toBe('stroke-info');
+    expect(flowTone('waiting').stroke).toBe('stroke-status-waiting');
+    // #109 — the stroke is the dot's token, per state, not per family.
+    for (const tone of STATUS_TONES.filter((t) => t !== 'idle')) {
+      expect(flowTone(tone).stroke).toBe(`stroke-status-${tone}`);
+      expect(flowTone(tone).dot).toBe(`bg-status-${tone}`);
+    }
     expect(flowTone('idle').stroke).toBe('stroke-ink-2');
   });
 

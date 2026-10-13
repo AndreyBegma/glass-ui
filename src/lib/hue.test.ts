@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { HUES, hueClasses, hueFor } from './hue';
 
-describe('hueFor (#109)', () => {
+// #109 — the identity hues.
+describe('hueFor', () => {
   test('is FNV-1a: the reference vectors land where the hash says', () => {
     // FNV-1a("") is 0x811c9dc5 and FNV-1a("a") is 0xe40c292c; their low three
     // bits are 5 and 4, so hues 6 and 5.
@@ -36,8 +37,8 @@ describe('hueFor (#109)', () => {
   });
 });
 
-describe('hueClasses (#109)', () => {
-  test.each(HUES)('hue %d reads its own tokens and no other hue', (hue) => {
+describe('hueClasses', () => {
+  test.each([...HUES])('hue %d reads its own tokens and no other hue', (hue) => {
     const classes = Object.values(hueClasses(hue)).join(' ');
     for (const match of classes.matchAll(/hue-(\d)/g)) expect(Number(match[1])).toBe(hue);
     expect(hueClasses(hue).soft).toBe(`bg-hue-${hue}-soft text-hue-${hue}-ink`);

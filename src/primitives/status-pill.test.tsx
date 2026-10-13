@@ -38,7 +38,8 @@ describe('statusTone', () => {
     expect(new Set(labels).size).toBe(STATUSES.length);
   });
 
-  test('#109 — each state reads its own status tokens, and idle the quiet ink', () => {
+  // #109
+  test('each state reads its own status tokens, and idle the quiet ink', () => {
     for (const status of STATUSES.filter((s) => s !== 'idle')) {
       const { text, soft, dot, rim, glow } = statusTone(status);
       expect(text).toBe(`text-status-${status}-ink`);

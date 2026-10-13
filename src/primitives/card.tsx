@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
 import { cn } from '../lib/cn';
+import { type Hue, hueClasses } from '../lib/hue';
 
 /**
  * FEAT-20260823-362 — a panel.
@@ -49,9 +50,46 @@ const card = tv({
   },
 });
 
-type CardProps = Omit<ComponentProps<'div'>, 'className'> &
-  VariantProps<typeof card> & { className?: string };
+/*
+ * #109 — a card with an identity hue. The hue is the border and a soft glow,
+ * so the surface is drawn here as its parts: `surface-content` sets the
+ * border and the shadow as one utility that a class cannot partly override
+ * (the reason `NodeCard` draws its own, too). The fill is each variant's. On
+ * `glass` the hue is the border only: the material's own shadows are its
+ * edge, and a glow would replace them.
+ */
+const HUED_SURFACE = {
+  content: 'border bg-content',
+  raised: 'border bg-raised',
+  surface: 'border bg-surface',
+  glass: 'glass border',
+  plain: 'border',
+} as const;
 
-export function Card({ variant, pad, className, ...props }: CardProps) {
+type CardProps = Omit<ComponentProps<'div'>, 'className'> &
+  VariantProps<typeof card> & {
+    /** #109 — an identity hue: the border and a soft glow. */
+    hue?: Hue;
+    className?: string;
+  };
+
+export function Card({ variant, pad, hue, className, ...props }: CardProps) {
+  if (hue) {
+    const surface = variant ?? 'content';
+    const hued = hueClasses(hue);
+    return (
+      <div
+        data-hue={hue}
+        className={cn(
+          card({ variant: 'plain', pad }),
+          HUED_SURFACE[surface],
+          hued.rim,
+          surface === 'glass' ? null : hued.glow,
+          className,
+        )}
+        {...props}
+      />
+    );
+  }
   return <div className={cn(card({ variant, pad }), className)} {...props} />;
 }

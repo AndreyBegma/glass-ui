@@ -48,6 +48,7 @@ export function collapse(
         label: n.label,
         column: c.id,
         tone: n.tone,
+        hue: n.hue,
         value: n.value,
       })),
     });

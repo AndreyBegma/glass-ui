@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn';
-import { flowTone } from './tone';
+import { type Hue, hueClasses } from '../../lib/hue';
+import { flowTone, hueTone } from './tone';
 import type { FlowTone } from './types';
 
 /**
@@ -18,6 +19,12 @@ import type { FlowTone } from './types';
 export type FlowNodeCardProps = {
   title: ReactNode;
   tone?: FlowTone;
+  /**
+   * #109 — an identity hue: the border, the icon disc and the glow. The
+   * status keeps its dot and word; identity beats state on the edge, as on
+   * `NodeCard`.
+   */
+  hue?: Hue;
   /** Beside the dot. Defaults to the tone's English name; nothing without a tone. */
   status?: ReactNode;
   meta?: ReactNode;
@@ -34,6 +41,7 @@ export type FlowNodeCardProps = {
 export function FlowNodeCard({
   title,
   tone,
+  hue,
   status,
   meta,
   icon,
@@ -41,17 +49,19 @@ export function FlowNodeCard({
   className,
 }: FlowNodeCardProps) {
   const classes = flowTone(tone);
+  const edge = hue ? hueTone(hue) : classes;
   const statusText = status ?? (tone ? classes.label : null);
   if (compact) {
     return (
       <div
         data-flow-node-card
         data-tone={tone}
+        data-hue={hue}
         className={cn(
           'flex h-full w-full items-center gap-2 overflow-hidden rounded-surface border bg-content px-3 text-left',
           'transition-[border-color,box-shadow] duration-(--dur-fast)',
-          classes.rim,
-          classes.glow,
+          edge.rim,
+          edge.glow,
           className,
         )}
       >
@@ -59,7 +69,10 @@ export function FlowNodeCard({
           <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', classes.dot)} />
         ) : null}
         {icon ? (
-          <span aria-hidden="true" className="flex shrink-0 text-ink-2 [&_svg]:size-4">
+          <span
+            aria-hidden="true"
+            className={cn('flex shrink-0 [&_svg]:size-4', hue ? hueClasses(hue).ink : 'text-ink-2')}
+          >
             {icon}
           </span>
         ) : null}
@@ -71,18 +84,22 @@ export function FlowNodeCard({
     <div
       data-flow-node-card
       data-tone={tone}
+      data-hue={hue}
       className={cn(
         'flex h-full w-full items-start gap-3 overflow-hidden rounded-surface border bg-content p-3 text-left',
         'transition-[border-color,box-shadow] duration-(--dur-fast)',
-        classes.rim,
-        classes.glow,
+        edge.rim,
+        edge.glow,
         className,
       )}
     >
       {icon ? (
         <span
           aria-hidden="true"
-          className="flex size-8 shrink-0 items-center justify-center rounded-control bg-hover text-ink-2 [&_svg]:size-4"
+          className={cn(
+            'flex size-8 shrink-0 items-center justify-center rounded-control [&_svg]:size-4',
+            hue ? hueClasses(hue).soft : 'bg-hover text-ink-2',
+          )}
         >
           {icon}
         </span>

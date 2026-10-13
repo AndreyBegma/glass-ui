@@ -1,3 +1,4 @@
+import { HUES, type Hue, hueClasses } from '../../lib/hue';
 import {
   STATUSES,
   type Status,
@@ -65,6 +66,23 @@ export const NEUTRAL_TONE: FlowToneClasses = {
 const FLOW_TONES = new Map<StatusTone, FlowToneClasses>(
   STATUSES.map((status) => [status, { ...statusTone(status), ...SVG[status] }]),
 );
+
+/**
+ * #109 — an identity hue in the same shape, for a node with a `hue` and for
+ * an edge that takes its source's: the hue's rim, glow, dot and SVG classes
+ * over the neutral tone. Not a status, so `tone` stays `neutral` and there is
+ * no label.
+ */
+const HUE_TONES = new Map<Hue, FlowToneClasses>(
+  HUES.map((hue) => {
+    const { rim, glow, dot, stroke, fill } = hueClasses(hue);
+    return [hue, { ...NEUTRAL_TONE, rim, glow, dot, stroke, fill }];
+  }),
+);
+
+export function hueTone(hue: Hue): FlowToneClasses {
+  return HUE_TONES.get(hue)!;
+}
 
 /** `statusTone` plus the SVG classes, and neutral for a node without a status. */
 export function flowTone(tone: StatusTone | undefined): FlowToneClasses {

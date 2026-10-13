@@ -22,6 +22,8 @@ export interface HueClasses {
   dot: string;
   /** The tint with text on it: an icon disc, a badge, a pill. AA in both themes. */
   soft: string;
+  /** Text in the hue, on any band: an icon on its own. AA in both themes. */
+  ink: string;
   /** A 1px border in the hue — use with `border`. */
   rim: string;
   /** A soft outer glow in the hue. */
@@ -36,6 +38,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   1: {
     dot: 'bg-hue-1',
     soft: 'bg-hue-1-soft text-hue-1-ink',
+    ink: 'text-hue-1-ink',
     rim: 'border-hue-1-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-1-glow)]',
     stroke: 'stroke-hue-1',
@@ -44,6 +47,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   2: {
     dot: 'bg-hue-2',
     soft: 'bg-hue-2-soft text-hue-2-ink',
+    ink: 'text-hue-2-ink',
     rim: 'border-hue-2-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-2-glow)]',
     stroke: 'stroke-hue-2',
@@ -52,6 +56,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   3: {
     dot: 'bg-hue-3',
     soft: 'bg-hue-3-soft text-hue-3-ink',
+    ink: 'text-hue-3-ink',
     rim: 'border-hue-3-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-3-glow)]',
     stroke: 'stroke-hue-3',
@@ -60,6 +65,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   4: {
     dot: 'bg-hue-4',
     soft: 'bg-hue-4-soft text-hue-4-ink',
+    ink: 'text-hue-4-ink',
     rim: 'border-hue-4-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-4-glow)]',
     stroke: 'stroke-hue-4',
@@ -68,6 +74,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   5: {
     dot: 'bg-hue-5',
     soft: 'bg-hue-5-soft text-hue-5-ink',
+    ink: 'text-hue-5-ink',
     rim: 'border-hue-5-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-5-glow)]',
     stroke: 'stroke-hue-5',
@@ -76,6 +83,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   6: {
     dot: 'bg-hue-6',
     soft: 'bg-hue-6-soft text-hue-6-ink',
+    ink: 'text-hue-6-ink',
     rim: 'border-hue-6-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-6-glow)]',
     stroke: 'stroke-hue-6',
@@ -84,6 +92,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   7: {
     dot: 'bg-hue-7',
     soft: 'bg-hue-7-soft text-hue-7-ink',
+    ink: 'text-hue-7-ink',
     rim: 'border-hue-7-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-7-glow)]',
     stroke: 'stroke-hue-7',
@@ -92,6 +101,7 @@ const HUE_CLASSES: Record<Hue, HueClasses> = {
   8: {
     dot: 'bg-hue-8',
     soft: 'bg-hue-8-soft text-hue-8-ink',
+    ink: 'text-hue-8-ink',
     rim: 'border-hue-8-line',
     glow: 'shadow-[0_0_24px_-6px_var(--color-hue-8-glow)]',
     stroke: 'stroke-hue-8',

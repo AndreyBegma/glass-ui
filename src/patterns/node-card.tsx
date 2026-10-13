@@ -4,6 +4,7 @@ import { EllipsisVertical, type LucideIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
 import { cn } from '../lib/cn';
+import { type Hue, hueClasses } from '../lib/hue';
 import { Button } from '../primitives/button';
 import type { ContextMenuAction } from '../primitives/context-menu';
 import {
@@ -40,6 +41,12 @@ import { NODE_TILE, type NodeCardColor } from './node-card-tile';
  * **The tile's colour is an identity, not a state.** `color` takes the
  * categorical series (`series-1` … `series-6`) — telling things apart is
  * exactly what they are for — or a status tone. It never takes the accent.
+ *
+ * #109 — **`hue` is the whole card's identity.** One of the eight identity
+ * hues tints the border, the icon disc and the glow, so an agent is
+ * recognisable by colour across a grid, a graph and a chart. Identity beats
+ * state on the edge: with a `hue`, the status is said by the pill alone.
+ * Without one, the status rim and glow are as they were.
  *
  * **Pressable only when asked.** With `onSelect` the title becomes a button
  * whose hit area is stretched over the whole card; the menu, the footer and
@@ -110,6 +117,12 @@ export interface NodeCardProps
   icon?: LucideIcon;
   /** The icon tile's colour: an identity, not a state. Default `neutral`. */
   color?: NodeCardColor;
+  /**
+   * #109 — the card's identity hue: its border, its icon disc and its glow.
+   * The status then shows in the pill only. Wins over `color` for the disc.
+   * `hueFor(key)` picks one from a stable key.
+   */
+  hue?: Hue;
   status?: Status;
   /** Replaces the status's English label. */
   statusLabel?: string;
@@ -143,6 +156,7 @@ export function NodeCard({
   title,
   icon: Icon,
   color = 'neutral',
+  hue,
   status,
   statusLabel,
   glow = true,
@@ -163,6 +177,10 @@ export function NodeCard({
 }: NodeCardProps) {
   const s = card({ size });
   const tone = status ? statusTone(status) : null;
+  const hued = hue ? hueClasses(hue) : null;
+  // The edge's colour and glow: the hue's when the card has one, else the
+  // status's, else a hairline and the faintest lift.
+  const edge = hued ?? tone;
   const compact = size === 'compact';
   const Heading = `h${headingLevel}` as const;
   const TagIcon = tag?.icon;
@@ -171,12 +189,13 @@ export function NodeCard({
     <article
       data-node-card
       data-node-status={status}
+      data-node-hue={hue}
       data-selected={selected || undefined}
       className={cn(
         s.root(),
-        tone ? tone.rim : 'border-line',
-        tone && glow && tone.glow
-          ? tone.glow
+        edge ? edge.rim : 'border-line',
+        edge && glow && edge.glow
+          ? edge.glow
           : 'shadow-[0_1px_2px_var(--glass-shadow-clear)]',
         selected && 'ring-2 ring-accent',
         onSelect && 'hover:border-line-strong',
@@ -187,9 +206,9 @@ export function NodeCard({
       <header className="flex min-w-0 items-start gap-3">
         {Icon ? (
           <span
-            data-node-tile={color}
+            data-node-tile={hue ? `hue-${hue}` : color}
             aria-hidden="true"
-            className={cn(s.tile(), NODE_TILE[color])}
+            className={cn(s.tile(), hued ? hued.soft : NODE_TILE[color])}
           >
             <Icon size={compact ? 16 : 20} />
           </span>

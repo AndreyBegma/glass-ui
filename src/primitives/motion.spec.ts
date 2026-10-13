@@ -67,6 +67,7 @@ describe('the vocabulary is declared', () => {
     'lunaFadeIn',
     'lunaFadeOut',
     'lunaDialogIn',
+    'lunaDialogSpring',
     'lunaDialogOut',
     'lunaPopIn',
     'lunaPopOut',

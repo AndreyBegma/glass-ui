@@ -8,13 +8,18 @@ import { cn } from '../lib/cn';
  * so the line follows light, dark and flat without a colour of its own.
  * Fewer than two finite values cannot make a line, so they draw a flat
  * baseline — never a path with `NaN` in it. Non-finite entries are dropped.
+ *
+ * #93 — the default tone is `accent`, the hue the default Chart series also
+ * takes, so a trend reads as data rather than as grey text. `neutral` is
+ * the old default, for a trend that should stay quiet.
  */
 export type SparklineProps = {
   values: number[];
   width?: number;
   height?: number;
   area?: boolean;
-  tone?: 'neutral' | 'ok' | 'warn' | 'danger';
+  /** Default `accent`. */
+  tone?: 'accent' | 'neutral' | 'ok' | 'warn' | 'danger';
   /** With a label the SVG is `role="img"`; without, `aria-hidden`. */
   label?: string;
   min?: number;
@@ -23,6 +28,7 @@ export type SparklineProps = {
 };
 
 const TONE = {
+  accent: 'text-accent',
   neutral: 'text-ink-2',
   ok: 'text-ok',
   warn: 'text-warn',
@@ -39,7 +45,7 @@ export function Sparkline({
   width = 96,
   height = 24,
   area = false,
-  tone = 'neutral',
+  tone = 'accent',
   label,
   min,
   max,

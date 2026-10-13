@@ -65,9 +65,14 @@ export function DialogContent({
 }: DialogProps) {
   return (
     <RadixDialog.Portal container={container}>
+      {/*
+          #93 — a film, not a wall: `--color-scrim` (0.3 dark, 0.22 light)
+          over a 2px blur. The page already goes back (`base.css`), and
+          blurring it into grey as well was the mud the audit found.
+        */}
       <RadixDialog.Overlay
         className={cn(
-          'fixed inset-0 z-overlay bg-black/55 backdrop-blur-sm',
+          'fixed inset-0 z-overlay bg-scrim backdrop-blur-scrim',
           'data-[state=open]:animate-[lunaFadeIn_var(--dur-base)_ease-out]',
           'data-[state=closed]:animate-[lunaFadeOut_var(--dur-fast)_ease-out]',
         )}
@@ -94,7 +99,11 @@ export function DialogContent({
           // entrance is the user's decision arriving; the exit is the system
           // getting out of the way, and a slow one reads as the interface
           // thinking about it.
-          'data-[state=open]:animate-[lunaDialogIn_var(--dur-base)_var(--ease-out-expo)]',
+          //
+          // #93 — the entrance is a critically damped spring of about 0.3s
+          // (`--ease-spring` over `--dur-spring`), so it lands without the
+          // long expo tail and without an overshoot.
+          'data-[state=open]:animate-[lunaDialogSpring_var(--dur-spring)_var(--ease-spring)]',
           'data-[state=closed]:animate-[lunaDialogOut_var(--dur-fast)_var(--ease-out-expo)]',
           className,
         )}

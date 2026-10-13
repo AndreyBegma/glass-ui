@@ -1,7 +1,43 @@
 # glass-ui
 
-The Liquid Glass design system, lifted out of Luna Watch so that more than one
-application can be built from the same material.
+**The Liquid Glass design system for React 19 and Tailwind CSS 4: tokens, a glass material, and the components built from them.**
+
+[![npm](https://img.shields.io/npm/v/@andrewbehma/glass-ui)](https://www.npmjs.com/package/@andrewbehma/glass-ui)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Two applications that want the same frosted-glass look usually end up with two
+copies of it: drifting colours, hand-tuned blurs, and buttons that are almost the
+same. glass-ui is the one copy. It was lifted out of Luna Watch so that more than
+one product can be built from the same material, and it now also carries
+[AgentDock](https://github.com/AndreyBegma/AgentDock)'s whole web UI.
+
+**Who it is for:** React 19 applications on Tailwind CSS 4 (Next.js included)
+that want a consistent glass look, from a television-style "sofa" interface to a
+dense desktop dashboard, without writing their own primitives.
+
+- **npm:** [`@andrewbehma/glass-ui`](https://www.npmjs.com/package/@andrewbehma/glass-ui) — `npm i @andrewbehma/glass-ui`
+- **Used by:** [AgentDock](https://github.com/AndreyBegma/AgentDock), whose UI is built only from glass-ui components.
+
+## What is in it
+
+- **Tokens** — palette, radius, motion, density and type scales, a z-index
+  ladder, and three independent switches (`data-theme`, `data-material`,
+  `data-scale`) for light/dark, glass/flat and sofa/desk density.
+- **The material** — `glass`, `glass-strong`, `glass-clear` and `lit` for
+  chrome, `surface-content` for content, and the `.canvas` behind them, with
+  the fallbacks they need.
+- **Primitives** — Button, Card, Chip, Badge, Banner, Avatar, Field, Input,
+  Select, Combobox, Checkbox, Radio group, Toggle, Slider and Range slider,
+  Number, Date and Cron inputs, Dialog, Sheet, Menu, Context menu, Tooltip,
+  Tabs, Segmented control, Table, Progress, Spinner, Skeleton, Sparkline,
+  Toast, Code block and more.
+- **Patterns** — app and nav rails, bottom capsule, breadcrumb, command
+  palette, toolbar, popover, side panel, split pane, data table, tree, trace
+  tree, timeline, board, stat tile, widget grid, log viewer, terminal and a
+  dependency-free SVG chart.
+- **Shipped as compiled ESM** with type declarations and one subpath per
+  module; client components keep `'use client'`, so they render from React
+  Server Components with no `transpilePackages`.
 
 Three layers, imported separately so an application can take the first two and
 decline the third:
@@ -9,9 +45,20 @@ decline the third:
 | Import | What it is |
 |---|---|
 | `@andrewbehma/glass-ui/tokens.css` | The palette, the radius, motion, density and type scales, the z-index ladder, and the three axes below. Declares its own `@source`, so a consumer does not have to know that Tailwind cannot see into `node_modules`. |
-| `@andrewbehma/glass-ui/material.css` | `glass`, `glass-strong`, `glass-clear` and `lit`, and every fallback they need. |
+| `@andrewbehma/glass-ui/material.css` | `glass`, `glass-strong`, `glass-clear` and `lit`, `surface-content`, the `.canvas` layer, and every fallback they need. |
 | `@andrewbehma/glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
 | `@andrewbehma/glass-ui` | The primitives and `cn`. |
+
+**Contents:** [Install](#install) · [Quick start](#quick-start) ·
+[The look](#the-look) · [The rules](#the-rules) · [Motion](#motion) ·
+[The shell patterns](#the-shell-patterns) ·
+[The workspace patterns](#the-workspace-patterns) ·
+[The data primitives](#the-data-primitives) ·
+[The widget grid](#the-widget-grid) ·
+[Desk dashboard primitives](#desk-dashboard-primitives) ·
+[Desk activity primitives](#desk-activity-primitives) ·
+[Desk automation primitives](#desk-automation-primitives) ·
+[Developing](#developing) · [Releasing](#releasing) · [License](#license)
 
 ## Install
 
@@ -73,6 +120,110 @@ components are generated; with neither, they are not.
 dependency on any later commit gets no `dist/` — it is built at publish time and
 is not in the repository — so use the npm package.
 
+## Quick start
+
+With the stylesheets imported as above, import each component from its own
+subpath (the barrel works too, but loads every module — see `src/index.ts`):
+
+```tsx
+import { Button } from '@andrewbehma/glass-ui/button';
+import { Card } from '@andrewbehma/glass-ui/card';
+
+export function Welcome() {
+  return (
+    <Card variant="glass" pad="lg">
+      <h2 className="text-ink">Hello</h2>
+      <p className="text-ink-2">Built from tokens, not hex codes.</p>
+      <Button variant="solid">Continue</Button>
+      <Button variant="ghost">Later</Button>
+    </Card>
+  );
+}
+```
+
+`Button` has four variants (`solid`, `glass`, `ghost`, `danger`) and three sizes
+(`sm`, `md`, `lg`); `Card` has `content` (the default), `raised`, `surface`,
+`glass` and `plain`. Mount `<Canvas />` once behind the app so the glass has
+something to refract; see [The look](#the-look). To
+switch the look for the whole document, set the axes on `<html>`, for example
+`<html data-theme="dark" data-scale="desk">` for a dense dark dashboard. Every
+axis does nothing until it is set; [the rules](#the-rules) explain each one.
+
+## The look
+
+#93. A UI audit of AgentDock found glass-ui reading as a flat grey admin
+template rather than as glass: the material sat on a plain page with nothing
+behind it to refract, every card was the same grey, there was no colour of its
+own, and modal scrims blurred the page into mud. The direction since 0.24.0,
+in both themes, minimal and cheap to render:
+
+**A canvas behind everything.** `<Canvas />` (`@andrewbehma/glass-ui/canvas`),
+or any element with the `.canvas` class, paints three large, soft radial
+gradients of the accent behind the app: `--canvas-glow` of the accent, 18 % in
+dark and 10 % in light. It is `position: fixed` at `z-index: -1`, with no
+`filter` and no animation, so it costs one composited layer and nothing on
+scroll. Mount it once, **outside `#main-content`** (the depth effect transforms
+that element), and do not give `body` a background of its own: `html` paints
+`--color-ground` beneath it. Under `prefers-reduced-transparency`,
+`data-material="flat"` and forced colours it is not drawn, and the page is the
+flat ground.
+
+```tsx
+<body>
+  <Canvas />
+  <div id="main-content">…</div>
+</body>
+```
+
+**Two surface levels.** Pick one by what the surface holds:
+
+| Level | Utility | For | Looks like |
+|---|---|---|---|
+| Chrome | `glass`, `glass-strong`, `glass-clear` | what moves you around the content: rails, the top bar, sheets, dialogs, menus, the command palette, popovers | the full seven-layer material, refracting the canvas |
+| Content | `surface-content` | what is read: `Card` (its default variant `content`), `DataTable`'s frame | `--color-content`, which is `paper` at 96 %, with a 1px `--color-line` hairline and the faintest lift. No blur, no grey fill. |
+
+The flat rung makes content opaque `paper`.
+
+**The accent.** An electric indigo, `--color-accent`, with `--color-on-accent`,
+`--color-accent-soft` and `--color-accent-ink`. It goes on the primary button,
+the selected segment, the active rail item, the toggle's on-state, the focus
+ring, links, and chart series 1. The rule and the contrast table are under
+[The rules](#the-rules).
+
+**Scrims are a film, not a wall.** `Dialog` and `Sheet` lay `bg-scrim` (`--color-scrim`:
+0.3 in dark, 0.22 in light) over a 2px `backdrop-blur-scrim`. The page already
+goes back under a sheet (the depth effect in `base.css`), so blurring it as
+well only greyed it out. The command palette keeps its stronger scrim, because
+it is a mode rather than a question about the page.
+
+**A type scale.** Font sizes as Tailwind `--text-*` tokens, each carrying its
+line height, weight and tracking:
+
+| Utility | Size / line | Weight | Tracking | For |
+|---|---|---|---|---|
+| `text-display` | 28 / 32 | 600 | -0.02em | the page title |
+| `text-heading` | 20 / 28 | 600 | -0.01em | a section heading |
+| `text-section` | 15 / 22 | 600 | | a card or panel title |
+| `text-body` | 14 / 20 | | | running text |
+| `text-label` | 12 / 16 | 500 | | a field label, a column header, metadata |
+
+`--font-sans` and `--font-mono` are the font-family tokens. glass-ui ships no
+font files: an application that self-hosts a face sets either one at `:root`.
+Numbers that sit in columns use `tabular-nums` (Tailwind's) or `.tabular`;
+`base.css` already applies it to every `table`, `time` and `output`, so `Table`
+and `DataTable` get it without asking, and `StatTile` carries it on its
+surface.
+
+**Motion.** A press is visible: anything `lit` (`Button`, the rails, `Chip`)
+scales to `--press-scale` (0.97) over `--dur-press` (100ms). Full-width rows
+(menu items, listbox options, an expanded `NavRail` item marked `press-row`)
+keep 0.985, because 3 % of a 300px row reads as a glitch. A dialog enters on a
+critically damped spring of about 0.3s (`--ease-spring`, a `linear()` easing,
+over `--dur-spring`; engines without `linear()` get `--ease-out-expo`). A sheet
+enters on Motion's spring with `bounce: 0` and a 0.3s visual duration. The
+command palette fades and scales up from 0.98 (`lunaDialogIn`). All of it is
+off under `prefers-reduced-motion`.
+
 ## The rules
 
 These are not style preferences. Each one replaced something a codebase was
@@ -88,10 +239,10 @@ change costs one file.
 `rgb()`, no `zinc-*`, `violet-*`, `emerald-*`, `rose-*`, `yellow-*` or
 `blue-*`. This is enforced by a test, not by review.
 
-The accent tokens are the one part of the palette that is conditional — they
-exist only under `data-scale="desk"`, and the rule about where they may be used
-is below. `--size-*` is not a Tailwind namespace, so the density scale is read
-as `h-[var(--size-row)]` rather than as a utility.
+The accent (`bg-accent`, `text-on-accent`, `bg-accent-soft`, `text-accent-ink`)
+is defined in every theme; the rule about where it may be used is below.
+`--size-*` is not a Tailwind namespace, so the density scale is read as
+`h-[var(--size-row)]` rather than as a utility.
 
 **A document is not a rung on the surface ladder.** `ground`, `surface` and
 `raised` say how far a panel sits from the back of the window. A page is a
@@ -112,11 +263,13 @@ carries the same weight in either theme. `ink` on `paper` measures 17.72:1 in
 light and 15.50:1 in dark, and `tokens.spec.ts` holds that above 12:1 in every
 value set.
 
-**New chrome is glass. Cards, grid items and rows are not.** Header, bottom bar,
-sheets, dialogs, menus, overlays and player controls use `glass` or
-`glass-strong`; anything carrying body text uses `glass-strong`. Glass on a card
-is invisible against the flat ground and it costs a television its frame rate —
-two hundred glass tiles on one page is why this rule is written down.
+**New chrome is glass. Cards, grid items and rows are content.** Header, bottom
+bar, rails, sheets, dialogs, menus, the palette, popovers and player controls
+use `glass` or `glass-strong`; anything carrying body text uses `glass-strong`.
+A card, a table frame or a grid item uses `surface-content` (`Card`'s default):
+near-opaque paper with a hairline and no blur. Glass on a card makes text harder
+to read and costs a television its frame rate. Two hundred glass tiles on one
+page is why this rule is written down.
 
 The material has three rungs of scrim on one renderer (FEAT-20260919-618), and
 the gate is what decides which one a surface may use — measured for
@@ -138,10 +291,10 @@ pair and the light is gathered on the top-left corner by a negative-spread
 inset — the 1px offset that is a crescent on a disc is a ruler line on a
 sheet.
 
-**The primary action is white** (`bg-ink text-ground`). The system was built for
-an interface that sits on top of other people's artwork, where every poster on
-screen is already competing for attention. Colour comes from the content. Under
-the desk profile it is the accent instead — see the two rules below.
+**The primary action is the accent** (`bg-accent text-on-accent`). Until #93 it
+was white, for an interface laid over other people's artwork; for a workspace
+with no artwork, a black primary button made the system read as a grey
+template. One primary per screen.
 
 **Three axes, each unset by default.** The document carries `data-theme`,
 `data-material` and `data-scale`, and every one of them does nothing until an
@@ -152,13 +305,14 @@ token layer without either being able to move the other.
 |---|---|---|---|
 | `data-theme` | follows the system | `light` / `dark` | the palette |
 | `data-material` | glass | `flat` | the material, and nothing else |
-| `data-scale` | the sofa | `desk` | radii, motion, hairlines, density, and the accent |
+| `data-scale` | the sofa | `desk` | radii, motion, hairlines and density |
 
 `data-scale="desk"` is Denitsa's. Luna Watch never sets it and is therefore
 untouched by everything under it — structurally, not by agreement.
-`tokens.spec.ts` holds every token in the base set to its value at `3d1c78e`
-and holds the desk profile to exactly the list it is allowed to change, so both
-halves of that claim fail a build rather than a review.
+`tokens.spec.ts` holds every token in the base set to `tokens.baseline.json`
+(its value at `3d1c78e`, except where a named decision moved it, such as #93's
+focus ring) and holds the desk profile to exactly the list it is allowed to
+change, so both halves of that claim fail a build rather than a review.
 
 What the desk profile is for: this system was designed to be read across a room
 from a television, and Denitsa is read at 60cm. A radius that gives a card a
@@ -167,32 +321,40 @@ feels considered from a sofa is a wait at a desk. Radii go 6/8/12, durations
 100/150/260, hairlines get heavier and hover gets lighter, and the density
 scale drops a row from 40px to 32.
 
-**The accent is desk-only, and it has four places.** `--color-accent`,
-`--color-accent-ink` and `--color-accent-soft` are defined under
-`data-scale="desk"` and are **undefined everywhere else** — a component that
-reads one outside the desk profile gets nothing, loudly, which is deliberate.
-The four places, and there is no fifth:
+**The accent has a short list of places.** Four tokens, in every theme
+(#93), each with one job:
 
-| Where | Which token |
-|---|---|
-| The active navigation item | `--color-accent`, or `--color-accent-soft` behind it |
-| A selection — a chosen row, a picked option | `--color-accent-soft` |
-| The primary action's fill | `--color-accent`, label in `--color-accent-ink` |
-| A link | `--color-accent` |
+| Token | Is | Goes on |
+|---|---|---|
+| `--color-accent` | the fill | the primary button, the toggle's on-state, a selected segment, chart series 1 and the default sparkline |
+| `--color-on-accent` | text and icons on the fill | the primary button's label, the toggle's knob |
+| `--color-accent-soft` | a tint, alpha | the active rail item's capsule, a selected row |
+| `--color-accent-ink` | text on the tint, and links | the active rail item's label, a selected row's mark, an unstyled `<a>` |
 
-It is not a decorative colour. It does not go on a chart, a badge, an icon that
-is merely present, an empty state, or a border that wants to look important.
-`--color-ok`, `--color-warn` and `--color-danger` keep their meanings and the
-accent does not join them — **an accent is not a semantic**, and a colour that
-means both "primary" and "this one is fine" means neither.
+The focus ring takes the accent too (`--color-focus`). It is not a decorative
+colour: it does not go on a badge, an icon that is merely present, an empty
+state, or a border that wants to look important. `--color-ok`,
+`--color-warn` and `--color-danger` keep their meanings and the accent does not
+join them — **an accent is not a semantic**, and a colour that means both
+"primary" and "this one is fine" means neither.
 
-`--color-accent-ink` flips with the theme and is near-black in dark. That is
-not a slip: in dark, "white text on the accent" and "the accent readable on
-`--color-raised`" cannot both be true of any colour of any hue, so the accent
-sits where `ink` already sits in each theme — a bright fill with dark text in
-dark, a dark fill with white text in light. Never write anything on the accent
-in a colour of your own choosing; `--color-accent-ink` is the only one measured
-against it.
+Never write on the accent in a colour of your own choosing; `--color-on-accent`
+is the one measured against it. The pairs, computed and held by
+`tokens.spec.ts`:
+
+| | dark | light |
+|---|---|---|
+| `accent` | `#5b5bf6` | `#4f46e5` |
+| `on-accent` on `accent` | 4.92:1 | 6.29:1 |
+| `accent` against `raised` (a graphic, 3:1) | 3.63:1 | 5.72:1 |
+| `accent-ink` | `#b4b2ff`, 10.18:1 on the ground | `#4338ca`, 7.90:1 on white |
+| `accent-ink` on `accent-soft` over `raised` | 7.47:1 | 5.87:1 |
+
+**Breaking in 0.24.0.** Under the desk profile, `--color-accent-ink` used to be
+the text *on* the accent fill (near-black in dark). It is now the text on the
+*tint*, and text on the fill is `--color-on-accent`. Replace
+`bg-accent text-accent-ink` with `bg-accent text-on-accent`. The desk's own
+accent values (`#806ffc` / `#5b4bd1`) are gone: there is one accent.
 
 **Hit area, visual size and the density scale are three different things.**
 `--size-row` (40px, a list row), `--size-control` (40px, a button),
@@ -209,8 +371,8 @@ one of them; see the next rule.
   minimum: a label that wraps grows its row rather than overlapping the next.
 
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
-`base.css` puts a 3px white outline on `:focus-visible`, sized to be read across
-a room from a television. Every hand-written ring that preceded it was thinner
+`base.css` puts a 3px `--color-focus` outline on `:focus-visible` (the accent
+since #93), sized to be read across a room from a television. Every hand-written ring that preceded it was thinner
 and dimmer. Form elements and `contenteditable` editors are the only exemption
 — they draw their own focus indicator (a caret, or a consumer's selected-node
 state), and `base.css` already exempts them.
@@ -554,15 +716,11 @@ which had an ancestor in this package (`V2`). `E-92`'s line holds: these are
 
 Five rules, each the answer to something that was already going wrong.
 
-**The accent's first place is `AppRail`'s active item, and only under the
-desk.** The glyph reads `--color-accent` and the capsule `--color-accent-soft`,
-each through a `var()` whose fallback is the sofa's look for the same place —
-`NavRail`'s `bg-hover` capsule and `ink`. Under `data-scale="desk"` it is the
-accent; under nothing it is exactly `NavRail`. That is not a fifth use: it is
-the same place, drawn the way that profile already draws it. Note that the
-accent tokens are declared under the desk selector rather than in `@theme`, so
-Tailwind emits no `bg-accent-*` utility for them — every read is an arbitrary
-`var()`, as the density scale already is.
+**The active rail item is the accent.** In `AppRail` and `NavRail` alike, the
+capsule is `bg-accent-soft` and the label or glyph on it `text-accent-ink`
+(#93). Before 0.24.0 this was desk-only, read through a `var()` with a
+fallback to a grey `bg-hover` capsule; the accent is in `@theme` now, so these
+are plain utilities.
 
 **Unavailable is marked, still navigable, never hidden — one level up.**
 `AppRail` keeps `NavRail`'s rule to the letter (`E-50`): a `warn` dot on the
@@ -774,8 +932,8 @@ behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
 | `@andrewbehma/glass-ui/stat-tile` | `StatTile` — label, value, optional delta, hint and a trend slot. Pressable only when given `href` or `onClick`. `loading` renders `Skeleton`s of the same height. |
 | `@andrewbehma/glass-ui/key-value-list` | `KeyValueList` — a `dl` of `dt`/`dd`, one or two columns, optional per-item copy button; long values truncate with the full text in a `Tooltip`. |
 | `@andrewbehma/glass-ui/code-block` | `CodeBlock` — `pre`/`code` in `font-mono`, a header with the language label, a wrap toggle (controlled or uncontrolled) and a copy button. No syntax highlighting. |
-| `@andrewbehma/glass-ui/data-table` | `DataTable` — `<table>` semantics over `Table`, with controlled sort, selection and hidden columns, sticky header, skeleton and empty states, and fixed-row-height windowing (`virtualize`). `sortRows` is exported for client-side sorting. |
-| `@andrewbehma/glass-ui/trace-tree` | `TraceTree` — a WAI-ARIA `treegrid` with `Tree`'s keyboard contract: a label column, a waterfall bar relative to the root's time span, and caller-supplied meta and totals. Bar colour by kind, tokens only: `turn` `ink-3`, `llm` `ink-2`, `tool` `accent` (under `data-scale="desk"`; `ink` elsewhere), `agent` `ok`, `other` `line-strong`; `status="error"` is `danger` on any kind. Colour is never alone: every row carries its kind's icon and name, an error its icon and "Error", a running node its icon and "Running". |
+| `@andrewbehma/glass-ui/data-table` | `DataTable` — `<table>` semantics over `Table`, with controlled sort, selection and hidden columns, sticky header, skeleton and empty states, and fixed-row-height windowing (`virtualize`). `sortRows` is exported for client-side sorting. The frame is `surface-content` and rows have no fill of their own; a selected row is `bg-accent-soft` (#93). |
+| `@andrewbehma/glass-ui/trace-tree` | `TraceTree` — a WAI-ARIA `treegrid` with `Tree`'s keyboard contract: a label column, a waterfall bar relative to the root's time span, and caller-supplied meta and totals. Bar colour by kind, tokens only: `turn` `ink-3`, `llm` `ink-2`, `tool` `accent`, `agent` `ok`, `other` `line-strong`; `status="error"` is `danger` on any kind. Colour is never alone: every row carries its kind's icon and name, an error its icon and "Error", a running node its icon and "Running". |
 
 Five rules.
 
@@ -891,6 +1049,36 @@ A `Chart` tooltip is its own readout in the popover material (`glass-strong`). A
 about 5 000 points per series render as SVG; above that the chart down-samples
 and says so in the table caption.
 
+## Controls (0.24.0)
+
+### Select
+
+`Select` is a native `<select>` drawn by the package: `appearance-none`, a caret in `ink-3`, the field's border, radius and focus ring. The keyboard, the option list and the screen reader are the browser's. Import it from `@andrewbehma/glass-ui/select` (or `/field`, or the root); `className` lands on the `<select>` itself, and `tone="on-glass"` works as it does for `Input`. Under forced colours the platform control comes back.
+
+### DateInput
+
+`DateInput` is `Input` with `type="date" | "time" | "datetime-local"`. Digits are `tabular-nums`; in Chromium the picker glyph is toned down to the caret's weight and the inner padding removed. It keeps its intrinsic width — give it a track wide enough for its value.
+
+### SegmentedControl — sizing and selection
+
+A segment is never narrower than its label (`min-w-max flex-1`): it grows to fit and still shares spare width. The glass pill encloses its segments; if it is wider than its column it overflows the column — wrap it in a horizontally scrolling container if that can happen. The selected segment is `bg-accent-soft` with `text-accent-ink`, which a child that sets no colour of its own inherits. `className="flex-none"` still opts a segment out of sharing spare width.
+
+### CodeBlock — chrome only when it holds something
+
+A one-line `code` (a trailing newline does not count) has no wrap toggle. With no `language` and no toggle there is no header bar; the copy button floats in the top-right corner.
+
+### TabBar
+
+`TabBar` is the bottom tab bar for phones: a glass strip pinned to the bottom edge, full width, up to five `items` plus an optional `more` that opens a bottom sheet. The active item (`active: true`, rendered with `aria-current="page"`) is the accent: an `accent-soft` pill behind its icon and `accent-ink` text. The home-indicator inset is inside the bar and in the spacer it renders above itself. Items with `href` render through `link` (see `NavLinkRender`); items without render a `button` and call `onSelect`. It holds no state. It sets no breakpoint — hide it at the call site (`className="lg:hidden"`). Choose `BottomCapsule` for a floating capsule with an action button; choose `TabBar` for an application shell.
+
+### Chart — sparse buckets
+
+Send every bucket. The chart cannot know your bucket size: a missing day is not a gap, it is interpolated across by an area or a line. Send `0` for an empty day, or `null` to break the line. Bars are capped at 40 px per x, and a time axis with bars spans at least seven steps, so one or two buckets render as bars on a readable axis rather than as a block.
+
+### Sparkline
+
+The default `tone` is `accent`. `tone="neutral"` is the old `ink-2`.
+
 ## Developing
 
 ```sh
@@ -934,3 +1122,7 @@ To rehearse without a tag, start a manual pipeline in Woodpecker with
 `[glass-release]` in its message. It runs the same steps and ends in
 `npm publish --dry-run`. A manual run without that marker does not start the
 release workflow.
+
+## License
+
+[MIT](LICENSE)

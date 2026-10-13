@@ -254,9 +254,14 @@ export function SheetContent({
               // out of the way, and a slow one reads as hesitation.
               transition: { duration: 0.22, ease: [0.32, 0.72, 0, 1] as const },
             },
+        // #93 — the entrance is a critically damped spring (`bounce: 0`) that
+        // reads as settled at 0.3s. It was 0.42s on the sheet curve, which
+        // left a long tail for something the user is waiting to use. Motion
+        // compiles a spring to a `linear()` easing for a WAAPI transform, so
+        // this still runs on the compositor.
         transition: reduced
           ? { duration: 0.14 }
-          : { duration: 0.42, ease: [0.32, 0.72, 0, 1] as const },
+          : { type: 'spring' as const, visualDuration: 0.3, bounce: 0 },
       }
     : {
         transition: reduced
@@ -377,7 +382,8 @@ export function SheetContent({
     <RadixDialog.Overlay key="overlay" asChild forceMount={forceMount}>
       <motion.div
         {...overlayMotion}
-        className="fixed inset-0 z-overlay bg-black/55 backdrop-blur-sm"
+        // #93 — the light scrim, the same film as `DialogContent`'s.
+        className="fixed inset-0 z-overlay bg-scrim backdrop-blur-scrim"
       />
     </RadixDialog.Overlay>,
 

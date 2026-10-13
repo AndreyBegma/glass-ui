@@ -356,4 +356,26 @@ describe('Chart', () => {
     expect(container.querySelectorAll('rect[data-series]')).toHaveLength(4);
     expect(container.querySelector('[data-chart-axes]')?.textContent).toContain('Mon');
   });
+
+  // #93 — AgentDock's Usage with one daily bucket: one slab, and every tick
+  // labelled with the same hour. The bar is now narrow, the axis has more
+  // than one distinct label, and the tooltip still answers.
+  test('one daily bucket: a narrow bar, distinct axis labels, a y-axis and a tooltip', () => {
+    const one: ChartSeries[] = [
+      { id: 'u', name: 'Tokens', kind: 'bar', points: [{ x: new Date(START), y: 1200 }] },
+    ];
+    const { container } = render(<Chart label="Usage" series={one} x="time" />);
+    const bars = container.querySelectorAll('rect[data-series]');
+    expect(bars).toHaveLength(1);
+    expect(Number(bars[0]?.getAttribute('width'))).toBeLessThanOrEqual(40);
+    const xLabels = Array.from(
+      container.querySelectorAll('[data-chart-axes] > text'),
+      (t) => t.textContent,
+    );
+    expect(new Set(xLabels).size).toBe(xLabels.length);
+    expect(xLabels.length).toBeGreaterThan(1);
+    expect(container.querySelectorAll('[data-chart-axes] line').length).toBeGreaterThan(1);
+    fireEvent.keyDown(svgOf(container), { key: 'Home' });
+    expect(container.querySelector('[data-chart-tooltip]')?.textContent).toContain('Tokens');
+  });
 });

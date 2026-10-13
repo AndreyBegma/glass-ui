@@ -260,3 +260,26 @@ describe('the depth effect is centred on the viewport', () => {
     expect(body).not.toContain('overflow: hidden');
   });
 });
+
+/**
+ * #93 — a link in running text is the accent, and nothing else is.
+ *
+ * The rule is page-wide, so its reach is the whole risk: it must stay at zero
+ * specificity, touch only anchors nobody styled, and read the reading colour
+ * rather than the fill. Underlined, because colour alone is not a link.
+ */
+describe('an unstyled link reads the accent', () => {
+  const at = CSS.indexOf(':where(a:not([class])) {');
+  const body = CSS.slice(CSS.indexOf('{', at) + 1, CSS.indexOf('}', at));
+
+  test('the rule is zero-specificity and skips any anchor with a class', () => {
+    expect(at).toBeGreaterThan(-1);
+    // No other selector in the file names an anchor.
+    expect(CSS.replace(/\/\*[\s\S]*?\*\//g, '').match(/(^|[\s,(])a[\s:.[{,]/gm)).toHaveLength(1);
+  });
+
+  test('it reads the accent ink and keeps the underline', () => {
+    expect(body).toContain('color: var(--color-accent-ink);');
+    expect(body).toContain('text-decoration: underline;');
+  });
+});

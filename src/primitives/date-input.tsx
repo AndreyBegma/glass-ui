@@ -17,8 +17,10 @@ import { Input } from './field';
  * the `ink-3` weight of `Select`'s caret and lifts to full ink under the
  * pointer, instead of the platform's full-strength black or white. The edit
  * box loses the padding Chromium adds, so the text sits where `Input`'s
- * does. It keeps its intrinsic minimum width on purpose: letting it shrink
- * in a narrow grid track clips the value ("09:" of a time). Firefox and
+ * does. It is deliberately not `min-w-0`: a native date input already clips
+ * its value once its box is narrower than the value (a `datetime-local` in
+ * a 160 px track shows "09:"), and `min-w-0` would let a grid track squeeze
+ * it further. Give it a track wide enough for its value. Firefox and
  * Safari draw no such pseudo-elements and are left alone; the
  * picker's colours already follow `color-scheme`, which the theme sets.
  */

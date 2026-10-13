@@ -4,6 +4,7 @@
 
 [![npm](https://img.shields.io/npm/v/@andrewbehma/glass-ui)](https://www.npmjs.com/package/@andrewbehma/glass-ui)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-glass.luna--realm.com-5b5bf6)](https://glass.luna-realm.com)
 
 Two applications that want the same frosted-glass look usually end up with two
 copies of it: drifting colours, hand-tuned blurs, and buttons that are almost the
@@ -15,6 +16,7 @@ one product can be built from the same material, and it now also carries
 that want a consistent glass look, from a television-style "sofa" interface to a
 dense desktop dashboard, without writing their own primitives.
 
+- **Live demo:** [glass.luna-realm.com](https://glass.luna-realm.com): every component rendered live, with a props playground, its states, copyable code and a JSX editor. Source: [glass-ui-showcase](https://github.com/AndreyBegma/glass-ui-showcase).
 - **npm:** [`@andrewbehma/glass-ui`](https://www.npmjs.com/package/@andrewbehma/glass-ui) — `npm i @andrewbehma/glass-ui`
 - **Used by:** [AgentDock](https://github.com/AndreyBegma/AgentDock), whose UI is built only from glass-ui components.
 
@@ -1313,6 +1315,13 @@ events. Without `push` the publish step says so and passes. The tag step needs
 `github_token` (contents write on this repository), available to `push` only;
 without it the step says so and passes, and the tag is pushed by hand:
 `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+**The tag follows the publish step's decision, not the registry.** The publish
+step records `publish=yes|no` and `version` in `.release/decision`; the tag step
+reads it (`scripts/release/should-tag.sh`, covered by `should-tag.test.ts`)
+because `npm view` can still miss a version published a second earlier (#121).
+Published now: tag. Already published and no tag yet (a re-run): tag. Already
+published and tagged (no version bump), or no decision recorded: no tag.
 
 To rehearse without a tag, start a manual pipeline in Woodpecker with
 `[glass-release]` in its message. It runs the same steps and ends in

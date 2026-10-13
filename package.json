@@ -7,6 +7,7 @@
     "type": "git",
     "url": "git+https://github.com/AndreyBegma/glass-ui.git"
   },
+  "homepage": "https://glass.luna-realm.com",
   "publishConfig": {
     "access": "public"
   },

@@ -12,12 +12,12 @@ import { cn } from '../lib/cn';
  * file: it is `statusTone`, exported, and every surface that shows a status
  * reads its classes from there rather than choosing a colour of its own.
  *
- * Four semantic hues for seven states, which is the point rather than a
- * shortage. `running` and `done` are both `ok` — nothing is wrong with either
- * — and differ in the dot: `running` pulses. `blocked` and `error` are both
- * `danger`. `waiting` is `info`, the sky blue #94 added so that a waiting
- * process stops looking exactly like an idle one; `idle` is the quiet ink.
- * The accent is in none of them: an accent is not a semantic.
+ * Four semantic families for seven states: `running` and `done` are both
+ * `ok` — nothing is wrong with either — `blocked` and `error` are both
+ * `danger`, `waiting` is `info` and `paused` is `warn`; `idle` is the quiet
+ * ink. #109 gave each state its own colour within that (the
+ * `--color-status-*` tokens), and `running` still pulses. The accent is in
+ * none of them: an accent is not a semantic.
  *
  * Colour is never the only signal. The label is always drawn, and
  * `data-status` is on the element for a test or a consumer's selector.
@@ -64,50 +64,74 @@ export interface StatusToneClasses {
  * Every class below is spelled out in full: Tailwind finds utilities by
  * scanning source text, so a class assembled from a tone name at run time is a
  * class that is never generated.
+ *
+ * #109 — each state has a colour of its own now, the `--color-status-*`
+ * tokens (references to six of the identity hues; see `tokens.css`), so
+ * `running` and `done` no longer share a mint and `blocked` is no longer
+ * `error`. `tone` still names the semantic family, so a reader that maps it
+ * (`Progress`, through `NodeCard`) is unchanged.
  */
-const OK = {
-  tone: 'ok',
-  text: 'text-ok',
-  soft: 'bg-ok/14',
-  dot: 'bg-ok',
-  rim: 'border-ok/45',
-  glow: 'shadow-[0_0_24px_-6px_color-mix(in_oklab,var(--color-ok)_45%,transparent)]',
-} as const;
-
-const DANGER = {
-  tone: 'danger',
-  text: 'text-danger',
-  soft: 'bg-danger/14',
-  dot: 'bg-danger',
-  rim: 'border-danger/50',
-  glow: 'shadow-[0_0_24px_-6px_color-mix(in_oklab,var(--color-danger)_45%,transparent)]',
-} as const;
-
 const TONES: Record<Status, StatusToneClasses> = {
-  running: { ...OK, pulse: true, label: 'Running' },
-  done: { ...OK, pulse: false, label: 'Done' },
+  running: {
+    tone: 'ok',
+    text: 'text-status-running-ink',
+    soft: 'bg-status-running-soft',
+    dot: 'bg-status-running',
+    rim: 'border-status-running/45',
+    glow: 'shadow-[0_0_24px_-6px_var(--color-status-running-glow)]',
+    pulse: true,
+    label: 'Running',
+  },
+  done: {
+    tone: 'ok',
+    text: 'text-status-done-ink',
+    soft: 'bg-status-done-soft',
+    dot: 'bg-status-done',
+    rim: 'border-status-done/45',
+    glow: 'shadow-[0_0_24px_-6px_var(--color-status-done-glow)]',
+    pulse: false,
+    label: 'Done',
+  },
   waiting: {
     tone: 'info',
-    text: 'text-info',
-    soft: 'bg-info-soft',
-    dot: 'bg-info',
-    rim: 'border-info/45',
-    glow: 'shadow-[0_0_24px_-6px_color-mix(in_oklab,var(--color-info)_45%,transparent)]',
+    text: 'text-status-waiting-ink',
+    soft: 'bg-status-waiting-soft',
+    dot: 'bg-status-waiting',
+    rim: 'border-status-waiting/45',
+    glow: 'shadow-[0_0_24px_-6px_var(--color-status-waiting-glow)]',
     pulse: false,
     label: 'Waiting',
   },
   paused: {
     tone: 'warn',
-    text: 'text-warn',
-    soft: 'bg-warn/14',
-    dot: 'bg-warn',
-    rim: 'border-warn/45',
-    glow: 'shadow-[0_0_24px_-6px_color-mix(in_oklab,var(--color-warn)_40%,transparent)]',
+    text: 'text-status-paused-ink',
+    soft: 'bg-status-paused-soft',
+    dot: 'bg-status-paused',
+    rim: 'border-status-paused/45',
+    glow: 'shadow-[0_0_24px_-6px_var(--color-status-paused-glow)]',
     pulse: false,
     label: 'Paused',
   },
-  blocked: { ...DANGER, pulse: false, label: 'Blocked' },
-  error: { ...DANGER, pulse: false, label: 'Error' },
+  blocked: {
+    tone: 'danger',
+    text: 'text-status-blocked-ink',
+    soft: 'bg-status-blocked-soft',
+    dot: 'bg-status-blocked',
+    rim: 'border-status-blocked/50',
+    glow: 'shadow-[0_0_24px_-6px_var(--color-status-blocked-glow)]',
+    pulse: false,
+    label: 'Blocked',
+  },
+  error: {
+    tone: 'danger',
+    text: 'text-status-error-ink',
+    soft: 'bg-status-error-soft',
+    dot: 'bg-status-error',
+    rim: 'border-status-error/50',
+    glow: 'shadow-[0_0_24px_-6px_var(--color-status-error-glow)]',
+    pulse: false,
+    label: 'Error',
+  },
   idle: {
     tone: 'neutral',
     text: 'text-ink-2',

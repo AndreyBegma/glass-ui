@@ -17,7 +17,11 @@ import { type LayoutNode, layoutSankey } from './layout';
 import { type ModelNode, normalize } from './normalize';
 import { type Active, pathOf } from './path';
 import { SankeyTable } from './table';
-import { TONE } from './tone';
+import { HUE_TONE, LINK_DEFAULT, TONE } from './tone';
+import type { Hue } from '../../lib/hue';
+
+/** A link is its source's hue, else the accent (#109). */
+const linkStroke = (hue: Hue | undefined) => (hue ? HUE_TONE[hue].link : LINK_DEFAULT);
 import { SankeyTooltip } from './tooltip';
 import type { SankeyNodeInfo, SankeyProps } from './types';
 
@@ -143,6 +147,7 @@ export function Sankey({
     label: n.label,
     column: model.columns[n.column]?.id ?? '',
     tone: n.tone,
+    hue: n.hue,
     value: n.value,
     collapsed: n.collapsed,
   });
@@ -298,7 +303,11 @@ export function Sankey({
                       fill="none"
                       strokeWidth={l.width}
                       strokeOpacity={state === 'lit' ? 0.75 : state === 'dim' ? 0.08 : 0.35}
-                      className="stroke-accent motion-safe:transition-[stroke-opacity] motion-safe:duration-150"
+                      data-sankey-stroke={l.key}
+                      className={cn(
+                        linkStroke(byId.get(l.source)?.hue),
+                        'motion-safe:transition-[stroke-opacity] motion-safe:duration-150',
+                      )}
                     />
                   );
                 })}
@@ -307,7 +316,7 @@ export function Sankey({
 
             {layout.nodes.map((n) => {
               const state = lit(path?.nodes.has(n.id) ?? false);
-              const tone = TONE[n.tone];
+              const tone = n.hue ? HUE_TONE[n.hue] : TONE[n.tone];
               const name = labels.node(n.label, columnLabel(n), valueFormat(n.value));
               const shared = {
                 ref: (el: HTMLElement | null) => {

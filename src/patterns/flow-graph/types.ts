@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { Hue } from '../../lib/hue';
 import type { StatusTone } from './tone';
 
 /**
@@ -32,6 +33,11 @@ export type FlowNode<T = FlowNodeData> = {
   data: T;
   /** The status colour: the card's rim and glow, and every edge into this node. */
   tone?: FlowTone;
+  /**
+   * #109 — the node's identity hue: the default card's border, icon disc and
+   * glow, and every edge out of it that no status colours.
+   */
+  hue?: Hue;
   /** The node's box. Defaults to the graph's `nodeSize`. Layout needs it before render. */
   size?: FlowNodeSize;
 };

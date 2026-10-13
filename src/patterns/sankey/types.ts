@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { Hue } from '../../lib/hue';
 
 /**
  * #94 — Sankey's public types. They live apart from `index.tsx` so the pure
@@ -31,6 +32,11 @@ export type SankeyNode = {
   /** Defaults to `'accent'`. */
   tone?: SankeyTone;
   /**
+   * #109 — an identity hue: the node's tint, rim and badge (over `tone`), and
+   * the colour of every link out of it. Without one, links are the accent.
+   */
+  hue?: Hue;
+  /**
    * A floor for the node's value. The value shown is the largest of this, the
    * sum of its incoming links and the sum of its outgoing ones.
    */
@@ -52,6 +58,8 @@ export type SankeyNodeInfo = {
   label: string;
   column: string;
   tone: SankeyTone;
+  /** #109 — the node's identity hue, if it has one. */
+  hue?: Hue;
   value: number;
   collapsed: SankeyNode[];
 };

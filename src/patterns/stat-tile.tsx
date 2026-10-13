@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn';
+import { type Hue, hueClasses } from '../lib/hue';
 import { Skeleton } from '../primitives/skeleton';
 
 /**
@@ -33,6 +34,8 @@ export type StatTileProps = {
   onClick?: () => void;
   /** The trend slot, usually a Sparkline. */
   children?: ReactNode;
+  /** #109 — an identity hue: the tile's border and a soft glow. */
+  hue?: Hue;
   className?: string;
 };
 
@@ -73,7 +76,7 @@ function DeltaIcon({ direction }: { direction: StatTileDelta['direction'] }) {
   );
 }
 
-const SURFACE = 'rounded-surface bg-raised border border-line tabular-nums';
+const BASE_SURFACE = 'rounded-surface bg-raised border border-line tabular-nums';
 
 export function StatTile({
   label,
@@ -84,8 +87,11 @@ export function StatTile({
   href,
   onClick,
   children,
+  hue,
   className,
 }: StatTileProps) {
+  const hued = hue ? hueClasses(hue) : null;
+  const SURFACE = hued ? cn(BASE_SURFACE, hued.rim, hued.glow) : BASE_SURFACE;
   const body = (
     <>
       <div className="text-ink-3 text-xs">{label}</div>

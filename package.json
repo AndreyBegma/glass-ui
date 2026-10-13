@@ -26,6 +26,10 @@
       "types": "./dist/lib/cn.d.ts",
       "import": "./dist/lib/cn.js"
     },
+    "./hue": {
+      "types": "./dist/lib/hue.d.ts",
+      "import": "./dist/lib/hue.js"
+    },
     "./material-light": {
       "types": "./dist/material-light.d.ts",
       "import": "./dist/material-light.js"

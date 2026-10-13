@@ -1284,6 +1284,13 @@ events. Without `push` the publish step says so and passes. The tag step needs
 without it the step says so and passes, and the tag is pushed by hand:
 `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
+**The tag follows the publish step's decision, not the registry.** The publish
+step records `publish=yes|no` and `version` in `.release/decision`; the tag step
+reads it (`scripts/release/should-tag.sh`, covered by `should-tag.test.ts`)
+because `npm view` can still miss a version published a second earlier (#121).
+Published now: tag. Already published and no tag yet (a re-run): tag. Already
+published and tagged (no version bump), or no decision recorded: no tag.
+
 To rehearse without a tag, start a manual pipeline in Woodpecker with
 `[glass-release]` in its message. It runs the same steps and ends in
 `npm publish --dry-run`. A manual run without that marker does not start the

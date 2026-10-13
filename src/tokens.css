@@ -1018,3 +1018,96 @@
 /* #93 — the accent, measured. The table is above the dark values, next to the
  * tokens it is about. FEAT-20260911-001's desk-only table (`#806ffc` /
  * `#5b4bd1`) that used to stand here is retired with those values. */
+
+/* #110 — the accent axis. `data-accent="<preset>"`.
+ *
+ * A fourth attribute, beside `data-theme`, `data-material` and `data-scale`.
+ * FilesDrop is not a desk: it is a single drop zone read at any distance, and
+ * `data-scale="desk"` would hand it 6px corners, 100ms motion and 28px
+ * controls along with whatever accent came with them. So the accent is its
+ * own question, answered by its own attribute.
+ *
+ * **Presets, never a colour from outside.** The attribute names a preset
+ * defined in this file; there is no `--accent-from-app` hook. That keeps "no
+ * raw colour outside `tokens.css`" true, and it is the only reason
+ * `tokens.spec.ts` can gate every accent a page can end up with — a colour an
+ * application passes in is a colour nobody measured. A new preset is a PR to
+ * this file with its table.
+ *
+ * **What it re-values, and nothing else.** The four accent tokens (#93 split
+ * the old three into a fill, its label, a tint and a reading colour) and
+ * `--color-focus`, because the ring takes the accent and an amber page with
+ * an indigo ring is two products. `--color-series-1` and `.canvas`'s glow
+ * read `var(--color-accent)` and follow on their own. `tokens.spec.ts` holds
+ * every preset block to exactly that list.
+ *
+ * **Decision 4 of #110 amends FEAT-20260911-001 decision 6**, which #93 had
+ * already reversed: the accent is defined in every set (indigo), and a
+ * preset replaces it. With no `data-accent` set, no block below matches, and
+ * the indigo is untouched — `tokens.spec.ts` resolves the cascade to prove it.
+ *
+ * **Order is load-bearing, the same way as the desk's.** Every block below is
+ * `:where()` at (0,1,0), so source order settles ties: the plain preset block
+ * comes after the light pair and the desk blocks, and its two light blocks
+ * come after it to turn the theme-dependent values back over. With
+ * `data-scale="desk"` and `data-accent` both set, the preset wins for the
+ * accent tokens and the desk keeps everything else — the desk no longer
+ * declares an accent, and the preset declares nothing else.
+ */
+
+/* #110 — `amber`. FilesDrop's preset, measured against its mascot's eye,
+ * `#e9d54a`.
+ *
+ * Dark is the eye pulled a little towards amber (`#f2c14e`, 1.13:1 from the
+ * eye — the same colour to anybody not holding a meter). Pure `#e9d54a` sits
+ * on top of `--color-series-5` (`#f0e442`), and series 1 is the accent, so a
+ * two-series chart would draw two yellows.
+ *
+ * Light is darker, as desk's `#5b4bd1` was: an amber that can be seen on
+ * white at 3:1 is a brown-gold, and the window is narrow. The fill has to be
+ * at most L 0.244 to clear 3:1 on `canvas` and at least L 0.217 to carry
+ * `--color-ink`'s near-black at 4.5:1; `#b07a00` sits at 0.232. White text on
+ * amber fails in both themes, so `--color-on-accent` is near-black in both.
+ *
+ * WCAG 2.x, computed (the tint over each opaque surface, as the compositor
+ * would draw it); `tokens.spec.ts` gates it:
+ *
+ *                                dark #f2c14e      light #b07a00
+ *   on-accent on accent           10.56  (#18181b)   4.75  (#18181b)
+ *   accent vs ground              11.85               3.73
+ *   accent vs canvas (worst)      11.85               3.16
+ *   accent vs surface             11.30               3.57
+ *   accent vs raised              10.62               3.39
+ *   accent vs paper (worst dark)  10.31               3.73
+ *   accent-ink on ground          13.89  (#f7d47c)    7.40  (#7c4a03)
+ *   accent-ink on worst band      12.08  (paper)      6.28  (canvas)
+ *   accent-ink on soft, worst     7.67   (paper)      5.44  (canvas)
+ *   focus on worst band           12.08  (= ink)      3.16  (= accent)
+ *
+ * The light fill's 3.16:1 on `canvas` is the tight cell. It clears 1.4.11
+ * and nothing else; a retune that darkens `canvas` has to come back here. */
+:root:where([data-accent="amber"]) {
+  --color-accent: #f2c14e;
+  --color-on-accent: #18181b;
+  --color-accent-soft: rgb(242 193 78 / 0.2);
+  --color-accent-ink: #f7d47c;
+  --color-focus: #f7d47c;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])[data-accent="amber"]) {
+    --color-accent: #b07a00;
+    --color-on-accent: #18181b;
+    --color-accent-soft: rgb(176 122 0 / 0.14);
+    --color-accent-ink: #7c4a03;
+    --color-focus: #b07a00;
+  }
+}
+
+:root:where([data-theme="light"][data-accent="amber"]) {
+  --color-accent: #b07a00;
+  --color-on-accent: #18181b;
+  --color-accent-soft: rgb(176 122 0 / 0.14);
+  --color-accent-ink: #7c4a03;
+  --color-focus: #b07a00;
+}

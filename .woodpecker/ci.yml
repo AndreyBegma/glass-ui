@@ -35,6 +35,14 @@ steps:
       - *setup
       - bun run test
 
+  # The release decisions (publish or not, which dist-tag) live in
+  # scripts/release/decide.sh, outside `bun run test`, which covers src only.
+  - name: release-script
+    image: *node_image
+    commands:
+      - *setup
+      - bun test scripts/release
+
   - name: build
     image: *node_image
     commands:

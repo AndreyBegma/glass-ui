@@ -1,9 +1,20 @@
-# Publishes @andrewbehma/glass-ui to npm (#89).
+# Publishes @andrewbehma/glass-ui to npm (#89, #108).
 #
-# Pushing the tag vX.Y.Z checks that X.Y.Z is the version in package.json,
-# builds, smoke-tests the packed tarball and runs `npm publish`. A tag that
-# differs from package.json fails before anything is built. README.md,
-# "Releasing", has the whole procedure.
+# A push to main (the merge of a release/vX.Y.Z pull request) publishes the
+# version in package.json when it is not on npm yet, then pushes the tag
+# vX.Y.Z. A push to a maint/* branch does the same on a maint dist-tag. A push
+# without a version bump publishes nothing and passes.
+#
+# Pushing the tag vX.Y.Z still works: it checks that X.Y.Z is the version in
+# package.json, builds, smoke-tests the packed tarball and runs `npm publish`.
+# A tag that differs from package.json fails before anything is built. A tag
+# whose version is already on npm passes without publishing, which is also what
+# the tag this pipeline pushes itself does. README.md, "Releasing", has the
+# whole procedure.
+#
+# The dist-tag is decided by scripts/release/decide.sh: `latest`, or
+# v<major>.<minor> for a maint/* branch or a version below the current `latest`,
+# so a 0.8.x release can never move `latest` back.
 #
 # A manual run is a dry run: the same steps, ending in `npm publish --dry-run`.
 # It starts only when the message given to the manual run contains
@@ -13,10 +24,15 @@
 # (AgentDock#135). The message reaches `when` as CI_COMMIT_MESSAGE.
 #
 # Pull requests never run this workflow. The npm_token secret is restricted to
-# the tag and manual events in Woodpecker. The repository is not trusted, so no
-# host volumes: a plain node image, with bun installed into it.
+# events in Woodpecker; for a push to publish, `push` has to be among them, and
+# until it is the publish step says so and passes. Creating the tag needs the
+# github_token secret (push event only) and is skipped without it. The
+# repository is not trusted, so no host volumes: a plain node image, with bun
+# installed into it.
 
 when:
+  - event: push
+    branch: [main, maint/*]
   - event: tag
     ref: refs/tags/v*
   - event: manual
@@ -51,6 +67,7 @@ steps:
       - *setup
       - bun run lint
       - bun run test
+      - bun test scripts/release
 
   - name: build
     image: *node_image
@@ -72,19 +89,69 @@ steps:
       NPM_TOKEN:
         from_secret: npm_token
     commands:
-      - npm config set //registry.npmjs.org/:_authToken "$${NPM_TOKEN}"
+      # npm_token is empty when the secret is not available to this event. On a
+      # push that is a configuration gap, not a broken build: say so and pass.
       - |
-        if [ "$${CI_PIPELINE_EVENT}" != tag ]; then
-          npm publish --dry-run --ignore-scripts
+        if [ "$${CI_PIPELINE_EVENT}" = push ] && [ -z "$${NPM_TOKEN}" ]; then
+          echo "npm_token is not available to push events; add the push event to the secret"
           exit 0
         fi
-      # A version already on the registry is not an error, so a re-run of a
-      # tag that published passes instead of failing on the duplicate.
+      - npm config set //registry.npmjs.org/:_authToken "$${NPM_TOKEN}"
+      - name=$(node -p "require('./package.json').name")
+      - version=$(node -p "require('./package.json').version")
+      # A version already on the registry is not an error, so a push without a
+      # version bump, or a re-run of a tag that published, passes instead of
+      # failing on the duplicate.
+      - published=no
+      - if npm view "$${name}@$${version}" version >/dev/null 2>&1; then published=yes; fi
+      - latest=$(npm view "$${name}" dist-tags.latest 2>/dev/null || true)
+      - branch=""
+      - if [ "$${CI_PIPELINE_EVENT}" = push ]; then branch="$${CI_COMMIT_BRANCH}"; fi
+      - sh scripts/release/decide.sh "$${version}" "$${published}" "$${latest}" "$${branch}" > /tmp/decision
+      - cat /tmp/decision
+      - . /tmp/decision
+      - |
+        if [ "$${CI_PIPELINE_EVENT}" = manual ]; then
+          npm publish --dry-run --ignore-scripts --tag "$${npm_tag}"
+          exit 0
+        fi
+      - |
+        if [ "$${publish}" = yes ]; then
+          npm publish --ignore-scripts --tag "$${npm_tag}"
+        else
+          echo "$${name}@$${version} is already published"
+        fi
+
+  # Pushes the tag v<version> for a version that is on npm and has no tag yet.
+  # Needs github_token: a token with contents:write on this repository, in a
+  # secret restricted to the push event. Without it the step says so and passes.
+  # The tag it pushes starts the tag pipeline, which finds the version on npm
+  # and publishes nothing.
+  - name: tag
+    image: *node_image
+    when:
+      - event: push
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - |
+        if [ -z "$${GITHUB_TOKEN}" ]; then
+          echo "github_token is not available to push events; the tag is not created"
+          exit 0
+        fi
       - name=$(node -p "require('./package.json').name")
       - version=$(node -p "require('./package.json').version")
       - |
-        if npm view "$${name}@$${version}" version >/dev/null 2>&1; then
-          echo "$${name}@$${version} is already published"
-        else
-          npm publish --ignore-scripts
+        if ! npm view "$${name}@$${version}" version >/dev/null 2>&1; then
+          echo "$${name}@$${version} is not on npm; no tag"
+          exit 0
         fi
+      - remote="https://x-access-token:$${GITHUB_TOKEN}@github.com/$${CI_REPO}.git"
+      - |
+        if git ls-remote --exit-code --tags "$${remote}" "refs/tags/v$${version}" >/dev/null 2>&1; then
+          echo "tag v$${version} already exists"
+          exit 0
+        fi
+      - git tag "v$${version}"
+      - git push "$${remote}" "refs/tags/v$${version}"

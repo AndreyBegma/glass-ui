@@ -12,12 +12,12 @@ import { cn } from '../lib/cn';
  *
  * Three decisions worth knowing before adding a fifth variant:
  *
- * **The primary action is white, not coloured.** Luna shows other people's
- * artwork, and every poster on screen is already fighting for attention. An
- * accent-coloured button competes with the content it is meant to launch, which
- * is why Apple TV, Netflix and Plex all land on a neutral primary. The violet
- * that used to be here was also the single loudest tell that nobody had chosen
- * a palette.
+ * **The primary action is the accent.** It used to be white, for Luna Watch:
+ * a media centre whose screens were other people's artwork, where a coloured
+ * button competed with the poster it launched. #93 reverses that for a
+ * workspace with no artwork, where a black primary read as a grey template.
+ * It is `--color-accent` with `--color-on-accent` on it, and the hover mixes
+ * a little of the label colour in rather than reaching for a second hue.
  *
  * **The focus ring is not defined here.** `globals.css` puts a 3px white
  * outline on `:focus-visible` globally, sized to be legible across a room on a
@@ -49,7 +49,8 @@ const button = tv({
   variants: {
     variant: {
       /** The one action a screen most wants you to take. One per screen. */
-      solid: 'bg-ink text-ground hover:bg-white',
+      solid:
+        'bg-accent text-on-accent hover:bg-[color-mix(in_oklab,var(--color-accent)_88%,var(--color-on-accent))]',
       /** Everything alongside the primary. Needs content behind it to read. */
       glass: 'glass text-ink glass-hover',
       /** Tertiary: toolbars, close buttons, anything that should recede. */

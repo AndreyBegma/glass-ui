@@ -81,13 +81,34 @@
    that omits it would drop the panel's top-left corner onto the middle of the
    screen for the length of the animation.
  *
- * Not `scale(0)`: nothing in the world vanishes to a point, and 0.96 is close
- * enough to read as the same object arriving. The exit goes the other way, to
- * 0.98 — shallower and faster, because an exit is the system responding rather
- * than the user deciding. */
+ * Not `scale(0)`: nothing in the world vanishes to a point. The exit goes to
+ * 0.98, shallower and faster, because an exit is the system responding rather
+ * than the user deciding.
+ *
+ * #93 — `lunaDialogIn` starts at 0.98 rather than 0.96. The command palette is
+ * what reads it now: a palette fades and scales up a little, and it does not
+ * travel. `DialogContent` enters on `lunaDialogSpring` instead, a little
+ * deeper at 0.94, because it is driven by `--ease-spring` and a spring needs
+ * a distance to be seen covering. */
 @keyframes lunaDialogIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.98); }
   to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes lunaDialogSpring {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* #93 — `--ease-spring` is a `linear()` easing, which Chromium before 113,
+   Safari before 17.2 and Firefox before 112 do not parse. An animation that
+   reads an unparseable timing function is dropped whole, so such an engine
+   (the television's Chromium 94 among them) gets the expo curve the dialog
+   used before rather than no entrance at all. */
+@supports not (animation-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring: var(--ease-out-expo);
+  }
 }
 
 @keyframes lunaDialogOut {

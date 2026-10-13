@@ -23,15 +23,11 @@ import type { NavLinkRender } from './nav-link';
  * contract taken as the only contract. The tooltip opens on focus, so a
  * keyboard reaches every name (issue #11 item 1).
  *
- * **The active item carries the accent — the first of its four places.**
- * `E-104` allows the accent on the active navigation item, a selection, the
- * primary fill and a link, and this is the first. The glyph is
- * `--color-accent` and the capsule under it `--color-accent-soft`. Both
- * tokens exist only under `data-scale="desk"`, on purpose, so off the desk
- * each is read with a `var()` fallback to the sofa's own look for the same
- * place — `NavRail`'s `bg-hover` capsule and `ink` — which is not a fifth
- * use of anything (`V2` correction 3). Under `desk` it is the accent; under
- * nothing it is exactly `NavRail`.
+ * **The active item carries the accent.** The capsule is `--color-accent-soft`
+ * and the glyph on it `--color-accent-ink`, the colour made for text on the
+ * tint. #93 made the accent global, so these are plain utilities now rather
+ * than `var()`s with a fallback to `NavRail`'s grey capsule off the desk, and
+ * the two rails draw their active item the same way.
  *
  * **Unavailable is marked, still navigable, never hidden.** `E-50`'s rule,
  * one level up, which is the point at which it becomes visible at a glance
@@ -100,13 +96,13 @@ export function AppRail({
   /**
    * One element, one `layoutId`, `NavRail`'s spring: switching applications
    * slides the capsule rather than blinking it. The tint is the accent's
-   * selected-row alpha under `desk` and the sofa's hover fill otherwise.
+   * selected-row alpha.
    */
   const capsule = (
     <motion.span
       layoutId={layoutId}
       aria-hidden="true"
-      className="absolute inset-0 rounded-control bg-[var(--color-accent-soft,var(--color-hover))]"
+      className="absolute inset-0 rounded-control bg-accent-soft"
       transition={
         reduced
           ? { duration: 0 }
@@ -130,7 +126,7 @@ export function AppRail({
       'h-[var(--size-nav)] w-[var(--size-nav)]',
       'motion-safe:transition-colors duration-(--dur-fast)',
       active
-        ? 'text-[var(--color-accent,var(--color-ink))]'
+        ? 'text-accent-ink'
         : 'text-ink-2 hover:bg-hover hover:text-ink',
     );
 

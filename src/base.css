@@ -163,6 +163,22 @@ body[data-scroll-locked] #main-content {
   font-variant-numeric: tabular-nums;
 }
 
+/* #93 — a link in running text is the accent's reading colour, underlined.
+ *
+ * Only an anchor nobody has styled: `:not([class])` leaves every component's
+ * own link alone (a `Button` rendered as an anchor, a nav item), and `:where()`
+ * holds the rule at zero specificity, so any utility on the anchor wins.
+ * `--color-accent-ink` and not `--color-accent`: the fill is pitched to carry
+ * white text, the ink to be read, and a link is read (`tokens.css` has the
+ * table). The underline stays because colour alone is not a link (WCAG
+ * 1.4.1). */
+:where(a:not([class])) {
+  color: var(--color-accent-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
 /* Tap highlight suppression on mobile */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -186,7 +202,11 @@ body[data-scroll-locked] #main-content {
  * is what keeps it off the element's own edge.
  *
  * The light value is `--color-ink`'s colour rather than the token itself, and
- * deliberately so — see the note in `tokens.css`. */
+ * deliberately so — see the note in `tokens.css`.
+ *
+ * #93 — and since then the ring takes the accent: the reading colour in dark,
+ * the fill in light. Every value is at least 3:1 on every surface, and
+ * `tokens.spec.ts` holds it there. */
 :focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 4px;

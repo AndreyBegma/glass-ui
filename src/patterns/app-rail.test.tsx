@@ -63,26 +63,20 @@ describe('AppRail', () => {
   });
 
   /**
-   * The first of the accent's four places. The glyph reads `--color-accent`
-   * and the capsule `--color-accent-soft`, each through a `var()` whose
-   * fallback is the sofa's look for the same place — so off the desk this is
-   * `NavRail`'s active item, and under it the accent. Neither is a fifth use.
+   * #93 — the accent is global, so the active item reads it directly: the
+   * capsule is the tint and the glyph is the ink made for text on the tint.
    */
-  test('the active item carries the accent, with the sofa look as the fallback', () => {
+  test('the active item carries the accent', () => {
     render(<AppRail aria-label="Applications" link={link} apps={apps} activeId="work" />);
 
     const work = screen.getByRole('link', { current: 'page' });
     expect(work.textContent).toBe('Work');
-    expect(work.className.split(' ')).toContain(
-      'text-[var(--color-accent,var(--color-ink))]',
-    );
+    expect(work.className.split(' ')).toContain('text-accent-ink');
     const capsule = capsulesIn(work)[0];
-    expect(capsule?.className.split(' ')).toContain(
-      'bg-[var(--color-accent-soft,var(--color-hover))]',
-    );
+    expect(capsule?.className.split(' ')).toContain('bg-accent-soft');
     // Nowhere else. The other four items read `ink-2`.
     for (const other of screen.getAllByRole('link').filter((a) => a !== work)) {
-      expect(other.className).not.toContain('--color-accent');
+      expect(other.className).not.toContain('accent');
       expect(capsulesIn(other)).toHaveLength(0);
     }
   });

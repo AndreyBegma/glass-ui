@@ -130,8 +130,14 @@
      deuteranopia and tritanopia), with the hues that fail on one theme nudged
      rather than replaced. Every value is >= 3:1 against `--color-surface` in
      its own theme (WCAG 1.4.11); `tokens.spec.ts` asserts it. Order is the
-     assignment order: series 1 is the one that has to carry a chart alone. */
-  --color-series-1: #56b4e9;
+     assignment order: series 1 is the one that has to carry a chart alone.
+
+     #93 — series 1 is the accent. A chart with one series is the common case
+     (usage over a day), and it should read as the product's colour rather
+     than as the first entry in somebody else's palette. Series 2–6 stay
+     Okabe-Ito, and the indigo sits clear of all five. A reference rather than
+     a copy, so retuning the accent retunes the chart. */
+  --color-series-1: var(--color-accent);
   --color-series-2: #e69f00;
   --color-series-3: #2fbf94;
   --color-series-4: #cc79a7;
@@ -153,8 +159,89 @@
      ground a white ring is not a quiet ring, it is no ring: the value has to
      be able to change with the theme, and a value that changes with the theme
      is a token. Deliberately not `--color-ink`: a focus ring is not text, and
-     tying them would mean the dark ring quietly became `#f2f2f6`. */
-  --color-focus: #ffffff;
+     tying them would mean the dark ring quietly became `#f2f2f6`.
+
+     #93 — the ring takes the accent's colour: `--color-accent-ink`'s value
+     in dark (10.18:1 on the ground), `--color-accent`'s in light (6.29:1 on
+     white). Still a literal and not a `var()`, for the reason above. */
+  --color-focus: #b4b2ff;
+
+  /* #93 — the accent, in every theme and at every distance.
+   *
+   * `E-92` retired the accent for Luna Watch, a media centre whose colour came
+   * from the artwork on it, and `E-104` gave one back to the desk profile
+   * only. The UI audit of AgentDock (2026-10-13) is the reason it comes back
+   * everywhere: with no colour of its own the system read as a grey admin
+   * template, with a black primary button and grey-on-grey selection. That
+   * reverses a recorded decision on purpose, and `tokens.spec.ts` now asserts
+   * the opposite of what it used to: the four tokens exist in every set.
+   *
+   * Four names, one job each:
+   *
+   *   --color-accent       the fill. The primary button, a selected segment,
+   *                        the toggle's on-state, chart series 1.
+   *   --color-on-accent    text and icons on that fill.
+   *   --color-accent-soft  a tint. A selected row, the active rail item's
+   *                        capsule. Alpha, so it works on any surface.
+   *   --color-accent-ink   text on the tint, and links. The accent's own hue,
+   *                        pitched for reading rather than for filling.
+   *
+   * **Breaking for the desk profile.** There `--color-accent-ink` used to be
+   * text *on* the accent fill (near-black in dark). It is text on the *tint*
+   * now, and text on the fill is `--color-on-accent`.
+   *
+   * **Why white text works in dark this time.** The desk accent could not
+   * take white text because the same colour also had to be readable as a link
+   * on `--color-raised` at 4.5:1, and in dark those two gates do not overlap
+   * for any hue. Splitting the fill from the reading colour removes the
+   * conflict: the fill only has to carry white text, and links read
+   * `--color-accent-ink`.
+   *
+   * An electric indigo, the same hue in both themes. WCAG 2.x, computed
+   * (every colour here is opaque or measured over an opaque surface):
+   *
+   *                               dark #5b5bf6       light #4f46e5
+   *   on-accent on accent          4.92               6.29
+   *   accent vs ground (non-text)  4.05               6.29
+   *   accent vs raised (non-text)  3.63               5.72
+   *   accent-ink on ground         10.18  (#b4b2ff)   7.90  (#4338ca)
+   *   accent-ink on soft/raised    7.47               5.87
+   *
+   * `tokens.spec.ts` gates the text pairs at 4.5:1 and the fill at 3:1
+   * (WCAG 1.4.11) against every surface, so a retune has to survive the same
+   * table. */
+  --color-accent: #5b5bf6;
+  --color-on-accent: #ffffff;
+  --color-accent-soft: rgb(91 91 246 / 0.2);
+  --color-accent-ink: #b4b2ff;
+
+  /* #93 — the content surface, and the scrim.
+   *
+   * Two surface levels, one job each. *Chrome* (rail, top bar, sheets,
+   * palette, popovers) keeps the full glass material: it floats, and the
+   * canvas behind it is what it refracts. *Content* (a card, a table) is not
+   * chrome. It is read, so it is near-opaque: `--color-paper` at 96 %, with a
+   * hairline and no grey fill. The 4 % that is left lets the canvas tint
+   * reach it, which is the difference between a sheet of paper lying on a
+   * coloured desk and a grey box pasted on top. The `surface-content` utility
+   * in `material.css` draws it.
+   *
+   * The scrim behind a dialog or a sheet is a film, not a wall: 0.3 here and
+   * 0.22 in light, over `--blur-scrim` rather than `backdrop-blur-sm`. The page
+   * already goes back (`base.css`'s depth effect), and blurring it as well
+   * turned the whole screen to grey mud. The command palette keeps its own,
+   * stronger scrim: it is a mode, not a question about the page. */
+  --color-content: rgb(26 26 33 / 0.96);
+  --color-scrim: rgb(9 9 12 / 0.3);
+  --blur-scrim: 2px;
+
+  /* #93 — the canvas glow. How strongly `.canvas` (`material.css`) paints the
+     accent behind the app: the `color-mix()` share of the accent in each of
+     its radial gradients. 18 % in dark and 10 % in light, inside the 14–20 %
+     and 6–10 % the issue asked for. Dark needs more because a tint over
+     near-black has less luminance to work with. Light sits at the top of its
+     range because 8 % was looked at on white and was not there. */
+  --canvas-glow: 18%;
 
   /* The material. See the `glass` utility below for what each part does.
    *
@@ -374,6 +461,28 @@
   --tilt-angle: 4deg;
   --tilt-depth: 900px;
 
+  /* #93 — the press, and the spring.
+   *
+   * `--press-scale` and `--dur-press` are what `.lit:active` (`material.css`)
+   * reads: a control takes the weight of a finger quickly and visibly. A
+   * full-width row keeps the quieter 0.985 it had, because 3 % of a 300px row
+   * reads as a glitch rather than as a press; `material.css` says which rows.
+   *
+   * `--ease-spring` is a critically damped spring from rest, sampled into
+   * `linear()`: x(t) = 1 − (1 + a·t)·e^(−a·t) with a = 9.23, which leaves
+   * 0.1 % of the distance at t = 1. Over `--dur-spring` that is a dialog that
+   * arrives in about 0.3s and settles without overshoot. An engine without
+   * `linear()` gets `--ease-out-expo` instead (`motion.css`). Sheets are
+   * driven by Motion, and run the same spring in `sheet.tsx`. */
+  --press-scale: 0.97;
+  --dur-press: 100ms;
+  --dur-spring: 300ms;
+  --ease-spring: linear(
+    0, 0.053 4%, 0.169 8%, 0.304 12%, 0.434 16%, 0.551 20%, 0.671 25%,
+    0.764 30%, 0.844 36%, 0.906 43%, 0.944 50%, 0.974 60%, 0.99 72%,
+    0.997 86%, 1
+  );
+
   /* Type. San Francisco where it exists, which is every Apple device this is
      watched on, and the self-hosted Inter that `next/font` injects as
      `--font-inter` everywhere else. Without this the app rendered in whatever
@@ -381,6 +490,39 @@
   --font-sans:
     "SF Pro Text", "SF Pro Display", var(--font-inter), system-ui,
     -apple-system, "Segoe UI", sans-serif;
+
+  /* #93 — the monospace face, by the same rule. glass-ui ships no font files:
+     an application that self-hosts a face sets `--font-sans` and `--font-mono`
+     at `:root`, which beats these because `@theme` sits in Tailwind's theme
+     layer. */
+  --font-mono:
+    "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* #93 — the type scale. Before this the largest text a screen had was
+     whatever `text-2xl` happened to be, and headings were set ad hoc.
+     Five steps, each a Tailwind `--text-*` entry, so each is a utility
+     (`text-display`, `text-heading`, `text-section`, `text-body`,
+     `text-label`) carrying its own line height, weight and tracking. Body is
+     14 because this is a workspace read at arm's length; display tightens to
+     -0.02em, as large text set at its default tracking looks loose. Numbers
+     in columns are `tabular-nums` (Tailwind's) or `.tabular` (`base.css`),
+     and `table`, `time` and `output` get it without asking. */
+  --text-display: 28px;
+  --text-display--line-height: 32px;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 600;
+  --text-heading: 20px;
+  --text-heading--line-height: 28px;
+  --text-heading--letter-spacing: -0.01em;
+  --text-heading--font-weight: 600;
+  --text-section: 15px;
+  --text-section--line-height: 22px;
+  --text-section--font-weight: 600;
+  --text-body: 14px;
+  --text-body--line-height: 20px;
+  --text-label: 12px;
+  --text-label--line-height: 16px;
+  --text-label--font-weight: 500;
 }
 
 /* The page gutter. Shared because it is a measure of a reading column, not a
@@ -500,7 +642,7 @@
     --color-warn: #b45309;
     --color-danger: #dc2626;
 
-    --color-series-1: #0072b2;
+    --color-series-1: var(--color-accent);
     --color-series-2: #b36b00;
     --color-series-3: #00805e;
     --color-series-4: #b0457f;
@@ -511,7 +653,17 @@
     --color-line-strong: rgb(0 0 0 / 0.18);
     --color-hover: rgb(0 0 0 / 0.1);
 
-    --color-focus: #18181b;
+    --color-focus: #4f46e5;
+
+    --color-accent: #4f46e5;
+    --color-on-accent: #ffffff;
+    --color-accent-soft: rgb(79 70 229 / 0.12);
+    --color-accent-ink: #4338ca;
+
+    --color-content: rgb(255 255 255 / 0.96);
+    --color-scrim: rgb(24 24 27 / 0.22);
+
+    --canvas-glow: 10%;
 
     /* The material, with its five layers pointing the other way.
 
@@ -582,7 +734,7 @@
   --color-warn: #b45309;
   --color-danger: #dc2626;
 
-  --color-series-1: #0072b2;
+  --color-series-1: var(--color-accent);
   --color-series-2: #b36b00;
   --color-series-3: #00805e;
   --color-series-4: #b0457f;
@@ -593,7 +745,17 @@
   --color-line-strong: rgb(0 0 0 / 0.18);
   --color-hover: rgb(0 0 0 / 0.1);
 
-  --color-focus: #18181b;
+  --color-focus: #4f46e5;
+
+  --color-accent: #4f46e5;
+  --color-on-accent: #ffffff;
+  --color-accent-soft: rgb(79 70 229 / 0.12);
+  --color-accent-ink: #4338ca;
+
+  --color-content: rgb(255 255 255 / 0.96);
+  --color-scrim: rgb(24 24 27 / 0.22);
+
+  --canvas-glow: 10%;
 
   /* The material, with its five layers pointing the other way.
 
@@ -743,54 +905,11 @@
   --size-field: 28px;
   --size-nav: 28px;
 
-  /* FEAT-20260911-001 — the accent returns, desk-only.
-   *
-   * `E-92` retired it and this does not un-retire it. Above this line there is
-   * still no accent of any kind: the primary action is `bg-ink text-ground`,
-   * links are ink with an underline, and a media centre laid over other
-   * people's artwork takes its colour from the artwork. That was right and it
-   * stays right — for a media centre. A workspace has no artwork to take
-   * colour from, and twenty-one places to be with nothing but weight to tell
-   * the current one apart.
-   *
-   * So the accent exists only under this attribute, and `--color-accent` is
-   * **undefined** anywhere else — deliberately, so a component that reaches
-   * for it outside the desk profile gets nothing and shows it, rather than a
-   * fallback that hides the mistake until somebody sees the wrong colour.
-   *
-   * A cold blue-violet, from `design.md`'s "cool blues and violets going warm
-   * at the edge". The warm edge stays traded. Hue 247.2°, which is well clear
-   * of Notion's ~208° blue on purpose: the brief is "like Notion, not a copy
-   * of Notion".
-   *
-   * **Why the ink flips and the fill does not go the way you would expect.**
-   * In dark these two gates are mutually exclusive, for every colour of every
-   * hue: white text on the accent needs its luminance at or below 0.1833, and
-   * 4.5:1 against `--color-raised` needs it at or above 0.2150. There is no
-   * overlap. So dark takes a *bright* violet with near-black ink, and light
-   * takes a dark violet with white ink — which is not a compromise, it is
-   * exactly where `bg-ink text-ground` already lands in each theme. The accent
-   * sits in the system rather than beside it.
-   *
-   * `#6C5CE0` was the starting point and did not survive the measurement: it
-   * reads 3.60:1 on `--color-raised`, against the 4.5:1 this is gated on.
-   * `#806FFC` is the smallest lift along the same hue that clears it.
-   *
-   * **The measurement.** 2026-09-11. Sampled out of a headless Chrome
-   * screenshot rather than computed — the same method `material.css` used for
-   * the glass, and here it is also the check that the cascade above actually
-   * resolves, since an unresolved `var()` samples as the ground behind it.
-   * See the table below the light blocks for the numbers as sampled.
-   *
-   * `--color-accent-soft` is the selected-row tint. Alpha rather than a hex so
-   * it works over `ground`, `surface` and `raised` alike; at 14% dark and 12%
-   * light it reads 1.18:1 / 1.20:1 against the row beneath — the weight
-   * `--color-hover` already works at — and leaves `--color-ink` above 13:1 on
-   * every ground. It is a tint, not a fill: nothing is ever written on it in
-   * `--color-accent-ink`. */
-  --color-accent: #806ffc;
-  --color-accent-ink: #09090c;
-  --color-accent-soft: rgb(128 111 252 / 0.14);
+  /* FEAT-20260911-001 gave the desk profile an accent of its own (`#806ffc`
+     dark, `#5b4bd1` light) while everything else had none. #93 made the
+     accent global, and one accent in two values is two products, so the desk
+     no longer re-values it. The accent is in `@theme static` and the light
+     blocks above. */
 }
 
 /* The theme-dependent half, turned back over. Same two selectors as the light
@@ -817,10 +936,6 @@
     --color-hover: rgb(0 0 0 / 0.06);
 
     --color-ink-3: rgb(24 24 27 / 0.64);
-
-    --color-accent: #5b4bd1;
-    --color-accent-ink: #ffffff;
-    --color-accent-soft: rgb(91 75 209 / 0.12);
   }
 }
 
@@ -835,10 +950,6 @@
   --color-hover: rgb(0 0 0 / 0.06);
 
   --color-ink-3: rgb(24 24 27 / 0.64);
-
-  --color-accent: #5b4bd1;
-  --color-accent-ink: #ffffff;
-  --color-accent-soft: rgb(91 75 209 / 0.12);
 }
 
 /* BUG-20260923-019 — `--color-ink-3` at the desk, measured. 2026-09-23.
@@ -877,46 +988,6 @@
  * 0.48, as before, and `--color-ink-4` to the same values. The sofa does not
  * move. */
 
-/* FEAT-20260911-001 — the accent, measured. 2026-09-11.
- *
- * Sampled out of a headless Chrome screenshot (152.0.7977.64) of a probe page
- * built from this file compiled through Tailwind — so these are pixels drawn
- * after the whole cascade resolved, not values computed from the source. That
- * distinction is the point: an accent that lost a specificity fight, or a
- * `var()` that resolved to nothing, samples as the ground behind it and shows
- * up here as a ratio of 1.00:1 rather than as a table that looks fine.
- *
- * Three bands per theme — `--color-ground`, `--color-surface`, `--color-raised`
- * — with the accent painted on each, `--color-accent-ink` painted on the
- * accent, and `--color-accent-soft` painted on the ground beside it.
- *
- *                      dark (#806FFC / #09090C)    light (#5B4BD1 / #FFFFFF)
- *                      accent   ink    ink/soft    accent   ink    ink/soft
- *   on ground           5.30    5.30    15.63       6.23    6.23    14.81
- *   on surface          5.06    5.30    14.61       5.97    6.23    14.15
- *   on raised           4.75    5.30    13.56       5.67    6.23    13.51
- *
- * `accent` is `--color-accent` against that band — gated at 4.5:1, because a
- * link is body text and a link is one of the four places this colour is
- * allowed. `ink` is `--color-accent-ink` on the accent, gated at 4.5:1 for the
- * same reason: the primary action's label is body text too. `ink/soft` is
- * `--color-ink` over the selected-row tint, which is not gated — it is here
- * because a tint that quietly ate seven points of contrast would be worth
- * knowing about, and it does not.
- *
- * Worst case is dark on `--color-raised` at 4.75:1. That is the one to watch
- * and the one the arithmetic predicted: see the note above the dark values for
- * why dark has the least room, and why it is the theme whose ink is black.
- *
- * The sampled numbers agreed with the computed ones to the last digit in all
- * eighteen cells, which is expected — every colour in this table is opaque, so
- * there is nothing for a compositor to disagree about. The screenshot was run
- * anyway, because agreeing is the evidence that the cascade resolved. The
- * glass measurement in `material.css` is the case where they genuinely differ,
- * and that is the case this method was borrowed from.
- *
- * Also verified on the same render, and not by eye: the system-default light
- * block and the explicit-toggle light block sample byte-identically across all
- * three bands, and the compiled stylesheet has no unresolved `var()` outside
- * `--lit` / `--lx` / `--ly`, which `material.css` writes at runtime and gives
- * fallbacks to. */
+/* #93 — the accent, measured. The table is above the dark values, next to the
+ * tokens it is about. FEAT-20260911-001's desk-only table (`#806ffc` /
+ * `#5b4bd1`) that used to stand here is retired with those values. */

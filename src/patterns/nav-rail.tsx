@@ -99,12 +99,16 @@ export function NavRail({
    * One element, one `layoutId`: walking the rail slides the highlight down it
    * rather than switching one off and another on. Not glass — it sits on a
    * glass rail, and a second blur inside the first has nothing left to refract.
+   *
+   * #93 — the accent's tint, with the active item's text in
+   * `--color-accent-ink`. It was the grey hover fill, and grey on a grey rail
+   * was where the audit lost track of which page it was on.
    */
   const capsule = (
     <motion.span
       layoutId={layoutId}
       aria-hidden="true"
-      className="bg-hover absolute inset-0 rounded-control"
+      className="bg-accent-soft absolute inset-0 rounded-control"
       transition={
         reduced
           ? { duration: 0 }
@@ -161,12 +165,14 @@ export function NavRail({
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const itemClassName = cn(
+                    // `press-row` (#93): a full-width row keeps the quieter
+                    // 0.985 press; collapsed, it is a square and takes 0.97.
                     'lit relative flex w-full items-center rounded-control',
                     'text-sm motion-safe:transition-colors duration-(--dur-fast)',
                     collapsed
                       ? 'justify-center px-0 py-2.5'
-                      : 'gap-3 px-3 py-2.5',
-                    item.active ? 'text-ink' : 'text-ink-2 hover:bg-hover',
+                      : 'press-row gap-3 px-3 py-2.5',
+                    item.active ? 'text-accent-ink' : 'text-ink-2 hover:bg-hover',
                   );
 
                   const inner = (

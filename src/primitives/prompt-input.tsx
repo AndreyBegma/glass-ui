@@ -21,7 +21,9 @@ import type { FieldTone } from './field';
  * It is a field and a button drawn as one control: the border, the fill and
  * the focus treatment are `Field`'s, moved from the input to the frame
  * (`focus-within`), so the send button and the leading actions sit *inside*
- * the box rather than beside it.
+ * the box rather than beside it. The ring is `ring-ink/22`, `fieldClassName`'s
+ * token-built stand-in for `field.tsx`'s literal white, which the palette
+ * spec allows in that one file.
  *
  * **Enter sends; Shift+Enter is a newline.** Not while an input method is
  * composing — a Japanese or Chinese user presses Enter to accept a candidate,
@@ -206,7 +208,7 @@ export function PromptInput({
         FILL[tone],
         'border border-line-strong rounded-control',
         'transition-[border-color,box-shadow] duration-(--dur-fast)',
-        'focus-within:border-ink/70 focus-within:ring-2 focus-within:ring-white/22',
+        'focus-within:border-ink/70 focus-within:ring-2 focus-within:ring-ink/22',
         disabled && 'opacity-60',
         layout === 'stacked'
           ? 'flex flex-col gap-1.5 px-3 pt-1.5 pb-2'

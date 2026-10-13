@@ -1,101 +1,319 @@
 {
-  "name": "glass-ui",
-  "version": "0.1.0",
+  "name": "@andrewbehma/glass-ui",
+  "version": "0.23.0",
   "description": "The Liquid Glass design system: tokens, the glass material, and the primitives built out of them.",
   "license": "MIT",
-  "private": true,
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/AndreyBegma/glass-ui.git"
+    "url": "git+https://github.com/AndreyBegma/glass-ui.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./tokens.css": "./src/tokens.css",
-    "./material.css": "./src/material.css",
-    "./base.css": "./src/base.css",
-    "./motion.css": "./src/primitives/motion.css",
-    "./cn": "./src/lib/cn.ts",
-    "./material-light": "./src/material-light.tsx",
-    "./depth-origin": "./src/depth-origin.tsx",
-    "./button": "./src/primitives/button.tsx",
-    "./card": "./src/primitives/card.tsx",
-    "./chip": "./src/primitives/chip.tsx",
-    "./dialog": "./src/primitives/dialog.tsx",
-    "./field": "./src/primitives/field.tsx",
-    "./menu": "./src/primitives/menu.tsx",
-    "./scroll-hint-row": "./src/primitives/scroll-hint-row.tsx",
-    "./scroll-hint-column": "./src/primitives/scroll-hint-column.tsx",
-    "./use-scroll-edges": "./src/hooks/use-scroll-edges.ts",
-    "./segmented-control": "./src/primitives/segmented-control.tsx",
-    "./sheet": "./src/primitives/sheet.tsx",
-    "./slider": "./src/primitives/slider.tsx",
-    "./range-slider": "./src/primitives/range-slider.tsx",
-    "./toast": "./src/primitives/toast.tsx",
-    "./toggle": "./src/primitives/toggle.tsx",
-    "./empty-state": "./src/patterns/empty-state.tsx",
-    "./section-unavailable": "./src/patterns/section-unavailable.tsx",
-    "./skeleton": "./src/primitives/skeleton.tsx",
-    "./bottom-capsule": "./src/patterns/bottom-capsule.tsx",
-    "./nav-rail": "./src/patterns/nav-rail.tsx",
-    "./command-palette": "./src/patterns/command-palette.tsx",
-    "./popover": "./src/patterns/popover.tsx",
-    "./use-command-palette-shortcut": "./src/hooks/use-command-palette-shortcut.ts",
-    "./tabs": "./src/primitives/tabs.tsx",
-    "./badge": "./src/primitives/badge.tsx",
-    "./progress": "./src/primitives/progress.tsx",
-    "./table": "./src/primitives/table.tsx",
-    "./checkbox": "./src/primitives/checkbox.tsx",
-    "./radio-group": "./src/primitives/radio-group.tsx",
-    "./disclosure": "./src/primitives/disclosure.tsx",
-    "./tooltip": "./src/primitives/tooltip.tsx",
-    "./avatar": "./src/primitives/avatar.tsx",
-    "./separator": "./src/primitives/separator.tsx",
-    "./number-input": "./src/primitives/number-input.tsx",
-    "./date-input": "./src/primitives/date-input.tsx",
-    "./auto-textarea": "./src/primitives/auto-textarea.tsx",
-    "./field-class-name": "./src/primitives/field-class-name.ts",
-    "./tree": "./src/patterns/tree.tsx",
-    "./app-rail": "./src/patterns/app-rail.tsx",
-    "./side-panel": "./src/patterns/side-panel.tsx",
-    "./breadcrumb": "./src/patterns/breadcrumb.tsx",
-    "./row-actions": "./src/patterns/row-actions.tsx",
-    "./context-menu": "./src/primitives/context-menu.tsx",
-    "./key-hint": "./src/patterns/key-hint.tsx",
-    "./board": "./src/patterns/board.tsx",
-    "./widget-grid": "./src/patterns/widget-grid.tsx",
-    "./toolbar": "./src/patterns/toolbar.tsx",
-    "./combobox": "./src/primitives/combobox.tsx",
-    "./inline-edit": "./src/primitives/inline-edit.tsx",
-    "./springs": "./src/primitives/springs.ts",
-    "./flight": "./src/primitives/flight.tsx",
-    "./tilt": "./src/primitives/tilt.tsx",
-    "./spinner": "./src/primitives/spinner.tsx",
-    "./sparkline": "./src/primitives/sparkline.tsx",
-    "./key-value-list": "./src/primitives/key-value-list.tsx",
-    "./code-block": "./src/primitives/code-block.tsx",
-    "./stat-tile": "./src/patterns/stat-tile.tsx",
-    "./data-table": "./src/patterns/data-table.tsx",
-    "./trace-tree": "./src/patterns/trace-tree.tsx",
-    "./banner": "./src/primitives/banner.tsx",
-    "./log-viewer": "./src/patterns/log-viewer.tsx",
-    "./timeline": "./src/patterns/timeline.tsx",
-    "./split-pane": "./src/patterns/split-pane.tsx",
-    "./chart": "./src/patterns/chart/index.tsx",
-    "./cron-input": "./src/primitives/cron-input.tsx",
-    "./terminal": "./src/patterns/terminal.tsx"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tokens.css": "./dist/tokens.css",
+    "./material.css": "./dist/material.css",
+    "./base.css": "./dist/base.css",
+    "./motion.css": "./dist/primitives/motion.css",
+    "./cn": {
+      "types": "./dist/lib/cn.d.ts",
+      "import": "./dist/lib/cn.js"
+    },
+    "./material-light": {
+      "types": "./dist/material-light.d.ts",
+      "import": "./dist/material-light.js"
+    },
+    "./depth-origin": {
+      "types": "./dist/depth-origin.d.ts",
+      "import": "./dist/depth-origin.js"
+    },
+    "./button": {
+      "types": "./dist/primitives/button.d.ts",
+      "import": "./dist/primitives/button.js"
+    },
+    "./card": {
+      "types": "./dist/primitives/card.d.ts",
+      "import": "./dist/primitives/card.js"
+    },
+    "./chip": {
+      "types": "./dist/primitives/chip.d.ts",
+      "import": "./dist/primitives/chip.js"
+    },
+    "./dialog": {
+      "types": "./dist/primitives/dialog.d.ts",
+      "import": "./dist/primitives/dialog.js"
+    },
+    "./field": {
+      "types": "./dist/primitives/field.d.ts",
+      "import": "./dist/primitives/field.js"
+    },
+    "./menu": {
+      "types": "./dist/primitives/menu.d.ts",
+      "import": "./dist/primitives/menu.js"
+    },
+    "./scroll-hint-row": {
+      "types": "./dist/primitives/scroll-hint-row.d.ts",
+      "import": "./dist/primitives/scroll-hint-row.js"
+    },
+    "./scroll-hint-column": {
+      "types": "./dist/primitives/scroll-hint-column.d.ts",
+      "import": "./dist/primitives/scroll-hint-column.js"
+    },
+    "./use-scroll-edges": {
+      "types": "./dist/hooks/use-scroll-edges.d.ts",
+      "import": "./dist/hooks/use-scroll-edges.js"
+    },
+    "./segmented-control": {
+      "types": "./dist/primitives/segmented-control.d.ts",
+      "import": "./dist/primitives/segmented-control.js"
+    },
+    "./sheet": {
+      "types": "./dist/primitives/sheet.d.ts",
+      "import": "./dist/primitives/sheet.js"
+    },
+    "./slider": {
+      "types": "./dist/primitives/slider.d.ts",
+      "import": "./dist/primitives/slider.js"
+    },
+    "./range-slider": {
+      "types": "./dist/primitives/range-slider.d.ts",
+      "import": "./dist/primitives/range-slider.js"
+    },
+    "./toast": {
+      "types": "./dist/primitives/toast.d.ts",
+      "import": "./dist/primitives/toast.js"
+    },
+    "./toggle": {
+      "types": "./dist/primitives/toggle.d.ts",
+      "import": "./dist/primitives/toggle.js"
+    },
+    "./empty-state": {
+      "types": "./dist/patterns/empty-state.d.ts",
+      "import": "./dist/patterns/empty-state.js"
+    },
+    "./section-unavailable": {
+      "types": "./dist/patterns/section-unavailable.d.ts",
+      "import": "./dist/patterns/section-unavailable.js"
+    },
+    "./skeleton": {
+      "types": "./dist/primitives/skeleton.d.ts",
+      "import": "./dist/primitives/skeleton.js"
+    },
+    "./bottom-capsule": {
+      "types": "./dist/patterns/bottom-capsule.d.ts",
+      "import": "./dist/patterns/bottom-capsule.js"
+    },
+    "./nav-rail": {
+      "types": "./dist/patterns/nav-rail.d.ts",
+      "import": "./dist/patterns/nav-rail.js"
+    },
+    "./command-palette": {
+      "types": "./dist/patterns/command-palette.d.ts",
+      "import": "./dist/patterns/command-palette.js"
+    },
+    "./popover": {
+      "types": "./dist/patterns/popover.d.ts",
+      "import": "./dist/patterns/popover.js"
+    },
+    "./use-command-palette-shortcut": {
+      "types": "./dist/hooks/use-command-palette-shortcut.d.ts",
+      "import": "./dist/hooks/use-command-palette-shortcut.js"
+    },
+    "./tabs": {
+      "types": "./dist/primitives/tabs.d.ts",
+      "import": "./dist/primitives/tabs.js"
+    },
+    "./badge": {
+      "types": "./dist/primitives/badge.d.ts",
+      "import": "./dist/primitives/badge.js"
+    },
+    "./progress": {
+      "types": "./dist/primitives/progress.d.ts",
+      "import": "./dist/primitives/progress.js"
+    },
+    "./table": {
+      "types": "./dist/primitives/table.d.ts",
+      "import": "./dist/primitives/table.js"
+    },
+    "./checkbox": {
+      "types": "./dist/primitives/checkbox.d.ts",
+      "import": "./dist/primitives/checkbox.js"
+    },
+    "./radio-group": {
+      "types": "./dist/primitives/radio-group.d.ts",
+      "import": "./dist/primitives/radio-group.js"
+    },
+    "./disclosure": {
+      "types": "./dist/primitives/disclosure.d.ts",
+      "import": "./dist/primitives/disclosure.js"
+    },
+    "./tooltip": {
+      "types": "./dist/primitives/tooltip.d.ts",
+      "import": "./dist/primitives/tooltip.js"
+    },
+    "./avatar": {
+      "types": "./dist/primitives/avatar.d.ts",
+      "import": "./dist/primitives/avatar.js"
+    },
+    "./separator": {
+      "types": "./dist/primitives/separator.d.ts",
+      "import": "./dist/primitives/separator.js"
+    },
+    "./number-input": {
+      "types": "./dist/primitives/number-input.d.ts",
+      "import": "./dist/primitives/number-input.js"
+    },
+    "./date-input": {
+      "types": "./dist/primitives/date-input.d.ts",
+      "import": "./dist/primitives/date-input.js"
+    },
+    "./auto-textarea": {
+      "types": "./dist/primitives/auto-textarea.d.ts",
+      "import": "./dist/primitives/auto-textarea.js"
+    },
+    "./field-class-name": {
+      "types": "./dist/primitives/field-class-name.d.ts",
+      "import": "./dist/primitives/field-class-name.js"
+    },
+    "./tree": {
+      "types": "./dist/patterns/tree.d.ts",
+      "import": "./dist/patterns/tree.js"
+    },
+    "./app-rail": {
+      "types": "./dist/patterns/app-rail.d.ts",
+      "import": "./dist/patterns/app-rail.js"
+    },
+    "./side-panel": {
+      "types": "./dist/patterns/side-panel.d.ts",
+      "import": "./dist/patterns/side-panel.js"
+    },
+    "./breadcrumb": {
+      "types": "./dist/patterns/breadcrumb.d.ts",
+      "import": "./dist/patterns/breadcrumb.js"
+    },
+    "./row-actions": {
+      "types": "./dist/patterns/row-actions.d.ts",
+      "import": "./dist/patterns/row-actions.js"
+    },
+    "./context-menu": {
+      "types": "./dist/primitives/context-menu.d.ts",
+      "import": "./dist/primitives/context-menu.js"
+    },
+    "./key-hint": {
+      "types": "./dist/patterns/key-hint.d.ts",
+      "import": "./dist/patterns/key-hint.js"
+    },
+    "./board": {
+      "types": "./dist/patterns/board.d.ts",
+      "import": "./dist/patterns/board.js"
+    },
+    "./widget-grid": {
+      "types": "./dist/patterns/widget-grid.d.ts",
+      "import": "./dist/patterns/widget-grid.js"
+    },
+    "./toolbar": {
+      "types": "./dist/patterns/toolbar.d.ts",
+      "import": "./dist/patterns/toolbar.js"
+    },
+    "./combobox": {
+      "types": "./dist/primitives/combobox.d.ts",
+      "import": "./dist/primitives/combobox.js"
+    },
+    "./inline-edit": {
+      "types": "./dist/primitives/inline-edit.d.ts",
+      "import": "./dist/primitives/inline-edit.js"
+    },
+    "./springs": {
+      "types": "./dist/primitives/springs.d.ts",
+      "import": "./dist/primitives/springs.js"
+    },
+    "./flight": {
+      "types": "./dist/primitives/flight.d.ts",
+      "import": "./dist/primitives/flight.js"
+    },
+    "./tilt": {
+      "types": "./dist/primitives/tilt.d.ts",
+      "import": "./dist/primitives/tilt.js"
+    },
+    "./spinner": {
+      "types": "./dist/primitives/spinner.d.ts",
+      "import": "./dist/primitives/spinner.js"
+    },
+    "./sparkline": {
+      "types": "./dist/primitives/sparkline.d.ts",
+      "import": "./dist/primitives/sparkline.js"
+    },
+    "./key-value-list": {
+      "types": "./dist/primitives/key-value-list.d.ts",
+      "import": "./dist/primitives/key-value-list.js"
+    },
+    "./code-block": {
+      "types": "./dist/primitives/code-block.d.ts",
+      "import": "./dist/primitives/code-block.js"
+    },
+    "./stat-tile": {
+      "types": "./dist/patterns/stat-tile.d.ts",
+      "import": "./dist/patterns/stat-tile.js"
+    },
+    "./data-table": {
+      "types": "./dist/patterns/data-table.d.ts",
+      "import": "./dist/patterns/data-table.js"
+    },
+    "./trace-tree": {
+      "types": "./dist/patterns/trace-tree.d.ts",
+      "import": "./dist/patterns/trace-tree.js"
+    },
+    "./banner": {
+      "types": "./dist/primitives/banner.d.ts",
+      "import": "./dist/primitives/banner.js"
+    },
+    "./log-viewer": {
+      "types": "./dist/patterns/log-viewer.d.ts",
+      "import": "./dist/patterns/log-viewer.js"
+    },
+    "./timeline": {
+      "types": "./dist/patterns/timeline.d.ts",
+      "import": "./dist/patterns/timeline.js"
+    },
+    "./split-pane": {
+      "types": "./dist/patterns/split-pane.d.ts",
+      "import": "./dist/patterns/split-pane.js"
+    },
+    "./chart": {
+      "types": "./dist/patterns/chart/index.d.ts",
+      "import": "./dist/patterns/chart/index.js"
+    },
+    "./cron-input": {
+      "types": "./dist/primitives/cron-input.d.ts",
+      "import": "./dist/primitives/cron-input.js"
+    },
+    "./terminal": {
+      "types": "./dist/patterns/terminal.d.ts",
+      "import": "./dist/patterns/terminal.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "src"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "sideEffects": [
     "*.css"
   ],
   "scripts": {
-    "lint": "biome lint src",
-    "test": "bun test src"
+    "lint": "biome lint src scripts",
+    "test": "bun test src",
+    "build": "bun scripts/build.ts",
+    "smoke": "node scripts/smoke.mjs",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "tailwind-merge": "3.6.0",

@@ -608,3 +608,25 @@ a call site swaps without logic changes. `DateInput` remains for
   the text and sets `aria-invalid`.
 - ArrowUp / ArrowDown move by `step` minutes (default 15), wrapping at
   midnight.
+
+## A rail you can read and a panel that fits
+
+Two optional props, both defaulting to what shipped before.
+
+**`AppRail labels`** — `'tooltip'` (default) or `'below'`.
+- `'below'` prints each item's `label` under its icon: the item is `w-16
+  flex-col gap-1 py-1.5`, the name `text-xs leading-4 max-w-14 truncate` (12px,
+  the floor). Pass a short name as `label` — a long one is cut, and the
+  `Tooltip` stays to read it. The `sr-only` copy is dropped, because the
+  visible name is the accessible one; the `unavailable` phrase stays `sr-only`.
+- The capsule, the accent, the `warn` dot and `footerApps` are unchanged. The
+  rail grows from one `--size-nav` square (~40px) to a 64px item, so a layout
+  that counted on the narrow rail should be looked at.
+
+**`SidePanel strip`** — `true` (default) or `false`.
+- `false` collapses to width 0: no strip, no `rail`, no material. Only the
+  resize handle remains, keyboard-operable as before, sitting on the content's
+  edge. Open, the panel is unchanged.
+- The way back is the consumer's — `useSidePanel().expand` from a control that
+  is on screen while the panel is not (a button in the `AppRail` `head`). A
+  panel with no such control should keep its strip.

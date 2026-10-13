@@ -324,3 +324,5 @@ export {
   type TabBarMore,
   type TabBarProps,
 } from './patterns/tab-bar';
+/** #93 — `g93-material`'s canvas layer; the barrel is this slot's file. */
+export { Canvas } from './patterns/canvas';

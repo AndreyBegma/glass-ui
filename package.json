@@ -306,6 +306,10 @@
       "types": "./dist/patterns/tab-bar.d.ts",
       "import": "./dist/patterns/tab-bar.js"
     },
+    "./canvas": {
+      "types": "./dist/patterns/canvas.d.ts",
+      "import": "./dist/patterns/canvas.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

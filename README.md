@@ -1,7 +1,42 @@
 # glass-ui
 
-The Liquid Glass design system, lifted out of Luna Watch so that more than one
-application can be built from the same material.
+**The Liquid Glass design system for React 19 and Tailwind CSS 4: tokens, a glass material, and the components built from them.**
+
+[![npm](https://img.shields.io/npm/v/@andrewbehma/glass-ui)](https://www.npmjs.com/package/@andrewbehma/glass-ui)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Two applications that want the same frosted-glass look usually end up with two
+copies of it: drifting colours, hand-tuned blurs, and buttons that are almost the
+same. glass-ui is the one copy. It was lifted out of Luna Watch so that more than
+one product can be built from the same material, and it now also carries
+[AgentDock](https://github.com/AndreyBegma/AgentDock)'s whole web UI.
+
+**Who it is for:** React 19 applications on Tailwind CSS 4 (Next.js included)
+that want a consistent glass look, from a television-style "sofa" interface to a
+dense desktop dashboard, without writing their own primitives.
+
+- **npm:** [`@andrewbehma/glass-ui`](https://www.npmjs.com/package/@andrewbehma/glass-ui) — `npm i @andrewbehma/glass-ui`
+- **Used by:** [AgentDock](https://github.com/AndreyBegma/AgentDock), whose UI is built only from glass-ui components.
+
+## What is in it
+
+- **Tokens** — palette, radius, motion, density and type scales, a z-index
+  ladder, and three independent switches (`data-theme`, `data-material`,
+  `data-scale`) for light/dark, glass/flat and sofa/desk density.
+- **The material** — `glass`, `glass-strong`, `glass-clear` and `lit`, with the
+  fallbacks they need.
+- **Primitives** — Button, Card, Chip, Badge, Banner, Avatar, Field, Input,
+  Select, Combobox, Checkbox, Radio group, Toggle, Slider and Range slider,
+  Number, Date and Cron inputs, Dialog, Sheet, Menu, Context menu, Tooltip,
+  Tabs, Segmented control, Table, Progress, Spinner, Skeleton, Sparkline,
+  Toast, Code block and more.
+- **Patterns** — app and nav rails, bottom capsule, breadcrumb, command
+  palette, toolbar, popover, side panel, split pane, data table, tree, trace
+  tree, timeline, board, stat tile, widget grid, log viewer, terminal and a
+  dependency-free SVG chart.
+- **Shipped as compiled ESM** with type declarations and one subpath per
+  module; client components keep `'use client'`, so they render from React
+  Server Components with no `transpilePackages`.
 
 Three layers, imported separately so an application can take the first two and
 decline the third:
@@ -12,6 +47,17 @@ decline the third:
 | `@andrewbehma/glass-ui/material.css` | `glass`, `glass-strong`, `glass-clear` and `lit`, and every fallback they need. |
 | `@andrewbehma/glass-ui/base.css` | Opinions that apply to a whole document: the focus ring, the reduced-motion override, the depth effect under a sheet. Optional. |
 | `@andrewbehma/glass-ui` | The primitives and `cn`. |
+
+**Contents:** [Install](#install) · [Quick start](#quick-start) ·
+[The rules](#the-rules) · [Motion](#motion) ·
+[The shell patterns](#the-shell-patterns) ·
+[The workspace patterns](#the-workspace-patterns) ·
+[The data primitives](#the-data-primitives) ·
+[The widget grid](#the-widget-grid) ·
+[Desk dashboard primitives](#desk-dashboard-primitives) ·
+[Desk activity primitives](#desk-activity-primitives) ·
+[Desk automation primitives](#desk-automation-primitives) ·
+[Developing](#developing) · [Releasing](#releasing) · [License](#license)
 
 ## Install
 
@@ -72,6 +118,33 @@ components are generated; with neither, they are not.
 `github:AndreyBegma/glass-ui#v0.22.0` and shipped its TypeScript source. A git
 dependency on any later commit gets no `dist/` — it is built at publish time and
 is not in the repository — so use the npm package.
+
+## Quick start
+
+With the stylesheets imported as above, import each component from its own
+subpath (the barrel works too, but loads every module — see `src/index.ts`):
+
+```tsx
+import { Button } from '@andrewbehma/glass-ui/button';
+import { Card } from '@andrewbehma/glass-ui/card';
+
+export function Welcome() {
+  return (
+    <Card variant="glass" pad="lg">
+      <h2 className="text-ink">Hello</h2>
+      <p className="text-ink-2">Built from tokens, not hex codes.</p>
+      <Button variant="solid">Continue</Button>
+      <Button variant="ghost">Later</Button>
+    </Card>
+  );
+}
+```
+
+`Button` has four variants (`solid`, `glass`, `ghost`, `danger`) and three sizes
+(`sm`, `md`, `lg`); `Card` has `raised`, `surface`, `glass` and `plain`. To
+switch the look for the whole document, set the axes on `<html>`, for example
+`<html data-theme="dark" data-scale="desk">` for a dense dark dashboard. Every
+axis does nothing until it is set; [the rules](#the-rules) explain each one.
 
 ## The rules
 
@@ -934,3 +1007,7 @@ To rehearse without a tag, start a manual pipeline in Woodpecker with
 `[glass-release]` in its message. It runs the same steps and ends in
 `npm publish --dry-run`. A manual run without that marker does not start the
 release workflow.
+
+## License
+
+[MIT](LICENSE)

@@ -1,0 +1,90 @@
+# Publishes @andrewbehma/glass-ui to npm (#89).
+#
+# Pushing the tag vX.Y.Z checks that X.Y.Z is the version in package.json,
+# builds, smoke-tests the packed tarball and runs `npm publish`. A tag that
+# differs from package.json fails before anything is built. README.md,
+# "Releasing", has the whole procedure.
+#
+# A manual run is a dry run: the same steps, ending in `npm publish --dry-run`.
+# It starts only when the message given to the manual run contains
+# [glass-release], so a plain manual run does not publish-rehearse by accident.
+# The gate reads the message, not a variable: Woodpecker 3.18 passes the
+# variables of a manual run to the steps only, never to a workflow's `when`
+# (AgentDock#135). The message reaches `when` as CI_COMMIT_MESSAGE.
+#
+# Pull requests never run this workflow. The npm_token secret is restricted to
+# the tag and manual events in Woodpecker. The repository is not trusted, so no
+# host volumes: a plain node image, with bun installed into it.
+
+when:
+  - event: tag
+    ref: refs/tags/v*
+  - event: manual
+    evaluate: 'CI_COMMIT_MESSAGE contains "[glass-release]"'
+
+variables:
+  - &node_image node:24
+  - &setup npm install --global --no-fund --no-audit bun@1.4.0
+
+steps:
+  - name: check-version
+    image: *node_image
+    when:
+      - event: tag
+    commands:
+      - version=$(node -p "require('./package.json').version")
+      - |
+        if [ "v$${version}" != "$${CI_COMMIT_TAG}" ]; then
+          echo "tag $${CI_COMMIT_TAG} does not match package.json version $${version}"
+          exit 1
+        fi
+
+  - name: install
+    image: *node_image
+    commands:
+      - *setup
+      - bun install --frozen-lockfile
+
+  - name: test
+    image: *node_image
+    commands:
+      - *setup
+      - bun run lint
+      - bun run test
+
+  - name: build
+    image: *node_image
+    commands:
+      - *setup
+      - bun run build
+
+  - name: smoke
+    image: *node_image
+    commands:
+      - *setup
+      - bun run smoke
+
+  # --ignore-scripts: publish the dist/ that `smoke` just tested, rather than
+  # let prepublishOnly rebuild it (this step has no bun anyway).
+  - name: publish
+    image: *node_image
+    environment:
+      NPM_TOKEN:
+        from_secret: npm_token
+    commands:
+      - npm config set //registry.npmjs.org/:_authToken "$${NPM_TOKEN}"
+      - |
+        if [ "$${CI_PIPELINE_EVENT}" != tag ]; then
+          npm publish --dry-run --ignore-scripts
+          exit 0
+        fi
+      # A version already on the registry is not an error, so a re-run of a
+      # tag that published passes instead of failing on the duplicate.
+      - name=$(node -p "require('./package.json').name")
+      - version=$(node -p "require('./package.json').version")
+      - |
+        if npm view "$${name}@$${version}" version >/dev/null 2>&1; then
+          echo "$${name}@$${version} is already published"
+        else
+          npm publish --ignore-scripts
+        fi

@@ -52,7 +52,6 @@ const LITERAL = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/g;
 const ALLOWED: Record<string, string[]> = {
   'primitives/chip.tsx': ['bg-black/55'],
   'primitives/dialog.tsx': ['bg-black/55'],
-  'primitives/field.tsx': ['ring-white/22'],
   'primitives/sheet.tsx': ['bg-black/55', 'bg-white/25'],
   'primitives/slider.tsx': ['bg-white/16', 'bg-white/16'],
 };

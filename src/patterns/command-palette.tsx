@@ -49,6 +49,12 @@ export interface CommandPaletteItem {
   label: string;
   /** The right-hand column: a section's group, a shortcut, an object's kind. */
   hint?: string;
+  /**
+   * W254 — the row's keys, drawn after the hint as one keycap each (`['G',
+   * 'T']`). Hidden from a reader: the label is what is announced, and the
+   * consumer decides whether a coarse pointer gets any (it passes none).
+   */
+  keys?: readonly string[];
   icon?: LucideIcon;
   /**
    * Carried so a consumer's ranking function and its rendered item can be the
@@ -468,6 +474,22 @@ export function CommandPalette({
                       {item.hint ? (
                         <span className="text-ink-3 shrink-0 text-xs">
                           {item.hint}
+                        </span>
+                      ) : null}
+                      {item.keys?.length ? (
+                        <span
+                          aria-hidden="true"
+                          data-palette-keys=""
+                          className="flex shrink-0 items-center gap-1"
+                        >
+                          {item.keys.map((key) => (
+                            <kbd
+                              key={key}
+                              className="bg-hover text-ink-2 min-w-5 rounded-sm px-1.5 text-center font-sans text-xs"
+                            >
+                              {key}
+                            </kbd>
+                          ))}
                         </span>
                       ) : null}
                     </div>

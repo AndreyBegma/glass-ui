@@ -64,4 +64,10 @@ describe('the field controls read the density scale', () => {
   test('the desk rung measures 32px', () => {
     expect(tokenValue(DESK, '--size-field')).toBe('32px');
   });
+
+  test('W254 — the focus ring is the token-built ring, the same as fieldClassName', () => {
+    render(<Input aria-label="plain" />);
+    const cls = screen.getByLabelText('plain').className;
+    expect(cls).toContain('focus:ring-ink/22');
+  });
 });

@@ -630,3 +630,11 @@ Two optional props, both defaulting to what shipped before.
 - The way back is the consumer's — `useSidePanel().expand` from a control that
   is on screen while the panel is not (a button in the `AppRail` `head`). A
   panel with no such control should keep its strip.
+
+## Command palette: keys on a row
+
+`CommandPaletteItem` takes `keys?: readonly string[]`, drawn after the hint as
+one `kbd` keycap per key (`["G", "T"]`), `aria-hidden` because the label is what
+is announced. Pass none on a coarse pointer. The field focus ring is now
+`ring-ink/22` in `Input`, `Select` and `SearchField`, the same spelling as
+`fieldClassName`, so it follows the theme.

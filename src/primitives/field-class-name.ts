@@ -15,13 +15,9 @@ import { cn } from '../lib/cn';
  * owns that file, not one made here. Flagged to the orchestrator per the
  * brief's own instruction.
  *
- * **One substitution, and it is deliberate.** `field.tsx`'s ring is the
- * literal `ring-white/22`, and `tokens.spec.ts`'s raw-colour ban allows that
- * string in `field.tsx` alone — a second file writing it fails the build.
- * `ring-ink/22` is the token-built equivalent: `--color-ink` is itself
- * near-white (`#f2f2f6`), so the ring reads the same against this package's
- * dark ground today. Everything else below is `field.tsx`'s string,
- * unchanged.
+ * W254 — `field.tsx` and this string now spell the ring the same way,
+ * `ring-ink/22`, so the two agree in light and dark: `--color-ink` follows the
+ * theme where the literal white it replaced did not.
  */
 export function fieldClassName(className?: string): string {
   return cn(

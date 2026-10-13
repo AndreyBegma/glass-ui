@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn';
-import { STATUS_TONE_LABELS, statusTone } from './tone';
+import { flowTone } from './tone';
 import type { FlowTone } from './types';
 
 /**
@@ -40,8 +40,8 @@ export function FlowNodeCard({
   compact = false,
   className,
 }: FlowNodeCardProps) {
-  const classes = statusTone(tone);
-  const statusText = status ?? (tone ? STATUS_TONE_LABELS[tone] : null);
+  const classes = flowTone(tone);
+  const statusText = status ?? (tone ? classes.label : null);
   if (compact) {
     return (
       <div

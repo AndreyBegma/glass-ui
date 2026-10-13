@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { edgeDash, edgeStyle, edgeTone } from './edge-style';
-import { NEUTRAL_TONE, statusTone } from './tone';
+import { flowTone, NEUTRAL_TONE, STATUS_TONES, statusTone } from './tone';
 import type { FlowEdge, FlowNode } from './types';
 
 const node = (id: string, tone?: FlowNode['tone']): FlowNode => ({
@@ -69,8 +69,22 @@ describe('edgeStyle', () => {
     expect(style.dash).toBe('6 5');
     expect(style.linecap).toBe('round');
     expect(style.tone).toBe('blocked');
-    expect(style.classes).toBe(statusTone('blocked'));
+    expect(style.classes).toBe(flowTone('blocked'));
     expect(style.classes.stroke).toBe('stroke-danger');
+  });
+
+  test('the edge reads StatusPill’s palette, plus the SVG classes of its family', () => {
+    for (const tone of STATUS_TONES) {
+      const flow = flowTone(tone);
+      const pill = statusTone(tone);
+      expect(flow.dot).toBe(pill.dot);
+      expect(flow.rim).toBe(pill.rim);
+      expect(flow.glow).toBe(pill.glow);
+      expect(flow.stroke).toMatch(/^stroke-/);
+      expect(flow.fill).toMatch(/^fill-/);
+    }
+    expect(flowTone('waiting').stroke).toBe('stroke-info');
+    expect(flowTone('idle').stroke).toBe('stroke-ink-2');
   });
 
   test('neutral when no tone applies', () => {

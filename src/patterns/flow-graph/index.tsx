@@ -36,7 +36,7 @@ import { type FlowEdgeStyle, edgeStyle } from './edge-style';
 import { isArrow, nearestInDirection } from './keyboard';
 import { type FlowLayoutResult, layoutFlow } from './layout';
 import { DEFAULT_KIND_LABELS } from './legend';
-import { STATUS_TONE_LABELS, STATUS_TONES, statusTone } from './tone';
+import { flowTone, STATUS_TONE_LABELS, STATUS_TONES } from './tone';
 import type {
   FlowDirection,
   FlowEdge,
@@ -59,8 +59,8 @@ export { FlowLegend } from './legend';
 export type { FlowLegendProps } from './legend';
 export { FlowNodeCard } from './node-card';
 export type { FlowNodeCardProps } from './node-card';
-export { STATUS_TONE_LABELS, STATUS_TONES, statusTone } from './tone';
-export type { StatusTone, StatusToneClasses } from './tone';
+export { flowTone, NEUTRAL_TONE, STATUS_TONE_LABELS, STATUS_TONES, statusTone } from './tone';
+export type { FlowToneClasses, StatusTone, StatusToneClasses } from './tone';
 export type {
   FlowDirection,
   FlowEdge,
@@ -275,7 +275,7 @@ function Markers({ prefix }: { prefix: string }) {
             markerHeight={6}
             orient="auto-start-reverse"
           >
-            <path d="M1 1 L9 5 L1 9 z" className={statusTone(tone).fill} />
+            <path d="M1 1 L9 5 L1 9 z" className={flowTone(tone).fill} />
           </marker>
         ))}
       </defs>

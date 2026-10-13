@@ -1,6 +1,6 @@
 import { cn } from '../../lib/cn';
 import { edgeDash } from './edge-style';
-import { statusTone } from './tone';
+import { flowTone } from './tone';
 import type { FlowEdgeKind, FlowTone } from './types';
 
 /**
@@ -32,7 +32,7 @@ export function FlowLegend({
   tone,
   className,
 }: FlowLegendProps) {
-  const classes = statusTone(tone);
+  const classes = flowTone(tone);
   return (
     <ul
       data-flow-legend

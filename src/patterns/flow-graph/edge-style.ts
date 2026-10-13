@@ -1,4 +1,4 @@
-import { type StatusToneClasses, statusTone } from './tone';
+import { type FlowToneClasses, flowTone } from './tone';
 import type { FlowEdge, FlowEdgeKind, FlowNode, FlowTone } from './types';
 
 /**
@@ -36,7 +36,7 @@ export type FlowEdgeStyle = {
   /** `round` for every kind: it is what turns the dotted dash into dots. */
   linecap: 'round';
   tone: FlowTone | undefined;
-  classes: StatusToneClasses;
+  classes: FlowToneClasses;
   /** Whether a pulse travels it: asked for, and motion is allowed. */
   animated: boolean;
 };
@@ -52,7 +52,7 @@ export function edgeStyle<T>(
     dash: edgeDash(edge.kind),
     linecap: 'round',
     tone,
-    classes: statusTone(tone),
+    classes: flowTone(tone),
     animated: wantsMotion && !options.reducedMotion,
   };
 }

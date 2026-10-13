@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { type FlowEdge, FlowGraph, FlowLegend, type FlowNode, FlowNodeCard } from './index';
+import { type FlowEdge, FlowGraph, FlowLegend, type FlowNode, FlowNodeCard, statusTone } from './index';
 
 // #94 — the composed graph, as far as a headless DOM shows it. happy-dom has
 // no layout, so xyflow never measures a handle and draws no edge here; edges
@@ -202,8 +202,8 @@ describe('FlowNodeCard', () => {
   test('the tone paints the rim and glow, not the text', () => {
     const { container } = render(<FlowNodeCard title="QA" tone="blocked" />);
     const card = container.querySelector('[data-flow-node-card]') as HTMLElement;
-    expect(card.className).toContain('border-danger/60');
-    expect(card.className).toContain('shadow-[0_0_22px_-6px_var(--color-danger)]');
+    expect(card.className).toContain(statusTone('blocked').rim);
+    expect(card.className).toContain(statusTone('blocked').glow);
     expect(screen.getByText('QA').className).toContain('text-ink');
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { SegmentedControl, SegmentedControlItem } from './segmented-control';
 
 describe('SegmentedControl', () => {
@@ -77,10 +77,10 @@ describe('SegmentedControl sizing', () => {
   }
 
   test('by default the control is as wide as its labels and its items do not grow', () => {
-    control();
-    const list = screen.getByRole('list');
-    expect(list.className).toContain('w-fit');
-    expect(list.className).toContain('max-w-full');
+    const { container } = control();
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller?.className).toContain('w-fit');
+    expect(scroller?.className).toContain('max-w-full');
     for (const item of screen.getAllByRole('listitem')) {
       expect(item.className).toContain('flex-none');
       expect(item.className).not.toContain('flex-1');
@@ -88,10 +88,10 @@ describe('SegmentedControl sizing', () => {
   });
 
   test('`full` shares the row in equal parts, never below a label', () => {
-    control(true);
-    const list = screen.getByRole('list');
-    expect(list.className).toContain('w-full');
-    expect(list.className).not.toContain('w-fit');
+    const { container } = control(true);
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller?.className).toContain('w-full');
+    expect(scroller?.className).not.toContain('w-fit');
     for (const item of screen.getAllByRole('listitem')) {
       expect(item.className).toContain('flex-1');
       expect(item.className).toContain('min-w-fit');
@@ -111,12 +111,47 @@ describe('SegmentedControl sizing', () => {
 
   test('the control sits inside a ScrollHintRow, the bar hidden', () => {
     const { container } = control();
-    const list = screen.getByRole('list');
-    expect(list.className).toContain('overflow-x-auto');
-    expect(list.className).toContain('scrollbar-hide');
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller?.className).toContain('scrollbar-hide');
+    expect(scroller?.contains(screen.getByRole('list'))).toBe(true);
     const fades = container.querySelectorAll('[aria-hidden="true"].pointer-events-none');
     expect(fades).toHaveLength(2);
     for (const fade of fades) expect(fade.className).toContain('from-surface');
+  });
+
+  // BUG-20261013-001 — the fades measure the element that scrolls. happy-dom
+  // has no layout, so the geometry is given: 600px of items in a 200px row.
+  test('an overflowing control shows the end fade; scrolled to the end, the start fade', () => {
+    const names = ['scrollWidth', 'clientWidth'] as const;
+    const saved = names.map((n) => Object.getOwnPropertyDescriptor(HTMLElement.prototype, n));
+    names.forEach((n, i) => {
+      Object.defineProperty(HTMLElement.prototype, n, {
+        configurable: true,
+        get() {
+          return this.classList.contains('overflow-x-auto') ? [600, 200][i] : 0;
+        },
+      });
+    });
+    try {
+      const { container } = control();
+      const [start, end] = Array.from(
+        container.querySelectorAll('[aria-hidden="true"].pointer-events-none'),
+      );
+      const scroller = container.querySelector('.overflow-x-auto') as HTMLElement;
+      scroller.scrollLeft = 0;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-0');
+      expect(end?.className).toContain('opacity-100');
+      scroller.scrollLeft = 400;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-100');
+      expect(end?.className).toContain('opacity-0');
+    } finally {
+      names.forEach((n, i) => {
+        const d = saved[i];
+        if (d) Object.defineProperty(HTMLElement.prototype, n, d);
+      });
+    }
   });
 
   test('the active pill uses the tabs radius', () => {

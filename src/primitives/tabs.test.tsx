@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Tabs, TabsItem } from './tabs';
 
 describe('Tabs', () => {
@@ -84,10 +84,13 @@ describe('Tabs', () => {
 describe('Tabs in a row too narrow for them', () => {
   const geometry: Record<string, PropertyDescriptor | undefined> = {};
   const GIVEN = {
-    scrollWidth: (el: HTMLElement) => (el.tagName === 'UL' ? 600 : 0),
-    clientWidth: (el: HTMLElement) => (el.tagName === 'UL' ? 200 : 0),
+    // The scroller is `ScrollHintRow`'s inner div (BUG-20261013-001), the one
+    // carrying `overflow-x-auto`; the list inside it never overflows by itself.
+    scrollWidth: (el: HTMLElement) => (el.classList.contains('overflow-x-auto') ? 600 : 0),
+    clientWidth: (el: HTMLElement) => (el.classList.contains('overflow-x-auto') ? 200 : 0),
     offsetWidth: (el: HTMLElement) => (el.tagName === 'LI' ? 100 : 0),
     offsetLeft: (el: HTMLElement) => (el.dataset.at ? Number(el.dataset.at) : 0),
+    offsetParent: (el: HTMLElement) => el.closest('.overflow-x-auto'),
   };
 
   function given() {
@@ -121,10 +124,12 @@ describe('Tabs in a row too narrow for them', () => {
   }
 
   test('the row scrolls sideways, with its bar hidden', () => {
-    row();
-    const list = screen.getByRole('list');
-    expect(list.className).toContain('overflow-x-auto');
-    expect(list.className).toContain('scrollbar-hide');
+    const { container } = row();
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller?.className).toContain('scrollbar-hide');
+    // The list is inside the scroller and does not scroll itself.
+    expect(scroller?.contains(screen.getByRole('list'))).toBe(true);
+    expect(screen.getByRole('list').className).not.toContain('overflow-x-auto');
   });
 
   test('the current tab is scrolled to the middle of the row on mount', () => {
@@ -143,9 +148,9 @@ describe('Tabs in a row too narrow for them', () => {
           ))}
         </Tabs>,
       );
-      const list = container.querySelector('ul');
+      const scroller = container.querySelector('.overflow-x-auto');
       // 400 − (200 − 100) / 2
-      expect(list?.scrollLeft).toBe(350);
+      expect(scroller?.scrollLeft).toBe(350);
     } finally {
       restore();
     }
@@ -158,6 +163,28 @@ describe('Tabs in a row too narrow for them', () => {
       const fades = container.querySelectorAll('[aria-hidden="true"].pointer-events-none');
       expect(fades).toHaveLength(2);
       for (const fade of fades) expect(fade.className).toContain('from-surface');
+    } finally {
+      restore();
+    }
+  });
+
+  // BUG-20261013-001 — the fades measure the element that scrolls.
+  test('at the start only the end fade shows; scrolled to the end only the start fade does', () => {
+    given();
+    try {
+      const { container } = row();
+      const [start, end] = Array.from(
+        container.querySelectorAll('[aria-hidden="true"].pointer-events-none'),
+      );
+      const scroller = container.querySelector('.overflow-x-auto') as HTMLElement;
+      scroller.scrollLeft = 0;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-0');
+      expect(end?.className).toContain('opacity-100');
+      scroller.scrollLeft = 400;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-100');
+      expect(end?.className).toContain('opacity-0');
     } finally {
       restore();
     }

@@ -9,15 +9,17 @@ import { type RefObject, useLayoutEffect } from 'react';
  * The row's own `scrollLeft`, not `scrollIntoView`: that one also scrolls
  * every ancestor, and a tab row below the fold would drag the page down to it
  * on load. Centred, so the items either side of the active one show too. The
- * row is the item's parent, and must be `relative` — that makes it the item's
- * `offsetParent`, which is what `offsetLeft` is measured from.
+ * row is the item's `offsetParent` — the nearest positioned ancestor, which
+ * is what `offsetLeft` is measured from. BUG-20261013-001: that is the
+ * `relative` scroller `ScrollHintRow` renders, not the unpositioned list
+ * between it and the item.
  *
  * Nothing happens while the row fits: there is nothing to scroll.
  */
 export function useScrollIntoRow(ref: RefObject<HTMLElement | null>, active: boolean) {
   useLayoutEffect(() => {
     const item = ref.current;
-    const row = item?.parentElement;
+    const row = item?.offsetParent;
     if (!active || !item || !row || row.scrollWidth <= row.clientWidth) return;
     row.scrollLeft = item.offsetLeft - (row.clientWidth - item.offsetWidth) / 2;
   }, [ref, active]);

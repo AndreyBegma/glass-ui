@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Fragment, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import { SheetContent, SheetRoot } from '../primitives/sheet';
+import { SPRINGS } from '../primitives/springs';
 import type { NavLinkRender } from './nav-link';
 
 /**
@@ -103,11 +104,7 @@ export function TabBar({
           aria-hidden="true"
           data-tab-bar-pill
           className="absolute inset-0 rounded-full bg-accent-soft"
-          transition={
-            reduced
-              ? { duration: 0 }
-              : { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 }
-          }
+          transition={reduced ? SPRINGS.reduced : SPRINGS.capsule}
         />
       ) : null}
       <Icon size={20} aria-hidden="true" className="relative" />

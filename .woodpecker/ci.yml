@@ -1,0 +1,48 @@
+# glass-ui CI (#89).
+#
+# Lint, test, build and smoke-test the packed tarball on every pull request and
+# on every push to develop and main. `release.yml` publishes; this never does.
+#
+# The repository is not trusted in Woodpecker, so there are no host volumes and
+# no caches: a plain node image, with bun installed into it at the version the
+# lockfile was written with.
+
+when:
+  - event: pull_request
+  - event: push
+    branch: [develop, main]
+
+variables:
+  - &node_image node:24
+  - &setup npm install --global --no-fund --no-audit bun@1.4.0
+
+steps:
+  - name: install
+    image: *node_image
+    commands:
+      - *setup
+      - bun install --frozen-lockfile
+
+  - name: lint
+    image: *node_image
+    commands:
+      - *setup
+      - bun run lint
+
+  - name: test
+    image: *node_image
+    commands:
+      - *setup
+      - bun run test
+
+  - name: build
+    image: *node_image
+    commands:
+      - *setup
+      - bun run build
+
+  - name: smoke
+    image: *node_image
+    commands:
+      - *setup
+      - bun run smoke

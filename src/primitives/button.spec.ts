@@ -150,7 +150,19 @@ function resolve(sets: string[][], token: string): string {
 /* The button, as it renders.                                                */
 /* ------------------------------------------------------------------------ */
 
-const VARIANTS = ['solid', 'glass', 'ghost', 'danger'] as const;
+const VARIANTS = ['solid', 'glass', 'ghost', 'danger', 'link'] as const;
+
+/** The link's label is `var(--color-accent, var(--color-ink))`: the accent
+ *  where a set defines it (the desk), ink where it does not (the sofa). */
+const ACCENT_FALLBACK = 'text-[color:var(--color-accent,var(--color-ink))]';
+
+/** The surfaces the accent is gated on (`desk-profile.spec.ts`): the ground
+ *  and the card (`raised`), with the step between them. */
+const LINK_SURFACES = ['--color-ground', '--color-surface', '--color-raised'];
+
+function hasToken(sets: string[][], token: string): boolean {
+  return sets.flat().some((d) => d.startsWith(`${token}:`));
+}
 
 /** A layer a button paints: a token at an optional `/N` opacity. */
 type Layer = { token: string; alpha: number };
@@ -200,17 +212,22 @@ function ratios(sets: string[][], variant: (typeof VARIANTS)[number], hover: boo
   const classes = buttonClassName({ variant }).split(/\s+/);
   const restFill = utility(classes, '', 'bg');
   const fill = (hover && utility(classes, 'hover:', 'bg')) || restFill;
-  const label = (hover && utility(classes, 'hover:', 'text')) || utility(classes, '', 'text');
+  let label = (hover && utility(classes, 'hover:', 'text')) || utility(classes, '', 'text');
+  if (variant === 'link') {
+    if (!classes.includes(ACCENT_FALLBACK)) throw new Error('`link` lost its accent label');
+    label = { token: hasToken(sets, '--color-accent') ? '--color-accent' : '--color-ink', alpha: 1 };
+  }
   if (!label) throw new Error(`\`${variant}\` has no label colour`);
 
-  return SURFACES.map((surface) => {
+  return (variant === 'link' ? LINK_SURFACES : SURFACES).map((surface) => {
     const page = colour(resolve(sets, surface)).rgb;
     let behind = classes.includes('glass')
       ? glass(sets, page, hover ? fill : null)
       : fill
         ? paint(sets, fill, page)
         : page;
-    if (hover) behind = over(colour(resolve(sets, '--glass-lit')), behind);
+    // `before:hidden` is the variant switching the highlight off (`link`).
+    if (hover && !classes.includes('before:hidden')) behind = over(colour(resolve(sets, '--glass-lit')), behind);
     return [surface, contrast(paint(sets, label, behind), behind)] as const;
   });
 }
@@ -243,38 +260,59 @@ describe('every variant can be read, at rest and on hover', () => {
 });
 
 /**
- * FEAT-20260930-004 (SYS-03) — a disabled primary is quiet, and still legible.
+ * FEAT-20261013-002 (W238) — a disabled primary stays a primary.
  *
- * It was the live primary at 40% opacity: an ink slab that out-shouted every
- * enabled control beside it. Now it is the hover fill with `ink-2` on it —
- * `ink-3` was tried first and read 2.89:1 on the sofa's light `canvas`.
- * WCAG 1.4.3 exempts a disabled control's label, so the floor here is 3:1,
- * the graphic floor, on every surface in every set — and the ceiling is the
- * live primary's own ratio, so it can never be the loudest thing on a form.
+ * FEAT-20260930-004 (SYS-03) had turned it into `bg-hover text-ink-2` so it
+ * would not out-shout its neighbours; the audit counted that grey fill as a
+ * third look for one hierarchy. It is the ink fill at the base 40% again.
+ * WCAG 1.4.3 exempts a disabled control's label, so what is asserted is the
+ * opacity, and that no variant swaps the fill or the label for a disabled one.
  */
-describe('a disabled primary is quiet and legible', () => {
+describe('a disabled primary is the ink fill at 40%', () => {
   const classes = buttonClassName({ variant: 'solid' }).split(/\s+/);
 
-  test('no opacity slab', () => {
-    expect(classes).toContain('disabled:opacity-100');
-    expect(classes).not.toContain('disabled:opacity-40');
+  test('the base opacity applies', () => {
+    expect(classes).toContain('disabled:opacity-40');
+    expect(classes).not.toContain('disabled:opacity-100');
   });
 
-  test.each(SETS)('%s: ≥ 3:1 on its fill, and under the live primary', (_n, sets) => {
-    const fill = utility(classes, 'disabled:', 'bg');
-    const label = utility(classes, 'disabled:', 'text');
-    const liveFill = utility(classes, '', 'bg');
-    const liveLabel = utility(classes, '', 'text');
-    if (!fill || !label || !liveFill || !liveLabel) throw new Error('`solid` lost a layer');
-    const low = SURFACES.map((surface) => {
+  test('no disabled fill or label of its own', () => {
+    expect(classes.filter((c) => /^disabled:(bg|text)-/.test(c))).toEqual([]);
+  });
+
+  test('the disabled fill is the live fill', () => {
+    expect(utility(classes, '', 'bg')).toEqual({ token: '--color-ink', alpha: 1 });
+  });
+});
+
+/**
+ * FEAT-20261013-002 (W238) — the secondary tier at the flat material.
+ *
+ * Under `data-material="flat"` the scrim is `raised`, so the tint is ink at 6%
+ * over whatever the button sits on, and the label is ink. On hover the tint is
+ * 10%, with `--color-hover` painted over it by `glass-hover`. `lit` is off in
+ * flat. The tint is an ancestor-variant utility, which `utility()` does not
+ * read, so the numbers here are the spec's and a test in `button.test.tsx`
+ * pins the class list to them.
+ */
+describe('the flat secondary can be read, at rest and on hover', () => {
+  const FLAT_TINT = 0.06;
+  const FLAT_HOVER = 0.1;
+
+  test.each(SETS)('%s', (_n, sets) => {
+    const ink = colour(resolve(sets, '--color-ink'));
+    const wash = colour(resolve(sets, '--color-hover'));
+    const failures: string[] = [];
+    for (const surface of SURFACES) {
       const page = colour(resolve(sets, surface)).rgb;
-      const behind = paint(sets, fill, page);
-      const live = paint(sets, liveFill, page);
-      const ratio = contrast(paint(sets, label, behind), behind);
-      const loud = contrast(paint(sets, liveLabel, live), live);
-      return { surface, ratio, loud };
-    }).filter(({ ratio, loud }) => ratio < 3 || ratio >= loud);
-    expect(low.map((l) => `${l.surface}: ${l.ratio.toFixed(2)}:1`)).toEqual([]);
+      const rest = over({ rgb: ink.rgb, a: ink.a * FLAT_TINT }, page);
+      const hover = over(wash, over({ rgb: ink.rgb, a: ink.a * FLAT_HOVER }, page));
+      for (const [state, behind] of [['rest', rest], ['hover', hover]] as const) {
+        const ratio = contrast(paint(sets, { token: '--color-ink', alpha: 1 }, behind), behind);
+        if (ratio < 4.5) failures.push(`${surface} ${state}: ${ratio.toFixed(2)}:1`);
+      }
+    }
+    expect(failures).toEqual([]);
   });
 });
 

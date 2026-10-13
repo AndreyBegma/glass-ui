@@ -17,6 +17,8 @@
  */
 
 export { cn } from './lib/cn';
+export { HUES, hueClasses, hueFor } from './lib/hue';
+export type { Hue, HueClasses } from './lib/hue';
 export { DepthOrigin } from './depth-origin';
 export { MaterialLight } from './material-light';
 export { Button, buttonClassName } from './primitives/button';

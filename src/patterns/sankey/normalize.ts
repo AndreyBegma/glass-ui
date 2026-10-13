@@ -1,3 +1,4 @@
+import type { Hue } from '../../lib/hue';
 import type { SankeyColumn, SankeyLink, SankeyNode, SankeyTone } from './types';
 
 /**
@@ -21,6 +22,8 @@ export type ModelNode = {
   /** The column's index, left to right. */
   column: number;
   tone: SankeyTone;
+  /** #109 — the node's identity hue, and every link out of it. */
+  hue?: Hue;
   value: number;
   /** For a "+N more" node, the nodes it stands for; otherwise empty. */
   collapsed: SankeyNode[];
@@ -61,6 +64,7 @@ export function normalize(
       label: n.label,
       column,
       tone: n.tone ?? 'accent',
+      hue: n.hue,
       value: floor,
       collapsed: [],
     });

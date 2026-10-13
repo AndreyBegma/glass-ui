@@ -37,6 +37,21 @@ describe('statusTone', () => {
     const labels = STATUSES.map((s) => statusTone(s).label);
     expect(new Set(labels).size).toBe(STATUSES.length);
   });
+
+  // #109
+  test('each state reads its own status tokens, and idle the quiet ink', () => {
+    for (const status of STATUSES.filter((s) => s !== 'idle')) {
+      const { text, soft, dot, rim, glow } = statusTone(status);
+      expect(text).toBe(`text-status-${status}-ink`);
+      expect(soft).toBe(`bg-status-${status}-soft`);
+      expect(dot).toBe(`bg-status-${status}`);
+      expect(rim).toMatch(new RegExp(`^border-status-${status}/\\d+$`));
+      expect(glow).toContain(`var(--color-status-${status}-glow)`);
+    }
+    expect(statusTone('idle').text).toBe('text-ink-2');
+    const dots = STATUSES.map((s) => statusTone(s).dot);
+    expect(new Set(dots).size).toBe(STATUSES.length);
+  });
 });
 
 describe('StatusPill', () => {

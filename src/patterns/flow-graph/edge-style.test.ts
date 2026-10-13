@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { edgeDash, edgeStyle, edgeTone } from './edge-style';
-import { flowTone, NEUTRAL_TONE, STATUS_TONES, statusTone } from './tone';
+import { edgeDash, edgeHue, edgeStyle, edgeTone } from './edge-style';
+import { flowTone, hueTone, NEUTRAL_TONE, STATUS_TONES, statusTone } from './tone';
 import type { FlowEdge, FlowNode } from './types';
 
 const node = (id: string, tone?: FlowNode['tone']): FlowNode => ({
@@ -70,10 +70,10 @@ describe('edgeStyle', () => {
     expect(style.linecap).toBe('round');
     expect(style.tone).toBe('blocked');
     expect(style.classes).toBe(flowTone('blocked'));
-    expect(style.classes.stroke).toBe('stroke-danger');
+    expect(style.classes.stroke).toBe('stroke-status-blocked');
   });
 
-  test('the edge reads StatusPill’s palette, plus the SVG classes of its family', () => {
+  test('the edge reads StatusPill’s palette, plus the SVG classes of its state', () => {
     for (const tone of STATUS_TONES) {
       const flow = flowTone(tone);
       const pill = statusTone(tone);
@@ -83,7 +83,12 @@ describe('edgeStyle', () => {
       expect(flow.stroke).toMatch(/^stroke-/);
       expect(flow.fill).toMatch(/^fill-/);
     }
-    expect(flowTone('waiting').stroke).toBe('stroke-info');
+    expect(flowTone('waiting').stroke).toBe('stroke-status-waiting');
+    // #109 — the stroke is the dot's token, per state, not per family.
+    for (const tone of STATUS_TONES.filter((t) => t !== 'idle')) {
+      expect(flowTone(tone).stroke).toBe(`stroke-status-${tone}`);
+      expect(flowTone(tone).dot).toBe(`bg-status-${tone}`);
+    }
     expect(flowTone('idle').stroke).toBe('stroke-ink-2');
   });
 
@@ -108,5 +113,45 @@ describe('edgeStyle', () => {
     expect(
       edgeStyle(edge({ animated: true }), nodes, { animated: true, reducedMotion: true }).animated,
     ).toBe(false);
+  });
+});
+
+// #109 — state beats identity: edge.tone, the target's status, the source's
+// hue, neutral.
+describe('edgeStyle — the source’s hue when no status applies', () => {
+  const hued = new Map<string, FlowNode>([
+    ['lead', { id: 'lead', data: { title: 'lead' }, hue: 4 }],
+    ['busy', { id: 'busy', data: { title: 'busy' }, tone: 'blocked' }],
+    ['plain', { id: 'plain', data: { title: 'plain' } }],
+  ]);
+  const from = (over: Partial<FlowEdge>) =>
+    edgeStyle({ source: 'lead', target: 'plain', kind: 'delegates', ...over }, hued);
+
+  test('an edge into a node with no status takes its source’s hue', () => {
+    const style = from({});
+    expect(style.tone).toBeUndefined();
+    expect(style.hue).toBe(4);
+    expect(style.classes).toBe(hueTone(4));
+    expect(style.classes.stroke).toBe('stroke-hue-4');
+    expect(style.marker).toBe('hue-4');
+    expect(edgeHue({ source: 'lead', target: 'plain' }, hued)).toBe(4);
+  });
+
+  test('the target’s status wins over the source’s hue', () => {
+    const style = from({ target: 'busy' });
+    expect(style.tone).toBe('blocked');
+    expect(style.hue).toBeUndefined();
+    expect(style.marker).toBe('blocked');
+  });
+
+  test('edge.tone wins over both', () => {
+    expect(from({ tone: 'done' }).marker).toBe('done');
+    expect(from({ tone: 'done' }).hue).toBeUndefined();
+  });
+
+  test('no hue and no status is neutral, with the `none` arrowhead', () => {
+    const style = from({ source: 'plain', target: 'plain' });
+    expect(style.classes).toBe(NEUTRAL_TONE);
+    expect(style.marker).toBe('none');
   });
 });

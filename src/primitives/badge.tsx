@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
 import { cn } from '../lib/cn';
+import { type Hue, hueClasses } from '../lib/hue';
 
 /**
  * FEAT-20260902-004 — an overlay, not a filter.
@@ -61,13 +62,23 @@ type BadgeProps = Omit<ComponentProps<'span'>, 'className' | 'children'> &
     count?: number;
     /** A short value that is not a count, shown as given. `count` wins when both are passed. */
     label?: string;
+    /**
+     * #109 — an identity hue instead of a tone: the hue's tint with its ink,
+     * or its solid mark as a dot. Wins over `tone`.
+     */
+    hue?: Hue;
   };
 
-export function Badge({ tone, dot = false, count, label, className, ...props }: BadgeProps) {
+export function Badge({ tone, dot = false, count, label, hue, className, ...props }: BadgeProps) {
   const display =
     typeof count === 'number' ? (count > 99 ? '99+' : String(count)) : (label ?? null);
+  const hued = hue ? hueClasses(hue) : null;
   return (
-    <span className={cn(badge({ tone, dot }), className)} {...props}>
+    <span
+      data-hue={hue}
+      className={cn(badge({ tone, dot }), hued && (dot ? hued.dot : hued.soft), className)}
+      {...props}
+    >
       {dot ? null : display}
     </span>
   );

@@ -1,3 +1,4 @@
+import { HUES, type Hue, hueClasses } from '../../lib/hue';
 import {
   STATUSES,
   type Status,
@@ -12,8 +13,8 @@ import {
  * top of it.
  *
  * - **SVG classes.** A connector and an arrowhead are painted with `stroke-*`
- *   and `fill-*`, which a pill never needs. They follow the tone's family
- *   (`ok`, `warn`, `danger`, `info`, `neutral`), so they can never drift from
+ *   and `fill-*`, which a pill never needs. They read the state's own
+ *   `--color-status-*` token (#109), the dot's, so they can never drift from
  *   the dot beside them.
  * - **No tone at all.** A node without a status is a plain rim and a neutral
  *   connector. `ink-2`, not `ink-3`: a dotted 1.5px line at ink-3 all but
@@ -37,12 +38,16 @@ export type FlowToneClasses = StatusToneClasses & {
   fill: string;
 };
 
-const SVG: Record<StatusToneClasses['tone'], { stroke: string; fill: string }> = {
-  ok: { stroke: 'stroke-ok', fill: 'fill-ok' },
-  warn: { stroke: 'stroke-warn', fill: 'fill-warn' },
-  danger: { stroke: 'stroke-danger', fill: 'fill-danger' },
-  info: { stroke: 'stroke-info', fill: 'fill-info' },
-  neutral: { stroke: 'stroke-ink-2', fill: 'fill-ink-2' },
+/* #109 — per state rather than per family, so a connector is the colour of
+   the dot beside it now that each state has its own. */
+const SVG: Record<StatusTone, { stroke: string; fill: string }> = {
+  running: { stroke: 'stroke-status-running', fill: 'fill-status-running' },
+  waiting: { stroke: 'stroke-status-waiting', fill: 'fill-status-waiting' },
+  paused: { stroke: 'stroke-status-paused', fill: 'fill-status-paused' },
+  blocked: { stroke: 'stroke-status-blocked', fill: 'fill-status-blocked' },
+  done: { stroke: 'stroke-status-done', fill: 'fill-status-done' },
+  error: { stroke: 'stroke-status-error', fill: 'fill-status-error' },
+  idle: { stroke: 'stroke-ink-2', fill: 'fill-ink-2' },
 };
 
 /** No tone at all: a neutral connector and a plain rim. */
@@ -55,15 +60,29 @@ export const NEUTRAL_TONE: FlowToneClasses = {
   glow: '',
   pulse: false,
   label: '',
-  ...SVG.neutral,
+  ...SVG.idle,
 };
 
 const FLOW_TONES = new Map<StatusTone, FlowToneClasses>(
-  STATUSES.map((status) => {
-    const classes = statusTone(status);
-    return [status, { ...classes, ...SVG[classes.tone] }];
+  STATUSES.map((status) => [status, { ...statusTone(status), ...SVG[status] }]),
+);
+
+/**
+ * #109 — an identity hue in the same shape, for a node with a `hue` and for
+ * an edge that takes its source's: the hue's rim, glow, dot and SVG classes
+ * over the neutral tone. Not a status, so `tone` stays `neutral` and there is
+ * no label.
+ */
+const HUE_TONES = new Map<Hue, FlowToneClasses>(
+  HUES.map((hue) => {
+    const { rim, glow, dot, stroke, fill } = hueClasses(hue);
+    return [hue, { ...NEUTRAL_TONE, rim, glow, dot, stroke, fill }];
   }),
 );
+
+export function hueTone(hue: Hue): FlowToneClasses {
+  return HUE_TONES.get(hue)!;
+}
 
 /** `statusTone` plus the SVG classes, and neutral for a node without a status. */
 export function flowTone(tone: StatusTone | undefined): FlowToneClasses {

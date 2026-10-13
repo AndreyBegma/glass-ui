@@ -36,7 +36,8 @@ import { type FlowEdgeStyle, edgeStyle } from './edge-style';
 import { isArrow, nearestInDirection } from './keyboard';
 import { type FlowLayoutResult, layoutFlow } from './layout';
 import { DEFAULT_KIND_LABELS } from './legend';
-import { flowTone, STATUS_TONE_LABELS, STATUS_TONES } from './tone';
+import { flowTone, hueTone, STATUS_TONE_LABELS, STATUS_TONES } from './tone';
+import { HUES } from '../../lib/hue';
 import type {
   FlowDirection,
   FlowEdge,
@@ -50,7 +51,7 @@ import type {
 } from './types';
 import { FlowNodeCard } from './node-card';
 
-export { edgeDash, edgeStyle, edgeTone } from './edge-style';
+export { edgeDash, edgeHue, edgeStyle, edgeTone } from './edge-style';
 export type { FlowEdgeStyle } from './edge-style';
 export { nearestInDirection } from './keyboard';
 export { DEFAULT_NODE_SIZE, layoutFlow } from './layout';
@@ -59,7 +60,14 @@ export { FlowLegend } from './legend';
 export type { FlowLegendProps } from './legend';
 export { FlowNodeCard } from './node-card';
 export type { FlowNodeCardProps } from './node-card';
-export { flowTone, NEUTRAL_TONE, STATUS_TONE_LABELS, STATUS_TONES, statusTone } from './tone';
+export {
+  flowTone,
+  hueTone,
+  NEUTRAL_TONE,
+  STATUS_TONE_LABELS,
+  STATUS_TONES,
+  statusTone,
+} from './tone';
 export type { FlowToneClasses, StatusTone, StatusToneClasses } from './tone';
 export type {
   FlowDirection,
@@ -195,6 +203,7 @@ function FlowNodeView({ id, data, height }: NodeProps<XyNode>) {
         <FlowNodeCard
           title={card?.title ?? node.id}
           tone={node.tone}
+          hue={node.hue}
           status={card?.status}
           meta={card?.meta}
           icon={card?.icon}
@@ -236,14 +245,14 @@ function FlowEdgeView({
   if (!data) return null;
   const { style } = data;
   return (
-    <g data-flow-edge data-tone={style.tone}>
+    <g data-flow-edge data-tone={style.tone} data-hue={style.hue}>
       <path
         d={path}
         fill="none"
         strokeWidth={1.5}
         strokeLinecap={style.linecap}
         strokeDasharray={style.dash}
-        markerEnd={`url(#${ctx.markerPrefix}-arrow-${style.tone ?? 'none'})`}
+        markerEnd={`url(#${ctx.markerPrefix}-arrow-${style.marker})`}
         className={style.classes.stroke}
       />
       {style.animated ? (
@@ -258,16 +267,20 @@ function FlowEdgeView({
 const NODE_TYPES = { flow: FlowNodeView };
 const EDGE_TYPES = { flow: FlowEdgeView };
 
-/** Arrowheads, one per tone, shared by every edge of the graph. */
+/** Arrowheads, one per tone and one per hue (#109), shared by every edge of the graph. */
 function Markers({ prefix }: { prefix: string }) {
   const tones: (FlowTone | undefined)[] = [...STATUS_TONES, undefined];
+  const heads = [
+    ...tones.map((tone) => ({ key: tone ?? 'none', fill: flowTone(tone).fill })),
+    ...HUES.map((hue) => ({ key: `hue-${hue}`, fill: hueTone(hue).fill })),
+  ];
   return (
     <svg aria-hidden="true" width={0} height={0} className="absolute">
       <defs>
-        {tones.map((tone) => (
+        {heads.map(({ key, fill }) => (
           <marker
-            key={tone ?? 'none'}
-            id={`${prefix}-arrow-${tone ?? 'none'}`}
+            key={key}
+            id={`${prefix}-arrow-${key}`}
             viewBox="0 0 10 10"
             refX={9}
             refY={5}
@@ -275,7 +288,7 @@ function Markers({ prefix }: { prefix: string }) {
             markerHeight={6}
             orient="auto-start-reverse"
           >
-            <path d="M1 1 L9 5 L1 9 z" className={flowTone(tone).fill} />
+            <path d="M1 1 L9 5 L1 9 z" className={fill} />
           </marker>
         ))}
       </defs>

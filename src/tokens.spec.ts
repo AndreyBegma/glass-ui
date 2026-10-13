@@ -421,6 +421,28 @@ const ADDED: Record<string, string> = {
       '--text-label', '--text-label--line-height', '--text-label--font-weight',
     ].map((t) => [t, '#93 — the type scale']),
   ),
+  ...Object.fromEntries(
+    [1, 2, 3, 4, 5, 6, 7, 8].flatMap((n) =>
+      ['', '-soft', '-line', '-ink', '-glow'].map((v) => [
+        `--color-hue-${n}${v}`,
+        '#109 — the eight identity hues; `palette.spec.ts` gates them',
+      ]),
+    ),
+  ),
+  ...Object.fromEntries(
+    ['running', 'waiting', 'paused', 'blocked', 'done', 'error'].flatMap((s) =>
+      ['', '-soft', '-ink', '-glow'].map((v) => [
+        `--color-status-${s}${v}`,
+        '#109 — the status colours, references to the hues',
+      ]),
+    ),
+  ),
+  ...Object.fromEntries(
+    [1, 2, 3].map((n) => [
+      `--canvas-aurora-${n}`,
+      '#109 — what the canvas glows are a glow of; the accent unless a palette says otherwise',
+    ]),
+  ),
 };
 
 const BASELINE: {

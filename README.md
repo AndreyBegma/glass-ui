@@ -21,9 +21,10 @@ dense desktop dashboard, without writing their own primitives.
 ## What is in it
 
 - **Tokens** — palette, radius, motion, density and type scales, a z-index
-  ladder, and four independent switches (`data-theme`, `data-material`,
-  `data-scale`, `data-accent`) for light/dark, glass/flat, sofa/desk density
-  and a named accent preset.
+  ladder, eight identity hues and six status colours, and five independent
+  switches (`data-theme`, `data-material`, `data-scale`, `data-accent`,
+  `data-palette`) for light/dark, glass/flat, sofa/desk density, a named
+  accent preset and a named surface palette.
 - **The material** — `glass`, `glass-strong`, `glass-clear` and `lit` for
   chrome, `surface-content` for content, and the `.canvas` behind them, with
   the fallbacks they need.
@@ -298,9 +299,9 @@ was white, for an interface laid over other people's artwork; for a workspace
 with no artwork, a black primary button made the system read as a grey
 template. One primary per screen.
 
-**Four axes, each unset by default.** The document carries `data-theme`,
-`data-material`, `data-scale` and `data-accent`, and every one of them does
-nothing until an application sets it. That is not politeness, it is how two products share one
+**Five axes, each unset by default.** The document carries `data-theme`,
+`data-material`, `data-scale`, `data-accent` and `data-palette`, and every one
+of them does nothing until an application sets it. That is not politeness, it is how two products share one
 token layer without either being able to move the other.
 
 | Attribute | Unset | Set | What it changes |
@@ -309,6 +310,7 @@ token layer without either being able to move the other.
 | `data-material` | glass | `flat` | the material, and nothing else |
 | `data-scale` | the sofa | `desk` | radii, motion, hairlines and density |
 | `data-accent` | the indigo accent | a preset name: `amber` | the four accent tokens and the focus ring, and nothing else |
+| `data-palette` | the neutral near-black / white surfaces | a palette name: `navy` | the surface family, the hairlines' colour, the scrim and the canvas aurora, and nothing else |
 
 `data-scale="desk"` is Denitsa's. Luna Watch never sets it and is therefore
 untouched by everything under it — structurally, not by agreement.
@@ -388,6 +390,108 @@ not less.
 fill is 1.13:1 from it. The light fill is darker, because an amber that shows
 on white at 3:1 is a brown-gold. White text fails on amber in both themes, so
 the label is near-black.
+
+### Palette, identity hues and status colours (#109)
+
+Before this change, every screen built on glass-ui read grey: a neutral
+near-black canvas, neutral surfaces and one accent. This change adds three
+things. Each can be used without the others.
+
+**`data-palette="navy"`** puts a dark navy canvas under the app (`#0a1022`
+canvas, `#111a33` surface, `#1b2647` paper), tints the hairlines blue, and
+paints the canvas aurora blue and violet instead of the accent. In light it is
+a faint blue paper: the page stays white, and the desk and panels behind it
+take the tint. It is opt-in. With no `data-palette` set, no navy value reaches
+the page. `palette.spec.ts` resolves the cascade for every combination of
+lighting, desk and accent preset, and proves that every token resolves exactly
+as it did before.
+
+| Unset, dark | `navy`, dark | Unset, light | `navy`, light |
+|---|---|---|---|
+| ![default dark](docs/palette/after-dark.png) | ![navy dark](docs/palette/after-dark-navy.png) | ![default light](docs/palette/after-light.png) | ![navy light](docs/palette/after-light-navy.png) |
+
+How it combines with the other axes:
+- It owns the surfaces, the hairlines' colour, the scrim and the aurora.
+- **`data-scale="desk"` wins the hairlines and `ink-3`**, because the desk
+  blocks come after the navy ones.
+- **`data-accent` owns the accent and the ring**, which the palette never
+  declares. So `data-palette="navy" data-accent="amber"` gives navy surfaces,
+  an amber accent and a blue-violet aurora.
+- The `--glass-*` material is not retuned for navy yet.
+
+| `navy` | dark | light |
+|---|---|---|
+| `ink` on `paper` | 13.29:1 | 17.72:1 |
+| indigo `accent` against the worst band (3:1) | 3.02:1 (`paper`) | 5.40:1 (`canvas`) |
+| amber `accent` against the worst band (3:1) | 8.84:1 | 3.21:1 (`canvas`) |
+
+**Eight identity hues.** `--color-hue-1` … `--color-hue-8` are blue, teal,
+green, amber, orange, red, violet and pink. They are defined in both themes,
+under every palette, and are meant for telling things apart: an agent, a slot,
+a node. Each hue has five tokens:
+
+| Token | Is | Gate |
+|---|---|---|
+| `--color-hue-N` | the mark: a dot, an edge, a chart series | 3:1 on every band |
+| `--color-hue-N-soft` | a tint: the icon disc, a badge | — |
+| `--color-hue-N-line` | a border | — |
+| `--color-hue-N-ink` | text, on any band and on the tint | 4.5:1 |
+| `--color-hue-N-glow` | a `box-shadow` colour | — |
+
+`palette.spec.ts` gates every hue in both themes and both palettes.
+
+- **Components.** `NodeCard`, `Card`, `StatTile`, `Badge` and `FlowNodeCard`
+  take `hue?: 1..8`, which tints the border, the icon disc and the glow. On a
+  badge it is the tint and its ink.
+  - On `NodeCard` the hue beats the status for the card's edge, and the status
+    is then shown by the pill alone.
+  - `FlowNode` and `SankeyNode` take `hue` too.
+- **Edges.** A FlowGraph edge takes, in this order: `edge.tone`, the target's
+  status, the source's hue, then neutral. A Sankey link takes its source's hue,
+  else the accent.
+- **`hueFor(key)`.** It maps a stable key, such as a slot name or an agent id,
+  onto a hue (FNV-1a, pinned by test). Import it from the barrel or from
+  `@andrewbehma/glass-ui/hue`, with `hueClasses(hue)` for the class strings.
+
+```tsx
+import { hueFor } from '@andrewbehma/glass-ui/hue';
+
+<NodeCard title={slot.name} hue={hueFor(slot.name)} status={slot.status} />
+```
+
+**The chart colours did not move.** Series 2, 3, 4 and 6 are now references to
+the amber, teal, pink and orange hues. Those hues carry the series' exact
+values, so a chart and a node in the same hue match.
+- Series 1 stays the accent.
+- Series 5, the yellow, stays a literal: there is no yellow hue.
+- Resolved, all six series are the hex they were. `palette.spec.ts` pins them.
+
+**Status colours.** `--color-status-{running,waiting,paused,blocked,done,error}`
+each have `-soft`, `-ink` and `-glow`, and each is a reference to one hue:
+
+| Status | Hue |
+|---|---|
+| running | teal |
+| waiting | blue |
+| paused | amber |
+| blocked | orange |
+| done | green |
+| error | red |
+
+`statusTone` (StatusPill, NodeCard, FlowGraph) reads these tokens.
+
+**A visible change in the release that ships #109, in every palette:**
+- `running` and `done` no longer share a mint;
+- `blocked` is orange, no longer the same red as `error`;
+- `waiting` and `paused` move to the blue and amber hues.
+
+`StatusToneClasses` keeps its shape. Its `tone` family (`ok` / `warn` /
+`danger` / `info` / `neutral`) is unchanged, so `Progress` and any consumer
+that maps the family read the same.
+
+| Before (develop, dark) | Before (develop, light) |
+|---|---|
+| ![before dark](docs/palette/before-dark.png) | ![before light](docs/palette/before-light.png) |
 
 **Breaking in 0.24.0.** Under the desk profile, `--color-accent-ink` used to be
 the text *on* the accent fill (near-black in dark). It is now the text on the
@@ -1181,19 +1285,34 @@ push to `develop` and `main` (`.woodpecker/ci.yml`).
 
 ## Releasing
 
-The version in `package.json` is the release. A `vX.Y.Z` tag publishes exactly
-that version, and CI refuses a tag that does not match it.
+The version in `package.json` is the release. Merging a version bump into
+`main` publishes it and tags it; there is no manual step.
 
 1. Branch `release/vX.Y.Z` from `develop`, set `"version": "X.Y.Z"` in
    `package.json`, and open a pull request into `main`.
 2. Merge it into `main`.
-3. Tag the merge commit `vX.Y.Z` and push the tag:
-   `git tag vX.Y.Z && git push origin vX.Y.Z`.
-4. `.woodpecker/release.yml` does the rest. It checks the tag against
-   `package.json`, then installs, lints, tests, builds and smoke-tests, and
-   runs `npm publish`. The `npm_token` secret is available only to tag and
-   manual runs. Re-running a tag that already published passes without
-   publishing again.
+3. `.woodpecker/release.yml` does the rest. On the push to `main` it installs,
+   lints, tests, builds and smoke-tests, then runs `npm publish` if X.Y.Z is
+   not on npm yet, and pushes the tag `vX.Y.Z`. A push to `main` without a
+   version bump publishes nothing and passes.
+
+The tag push still works and is idempotent. Pushing `vX.Y.Z` yourself checks the
+tag against `package.json` (a mismatch fails before anything is built) and
+publishes that version; a version that is already on npm passes without
+publishing again, which is also what the tag the pipeline pushes itself does.
+
+**Maint lines never take `latest`.** A push to a `maint/*` branch (for example
+`maint/v0.8`), or any version below the current `latest`, is published with
+`npm publish --tag v<major>.<minor>` (`v0.8` for 0.8.14), so it cannot move the
+`latest` dist-tag. `scripts/release/decide.sh` makes that decision and
+`scripts/release/decide.test.ts` covers it. After a release, check with
+`npm view @andrewbehma/glass-ui dist-tags`.
+
+**Secrets.** `npm_token` must be available to the `push`, `tag` and `manual`
+events. Without `push` the publish step says so and passes. The tag step needs
+`github_token` (contents write on this repository), available to `push` only;
+without it the step says so and passes, and the tag is pushed by hand:
+`git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 To rehearse without a tag, start a manual pipeline in Woodpecker with
 `[glass-release]` in its message. It runs the same steps and ends in

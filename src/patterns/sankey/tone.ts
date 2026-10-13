@@ -1,4 +1,25 @@
+import type { Hue } from '../../lib/hue';
 import type { SankeyTone } from './types';
+
+/**
+ * #109 — a node with an identity hue, in the same shape, and the stroke of
+ * every link out of it. The badge sits on the node's own tint, so its text is
+ * `ink-2`, as the series' is: a second layer of tint under the hue's ink is a
+ * pair nobody measured.
+ */
+export const HUE_TONE: Record<Hue, { card: string; badge: string; swatch: string; link: string }> = {
+  1: { card: 'bg-hue-1-soft border-hue-1-line', badge: 'bg-hue-1-soft text-ink-2', swatch: 'bg-hue-1', link: 'stroke-hue-1' },
+  2: { card: 'bg-hue-2-soft border-hue-2-line', badge: 'bg-hue-2-soft text-ink-2', swatch: 'bg-hue-2', link: 'stroke-hue-2' },
+  3: { card: 'bg-hue-3-soft border-hue-3-line', badge: 'bg-hue-3-soft text-ink-2', swatch: 'bg-hue-3', link: 'stroke-hue-3' },
+  4: { card: 'bg-hue-4-soft border-hue-4-line', badge: 'bg-hue-4-soft text-ink-2', swatch: 'bg-hue-4', link: 'stroke-hue-4' },
+  5: { card: 'bg-hue-5-soft border-hue-5-line', badge: 'bg-hue-5-soft text-ink-2', swatch: 'bg-hue-5', link: 'stroke-hue-5' },
+  6: { card: 'bg-hue-6-soft border-hue-6-line', badge: 'bg-hue-6-soft text-ink-2', swatch: 'bg-hue-6', link: 'stroke-hue-6' },
+  7: { card: 'bg-hue-7-soft border-hue-7-line', badge: 'bg-hue-7-soft text-ink-2', swatch: 'bg-hue-7', link: 'stroke-hue-7' },
+  8: { card: 'bg-hue-8-soft border-hue-8-line', badge: 'bg-hue-8-soft text-ink-2', swatch: 'bg-hue-8', link: 'stroke-hue-8' },
+};
+
+/** A link without a hued source: the accent, as every link was before #109. */
+export const LINK_DEFAULT = 'stroke-accent';
 
 /**
  * #94 — how a node is painted. Every colour is a token class, written out in

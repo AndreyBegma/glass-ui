@@ -155,13 +155,140 @@
      (usage over a day), and it should read as the product's colour rather
      than as the first entry in somebody else's palette. Series 2–6 stay
      Okabe-Ito, and the indigo sits clear of all five. A reference rather than
-     a copy, so retuning the accent retunes the chart. */
+     a copy, so retuning the accent retunes the chart.
+
+     #109 — series 2, 3, 4 and 6 are references to the identity hues below
+     that carry their exact values, so a chart and a node card coloured by
+     the same hue are the same colour. Not by index: the hues are in the
+     order the issue names them (blue, teal, green, amber, orange, red,
+     violet, pink), and Okabe-Ito's order is not that one. Series 1 stays the
+     accent (#93, #110). Series 5, the yellow, stays a literal: there is no
+     yellow hue, and a yellow among eight identities reads as a warning.
+     Every value resolves to what it was before #109; `palette.spec.ts` pins
+     all six in both themes. */
   --color-series-1: var(--color-accent);
-  --color-series-2: #e69f00;
-  --color-series-3: #2fbf94;
-  --color-series-4: #cc79a7;
+  --color-series-2: var(--color-hue-4);
+  --color-series-3: var(--color-hue-2);
+  --color-series-4: var(--color-hue-8);
   --color-series-5: #f0e442;
-  --color-series-6: #e8743b;
+  --color-series-6: var(--color-hue-5);
+
+  /* #109 — eight identity hues, for telling things apart: an agent, a node,
+   * a slot. Colour as identity, not as state — a state is a status token
+   * below, and a status never reads a hue directly.
+   *
+   * Each hue is five tokens, one job each:
+   *
+   *   --color-hue-N        the mark: an icon, a dot, an edge, a chart series.
+   *                        A graphical object, so 3:1 (WCAG 1.4.11) on every
+   *                        band.
+   *   --color-hue-N-soft   a tint, alpha: the icon disc, a pill, a badge.
+   *   --color-hue-N-line   a border, alpha: a card's rim in its hue.
+   *   --color-hue-N-ink    text on the tint, and text on any band. 4.5:1.
+   *   --color-hue-N-glow   a box-shadow colour, alpha.
+   *
+   * Four of the eight are the series colours they alias above, to the digit,
+   * in both themes: teal, amber, orange and pink. The other four were set
+   * between them by eye and then measured: blue clear of the accent's indigo
+   * (≈ 215° against 240°), green clear of `ok`'s mint, red clear of orange.
+   *
+   * WCAG 2.x, computed. The worst cell over every band — ground, canvas,
+   * surface, raised, paper — of the default palette and of `navy`; the tint
+   * is composited over the band as the compositor would draw it:
+   *
+   *              dark: mark  ink   ink/soft    light: mark  ink   ink/soft
+   *   1 blue          5.32  8.68  6.44               4.62  6.35  5.42
+   *   2 teal          6.36  9.41  6.76               4.19  5.62  4.82
+   *   3 green         7.32 10.16  7.16               4.31  5.87  5.08
+   *   4 amber         6.59  9.01  6.62               3.55  5.42  4.75
+   *   5 orange        4.94  7.67  6.04               4.06  5.78  4.95
+   *   6 red           4.67  7.50  6.04               4.36  5.90  4.97
+   *   7 violet        5.44  8.61  6.38               4.92  6.68  5.67
+   *   8 pink          4.85  8.07  6.22               4.45  6.00  5.14
+   *
+   * The dark worst cells are navy's (its bands are lighter than the default
+   * near-black); the light ones are the default's `canvas`. `palette.spec.ts`
+   * gates every cell: mark 3:1, ink and ink on soft 4.5:1. */
+  --color-hue-1: #5b9cf6;
+  --color-hue-1-soft: rgb(91 156 246 / 0.18);
+  --color-hue-1-line: rgb(91 156 246 / 0.5);
+  --color-hue-1-ink: #a4c8ff;
+  --color-hue-1-glow: rgb(91 156 246 / 0.45);
+  --color-hue-2: #2fbf94;
+  --color-hue-2-soft: rgb(47 191 148 / 0.18);
+  --color-hue-2-line: rgb(47 191 148 / 0.5);
+  --color-hue-2-ink: #7ee0c0;
+  --color-hue-2-glow: rgb(47 191 148 / 0.45);
+  --color-hue-3: #7cc95a;
+  --color-hue-3-soft: rgb(124 201 90 / 0.18);
+  --color-hue-3-line: rgb(124 201 90 / 0.5);
+  --color-hue-3-ink: #ade58f;
+  --color-hue-3-glow: rgb(124 201 90 / 0.45);
+  --color-hue-4: #e69f00;
+  --color-hue-4-soft: rgb(230 159 0 / 0.18);
+  --color-hue-4-line: rgb(230 159 0 / 0.5);
+  --color-hue-4-ink: #f5c25c;
+  --color-hue-4-glow: rgb(230 159 0 / 0.45);
+  --color-hue-5: #e8743b;
+  --color-hue-5-soft: rgb(232 116 59 / 0.18);
+  --color-hue-5-line: rgb(232 116 59 / 0.5);
+  --color-hue-5-ink: #f9a77c;
+  --color-hue-5-glow: rgb(232 116 59 / 0.45);
+  --color-hue-6: #f0606e;
+  --color-hue-6-soft: rgb(240 96 110 / 0.18);
+  --color-hue-6-line: rgb(240 96 110 / 0.5);
+  --color-hue-6-ink: #ff9da5;
+  --color-hue-6-glow: rgb(240 96 110 / 0.45);
+  --color-hue-7: #a68bfa;
+  --color-hue-7-soft: rgb(166 139 250 / 0.18);
+  --color-hue-7-line: rgb(166 139 250 / 0.5);
+  --color-hue-7-ink: #cbbcff;
+  --color-hue-7-glow: rgb(166 139 250 / 0.45);
+  --color-hue-8: #cc79a7;
+  --color-hue-8-soft: rgb(204 121 167 / 0.18);
+  --color-hue-8-line: rgb(204 121 167 / 0.5);
+  --color-hue-8-ink: #efabd1;
+  --color-hue-8-glow: rgb(204 121 167 / 0.45);
+
+  /* #109 — the status colours, one per state a running thing can be in, so
+     colour says the state and not only the word. References to the hues
+     rather than values of their own, so a status and an identity of the same
+     hue can never drift apart, and they measure as the hue they name.
+
+       running  teal     alive, and not yet "done"
+       waiting  blue     in hand, nothing wrong — where `info` was
+       paused   amber    where `warn` was
+       blocked  orange   needs somebody, but is not broken
+       done     green
+       error    red
+
+     Six of the eight hues; violet and pink are left to identities only.
+     `idle` has no token: it is the quiet ink, as it was. `statusTone` in
+     `status-pill.tsx` is the one reader. */
+  --color-status-running: var(--color-hue-2);
+  --color-status-running-soft: var(--color-hue-2-soft);
+  --color-status-running-ink: var(--color-hue-2-ink);
+  --color-status-running-glow: var(--color-hue-2-glow);
+  --color-status-waiting: var(--color-hue-1);
+  --color-status-waiting-soft: var(--color-hue-1-soft);
+  --color-status-waiting-ink: var(--color-hue-1-ink);
+  --color-status-waiting-glow: var(--color-hue-1-glow);
+  --color-status-paused: var(--color-hue-4);
+  --color-status-paused-soft: var(--color-hue-4-soft);
+  --color-status-paused-ink: var(--color-hue-4-ink);
+  --color-status-paused-glow: var(--color-hue-4-glow);
+  --color-status-blocked: var(--color-hue-5);
+  --color-status-blocked-soft: var(--color-hue-5-soft);
+  --color-status-blocked-ink: var(--color-hue-5-ink);
+  --color-status-blocked-glow: var(--color-hue-5-glow);
+  --color-status-done: var(--color-hue-3);
+  --color-status-done-soft: var(--color-hue-3-soft);
+  --color-status-done-ink: var(--color-hue-3-ink);
+  --color-status-done-glow: var(--color-hue-3-glow);
+  --color-status-error: var(--color-hue-6);
+  --color-status-error-soft: var(--color-hue-6-soft);
+  --color-status-error-ink: var(--color-hue-6-ink);
+  --color-status-error-glow: var(--color-hue-6-glow);
 
   /* FEAT-20260830-492 — a hairline and a hover fill, named.
      337 `border-white/N` and `bg-white/N` values existed because there was
@@ -261,6 +388,15 @@
      near-black has less luminance to work with. Light sits at the top of its
      range because 8 % was looked at on white and was not there. */
   --canvas-glow: 18%;
+
+  /* #109 — what the three glows are a glow *of*. The accent, its reading
+     colour and the accent again, as `.canvas` painted them before these had
+     names — so nothing moves until a palette says otherwise. `navy` points
+     them at the blue and violet hues; see its block. References, so a
+     `data-accent` preset still recolours the default canvas on its own. */
+  --canvas-aurora-1: var(--color-accent);
+  --canvas-aurora-2: var(--color-accent-ink);
+  --canvas-aurora-3: var(--color-accent);
 
   /* The material. See the `glass` utility below for what each part does.
    *
@@ -666,11 +802,79 @@
     --color-info-soft: rgb(3 98 154 / 0.12);
 
     --color-series-1: var(--color-accent);
-    --color-series-2: #b36b00;
-    --color-series-3: #00805e;
-    --color-series-4: #b0457f;
+    --color-series-2: var(--color-hue-4);
+    --color-series-3: var(--color-hue-2);
+    --color-series-4: var(--color-hue-8);
     --color-series-5: #8a7d00;
-    --color-series-6: #c24e00;
+    --color-series-6: var(--color-hue-5);
+
+    /* #109 — the hues and the status colours pitched for white; see the
+       dark set for the table. */
+    --color-hue-1: #1f64d6;
+    --color-hue-1-soft: rgb(31 100 214 / 0.12);
+    --color-hue-1-line: rgb(31 100 214 / 0.45);
+    --color-hue-1-ink: #1550b0;
+    --color-hue-1-glow: rgb(31 100 214 / 0.28);
+    --color-hue-2: #00805e;
+    --color-hue-2-soft: rgb(0 128 94 / 0.12);
+    --color-hue-2-line: rgb(0 128 94 / 0.45);
+    --color-hue-2-ink: #006a4e;
+    --color-hue-2-glow: rgb(0 128 94 / 0.28);
+    --color-hue-3: #3a7d1c;
+    --color-hue-3-soft: rgb(58 125 28 / 0.12);
+    --color-hue-3-line: rgb(58 125 28 / 0.45);
+    --color-hue-3-ink: #2f6617;
+    --color-hue-3-glow: rgb(58 125 28 / 0.28);
+    --color-hue-4: #b36b00;
+    --color-hue-4-soft: rgb(179 107 0 / 0.12);
+    --color-hue-4-line: rgb(179 107 0 / 0.45);
+    --color-hue-4-ink: #8a5200;
+    --color-hue-4-glow: rgb(179 107 0 / 0.28);
+    --color-hue-5: #c24e00;
+    --color-hue-5-soft: rgb(194 78 0 / 0.12);
+    --color-hue-5-line: rgb(194 78 0 / 0.45);
+    --color-hue-5-ink: #9c3d00;
+    --color-hue-5-glow: rgb(194 78 0 / 0.28);
+    --color-hue-6: #d02a3e;
+    --color-hue-6-soft: rgb(208 42 62 / 0.12);
+    --color-hue-6-line: rgb(208 42 62 / 0.45);
+    --color-hue-6-ink: #ad1f31;
+    --color-hue-6-glow: rgb(208 42 62 / 0.28);
+    --color-hue-7: #7244e0;
+    --color-hue-7-soft: rgb(114 68 224 / 0.12);
+    --color-hue-7-line: rgb(114 68 224 / 0.45);
+    --color-hue-7-ink: #5b30c4;
+    --color-hue-7-glow: rgb(114 68 224 / 0.28);
+    --color-hue-8: #b0457f;
+    --color-hue-8-soft: rgb(176 69 127 / 0.12);
+    --color-hue-8-line: rgb(176 69 127 / 0.45);
+    --color-hue-8-ink: #933668;
+    --color-hue-8-glow: rgb(176 69 127 / 0.28);
+
+    --color-status-running: var(--color-hue-2);
+    --color-status-running-soft: var(--color-hue-2-soft);
+    --color-status-running-ink: var(--color-hue-2-ink);
+    --color-status-running-glow: var(--color-hue-2-glow);
+    --color-status-waiting: var(--color-hue-1);
+    --color-status-waiting-soft: var(--color-hue-1-soft);
+    --color-status-waiting-ink: var(--color-hue-1-ink);
+    --color-status-waiting-glow: var(--color-hue-1-glow);
+    --color-status-paused: var(--color-hue-4);
+    --color-status-paused-soft: var(--color-hue-4-soft);
+    --color-status-paused-ink: var(--color-hue-4-ink);
+    --color-status-paused-glow: var(--color-hue-4-glow);
+    --color-status-blocked: var(--color-hue-5);
+    --color-status-blocked-soft: var(--color-hue-5-soft);
+    --color-status-blocked-ink: var(--color-hue-5-ink);
+    --color-status-blocked-glow: var(--color-hue-5-glow);
+    --color-status-done: var(--color-hue-3);
+    --color-status-done-soft: var(--color-hue-3-soft);
+    --color-status-done-ink: var(--color-hue-3-ink);
+    --color-status-done-glow: var(--color-hue-3-glow);
+    --color-status-error: var(--color-hue-6);
+    --color-status-error-soft: var(--color-hue-6-soft);
+    --color-status-error-ink: var(--color-hue-6-ink);
+    --color-status-error-glow: var(--color-hue-6-glow);
 
     --color-line: rgb(0 0 0 / 0.08);
     --color-line-strong: rgb(0 0 0 / 0.18);
@@ -762,11 +966,79 @@
   --color-info-soft: rgb(3 98 154 / 0.12);
 
   --color-series-1: var(--color-accent);
-  --color-series-2: #b36b00;
-  --color-series-3: #00805e;
-  --color-series-4: #b0457f;
+  --color-series-2: var(--color-hue-4);
+  --color-series-3: var(--color-hue-2);
+  --color-series-4: var(--color-hue-8);
   --color-series-5: #8a7d00;
-  --color-series-6: #c24e00;
+  --color-series-6: var(--color-hue-5);
+
+  /* #109 — the hues and the status colours pitched for white; see the
+     dark set for the table. */
+  --color-hue-1: #1f64d6;
+  --color-hue-1-soft: rgb(31 100 214 / 0.12);
+  --color-hue-1-line: rgb(31 100 214 / 0.45);
+  --color-hue-1-ink: #1550b0;
+  --color-hue-1-glow: rgb(31 100 214 / 0.28);
+  --color-hue-2: #00805e;
+  --color-hue-2-soft: rgb(0 128 94 / 0.12);
+  --color-hue-2-line: rgb(0 128 94 / 0.45);
+  --color-hue-2-ink: #006a4e;
+  --color-hue-2-glow: rgb(0 128 94 / 0.28);
+  --color-hue-3: #3a7d1c;
+  --color-hue-3-soft: rgb(58 125 28 / 0.12);
+  --color-hue-3-line: rgb(58 125 28 / 0.45);
+  --color-hue-3-ink: #2f6617;
+  --color-hue-3-glow: rgb(58 125 28 / 0.28);
+  --color-hue-4: #b36b00;
+  --color-hue-4-soft: rgb(179 107 0 / 0.12);
+  --color-hue-4-line: rgb(179 107 0 / 0.45);
+  --color-hue-4-ink: #8a5200;
+  --color-hue-4-glow: rgb(179 107 0 / 0.28);
+  --color-hue-5: #c24e00;
+  --color-hue-5-soft: rgb(194 78 0 / 0.12);
+  --color-hue-5-line: rgb(194 78 0 / 0.45);
+  --color-hue-5-ink: #9c3d00;
+  --color-hue-5-glow: rgb(194 78 0 / 0.28);
+  --color-hue-6: #d02a3e;
+  --color-hue-6-soft: rgb(208 42 62 / 0.12);
+  --color-hue-6-line: rgb(208 42 62 / 0.45);
+  --color-hue-6-ink: #ad1f31;
+  --color-hue-6-glow: rgb(208 42 62 / 0.28);
+  --color-hue-7: #7244e0;
+  --color-hue-7-soft: rgb(114 68 224 / 0.12);
+  --color-hue-7-line: rgb(114 68 224 / 0.45);
+  --color-hue-7-ink: #5b30c4;
+  --color-hue-7-glow: rgb(114 68 224 / 0.28);
+  --color-hue-8: #b0457f;
+  --color-hue-8-soft: rgb(176 69 127 / 0.12);
+  --color-hue-8-line: rgb(176 69 127 / 0.45);
+  --color-hue-8-ink: #933668;
+  --color-hue-8-glow: rgb(176 69 127 / 0.28);
+
+  --color-status-running: var(--color-hue-2);
+  --color-status-running-soft: var(--color-hue-2-soft);
+  --color-status-running-ink: var(--color-hue-2-ink);
+  --color-status-running-glow: var(--color-hue-2-glow);
+  --color-status-waiting: var(--color-hue-1);
+  --color-status-waiting-soft: var(--color-hue-1-soft);
+  --color-status-waiting-ink: var(--color-hue-1-ink);
+  --color-status-waiting-glow: var(--color-hue-1-glow);
+  --color-status-paused: var(--color-hue-4);
+  --color-status-paused-soft: var(--color-hue-4-soft);
+  --color-status-paused-ink: var(--color-hue-4-ink);
+  --color-status-paused-glow: var(--color-hue-4-glow);
+  --color-status-blocked: var(--color-hue-5);
+  --color-status-blocked-soft: var(--color-hue-5-soft);
+  --color-status-blocked-ink: var(--color-hue-5-ink);
+  --color-status-blocked-glow: var(--color-hue-5-glow);
+  --color-status-done: var(--color-hue-3);
+  --color-status-done-soft: var(--color-hue-3-soft);
+  --color-status-done-ink: var(--color-hue-3-ink);
+  --color-status-done-glow: var(--color-hue-3-glow);
+  --color-status-error: var(--color-hue-6);
+  --color-status-error-soft: var(--color-hue-6-soft);
+  --color-status-error-ink: var(--color-hue-6-ink);
+  --color-status-error-glow: var(--color-hue-6-glow);
 
   --color-line: rgb(0 0 0 / 0.08);
   --color-line-strong: rgb(0 0 0 / 0.18);
@@ -839,6 +1111,105 @@
    three places, and a value in three places is a value that will one day be
    two values — a drift no assertion about "declared in both sets" could see,
    because both sets would still declare it. */
+
+/* #109 — the palette axis. `data-palette="navy"`.
+ *
+ * A fifth attribute, beside `data-theme`, `data-material`, `data-scale` and
+ * `data-accent`. Every screen built on glass-ui read grey: a neutral
+ * near-black canvas, neutral surfaces, one accent. AgentDock wants a dark
+ * navy ground with colour on it, and Denitsa must not move — so it is an
+ * axis, and it is opt-in.
+ *
+ * **What it re-values, and nothing else.** The surface family — ground,
+ * surface, raised, canvas, paper, content — the three hairlines' colour
+ * (`line`, `line-strong`) and the scrim, in both themes; and, in the plain
+ * block only, the three colours the canvas aurora paints (`--canvas-aurora-*`,
+ * blue and violet rather than the accent). The ink stays the ink. The hues
+ * and status colours are defined in every set, not here: a hue is an
+ * identity and a chart reads three of them, so they have to exist without
+ * the axis. `palette.spec.ts` holds every block to exactly that list.
+ *
+ * **Unset, it is not there.** No block below matches without the attribute,
+ * and `palette.spec.ts` resolves the cascade for every lighting × desk ×
+ * accent combination to prove that every token resolves exactly as it did
+ * before #109.
+ *
+ * **Precedence, which is source order.** Every block weighs (0,1,0). The
+ * plain block follows the light pair; its two light blocks follow it to turn
+ * the theme over — the desk's shape. All three come *before* the desk blocks,
+ * so with `data-scale="desk"` the desk's hairlines and `ink-3` win: density
+ * and legibility are the scale's question, and the palette's tint on a
+ * hairline is a detail. The accent presets come after everything and
+ * re-value only the accent and the ring, which the palette never declares,
+ * so `data-palette="navy" data-accent="amber"` composes: navy surfaces, amber
+ * accent, blue-violet aurora. `palette.spec.ts` asserts the order.
+ *
+ * **`--glass-*` stays neutral.** The material's scrims and rims are measured
+ * on `9 9 12`; over a navy canvas they read a shade cooler, which is the
+ * right direction. Retuning them is a follow-up with its own probe.
+ *
+ * WCAG 2.x, computed, for what the surfaces carry:
+ *
+ *                                     navy dark       navy light
+ *   ink on paper                        13.29           17.72
+ *   ink on canvas                       16.94           15.23
+ *   ink-2 (alpha) on raised              6.23            6.67
+ *   accent fill, worst band              3.02 (paper)    5.40 (canvas)
+ *   amber fill, worst band               8.84            3.21 (canvas)
+ *   info, worst band                     6.55            5.61
+ *
+ * The indigo fill's 3.02:1 on navy `paper` is the tight cell: it clears
+ * 1.4.11 and nothing else, so a lighter navy paper has to come back here.
+ * The light canvas is held lighter than the default's `#ececef`, for amber's
+ * 3.16:1 there. */
+
+/* Navy, dark. A blue-black ground stepping up through blue-greys; each rung
+ * sits about where the neutral ladder does in lightness, with the hue moved
+ * to ≈ 225°. */
+:root:where([data-palette="navy"]) {
+  --color-ground: #0a1022;
+  --color-surface: #111a33;
+  --color-raised: #18223f;
+  --color-canvas: #0a1022;
+  --color-paper: #1b2647;
+  --color-content: rgb(27 38 71 / 0.96);
+  --color-line: rgb(160 180 255 / 0.1);
+  --color-line-strong: rgb(160 180 255 / 0.18);
+  --color-scrim: rgb(10 16 34 / 0.3);
+
+  --canvas-aurora-1: var(--color-hue-1);
+  --canvas-aurora-2: var(--color-hue-7);
+  --canvas-aurora-3: var(--color-hue-1);
+}
+
+/* Navy, light: a faint blue paper. The page stays white; the desk behind it
+ * and the panels take the tint. Same two selectors as every light pair in
+ * this file, and the same byte-identical rule. */
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])[data-palette="navy"]) {
+    --color-ground: #ffffff;
+    --color-surface: #f8faff;
+    --color-raised: #f0f4fb;
+    --color-canvas: #e9eef8;
+    --color-paper: #ffffff;
+    --color-content: rgb(255 255 255 / 0.96);
+    --color-line: rgb(20 40 110 / 0.1);
+    --color-line-strong: rgb(20 40 110 / 0.2);
+    --color-scrim: rgb(10 16 34 / 0.22);
+  }
+}
+
+:root:where([data-theme="light"][data-palette="navy"]) {
+  --color-ground: #ffffff;
+  --color-surface: #f8faff;
+  --color-raised: #f0f4fb;
+  --color-canvas: #e9eef8;
+  --color-paper: #ffffff;
+  --color-content: rgb(255 255 255 / 0.96);
+  --color-line: rgb(20 40 110 / 0.1);
+  --color-line-strong: rgb(20 40 110 / 0.2);
+  --color-scrim: rgb(10 16 34 / 0.22);
+}
 
 /* FEAT-20260911-001 — the desk profile. `E-104`.
  *

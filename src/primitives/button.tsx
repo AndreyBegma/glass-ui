@@ -58,18 +58,28 @@ const button = tv({
        *  moves the fill a step toward whatever is behind it and keeps the
        *  label above 13:1 over any backdrop, in both themes.
        *
-       *  FEAT-20260930-004 (SYS-03) — disabled, it is the hover fill with a
-       *  quiet label, not a 40% ink slab. The slab was the loudest thing on a
-       *  form that could not be submitted. The label is `ink-2`, not the
-       *  `ink-3` U7 proposed: `ink-3` measured 2.89–2.98:1 on the sofa's
-       *  light `canvas`, `raised` and `surface`, under the 3:1 floor.
-       *  `ink-2` clears it everywhere and stays far under the live primary
-       *  (`button.spec.ts`). Rarely needed: a primary stays enabled and
-       *  validates on submit (README). */
-      solid:
-        'bg-ink text-ground hover:bg-ink/90 disabled:bg-hover disabled:text-ink-2 disabled:opacity-100',
-      /** Everything alongside the primary. Needs content behind it to read. */
-      glass: 'glass text-ink glass-hover',
+       *  FEAT-20261013-002 (W238) — disabled, it is still the primary: the ink
+       *  fill at the base `disabled:opacity-40`. FEAT-20260930-004 had turned
+       *  it into a grey `bg-hover` fill, and the audit read that as a third
+       *  look for one hierarchy ("the grey filled Send"). A disabled control
+       *  is exempt from 1.4.3 (`button.spec.ts` asserts the opacity). */
+      solid: 'bg-ink text-ground hover:bg-ink/90',
+      /** The secondary tier: everything alongside the primary.
+       *  FEAT-20261013-002 (W238) — at the flat material the glass scrim is
+       *  `--color-raised`, which is also a card, so on a card this button had
+       *  no fill and read as an outline, and on the page as a grey fill: one
+       *  variant, two looks. Under `data-material="flat"` it is now a tint of
+       *  ink with a hairline ring, the same on both. Luna's glass is untouched.
+       *  `glass` paints with the `background` shorthand; Tailwind emits these
+       *  after it at the same weight (the ancestor variant is `:where()`), so
+       *  the tint replaces the scrim colour — `button.test.tsx` compiles the
+       *  stylesheet and asserts that order, so a reshuffle fails there. */
+      glass: [
+        'glass text-ink glass-hover',
+        'in-data-[material=flat]:bg-ink/[0.06] in-data-[material=flat]:ring-1',
+        'in-data-[material=flat]:ring-inset in-data-[material=flat]:ring-line-strong',
+        'in-data-[material=flat]:hover:bg-ink/[0.10]',
+      ],
       /** Tertiary: toolbars, close buttons, anything that should recede. */
       ghost: 'text-ink-2 hover:text-ink hover:bg-hover',
       /** Destructive. Tinted rather than filled, so it warns without shouting.
@@ -78,6 +88,14 @@ const button = tv({
        *  it read 3.4:1 at rest and 3.0:1 on hover. The tint and the border say
        *  "destructive"; the label only has to be read. */
       danger: 'bg-danger/12 text-ink border border-danger/30 hover:bg-danger/20',
+      /** Text that acts like a link, for `<a>` and Next `<Link>` through
+       *  `buttonClassName`.
+       *  FEAT-20261013-002 (W238) — the accent at the desk, ink elsewhere: the
+       *  accent is defined only in the desk profile, so the `var()` fallback is
+       *  what makes it ink on the sofa (E-92). Size never reaches it (compound
+       *  variant below). Text is not material, so the pointer highlight is
+       *  hidden: it measured the accent at 3.34:1 on `raised` under it. */
+      link: 'text-[color:var(--color-accent,var(--color-ink))] font-medium underline-offset-4 hover:underline',
     },
     size: {
       // `--size-control-sm` is the rung below the control token, so `sm` stays
@@ -99,6 +117,7 @@ const button = tv({
       true: 'w-full',
     },
   },
+  compoundVariants: [{ variant: 'link', class: 'h-auto px-0 rounded-sm before:hidden' }],
   defaultVariants: {
     variant: 'glass',
     size: 'md',

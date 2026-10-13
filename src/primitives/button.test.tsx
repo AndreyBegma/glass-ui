@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 import { render, screen } from '@testing-library/react';
+import { compile } from 'tailwindcss';
 import { readTokens } from '../tokens/read';
-import { Button } from './button';
+import { Button, buttonClassName } from './button';
 
 /**
  * FEAT-20260911-006 — the density scale, consumed.
@@ -87,6 +89,117 @@ describe('Button reads the density scale', () => {
     expect(tokenValue(DESK, '--size-control')).toBe('32px');
   });
 });
+
+/**
+ * FEAT-20261013-002 (W238) — three tiers and a link.
+ *
+ * The secondary's tint is written as ancestor-variant utilities, so the class
+ * list is the same wherever the button is rendered: what differs is the
+ * selector, which only applies under `data-material="flat"`. So there are two
+ * things to hold — the class list carries the tint and the ring *only* behind
+ * the flat gate, and the stylesheet Tailwind builds from them (a) scopes them
+ * to `[data-material="flat"]` and (b) emits them after `glass` / `glass-hover`,
+ * which paint with the `background` shorthand and would otherwise win.
+ */
+const FLAT = [
+  'in-data-[material=flat]:bg-ink/[0.06]',
+  'in-data-[material=flat]:ring-1',
+  'in-data-[material=flat]:ring-inset',
+  'in-data-[material=flat]:ring-line-strong',
+  'in-data-[material=flat]:hover:bg-ink/[0.10]',
+];
+
+describe('the secondary tier', () => {
+  test('a glass button inside flat material carries the tint and the ring', () => {
+    render(
+      <div data-material="flat">
+        <Button>Cancel</Button>
+      </div>,
+    );
+    const classes = screen.getByRole('button').className.split(/\s+/);
+    for (const c of FLAT) expect(classes).toContain(c);
+  });
+
+  test('outside it, the tint and the ring exist only behind the flat gate', () => {
+    render(<Button>Cancel</Button>);
+    const classes = screen.getByRole('button').className.split(/\s+/);
+    expect(classes).toContain('glass');
+    expect(classes.filter((c) => /^(hover:)?(bg-ink|ring)/.test(c))).toEqual([]);
+  });
+
+  test('other variants do not carry it', () => {
+    for (const variant of ['solid', 'ghost', 'danger', 'link'] as const) {
+      expect(buttonClassName({ variant })).not.toContain('in-data-[material=flat]');
+    }
+  });
+
+  test('the built stylesheet gates the tint on flat and emits it after glass', async () => {
+    const css = await build(['glass', 'glass-hover', ...FLAT]);
+    const at = (needle: string) => css.indexOf(needle);
+    const gate = ':where([data-material="flat"]) .in-data-';
+    expect(at(gate)).toBeGreaterThan(-1);
+    expect(at('.glass-hover:hover')).toBeGreaterThan(at('.glass {'));
+    // Every flat rule after both material utilities, so equal weight resolves to it.
+    expect(at(gate)).toBeGreaterThan(at('.glass-hover:hover'));
+    // And nothing applies the tint outside the gate.
+    expect(css).not.toMatch(/(^|\n)\.in-data-\\\[material/);
+    expect(css).toContain('in-data-\\[material\\=flat\\]\\:hover\\:bg-ink\\/\\[0\\.10\\]:hover');
+  });
+});
+
+describe('the link variant', () => {
+  test('size never reaches it: no control height, no horizontal padding', () => {
+    const classes = buttonClassName({ variant: 'link', size: 'md' });
+    expect(classes).not.toContain('h-(--size-control)');
+    expect(classes).not.toContain('px-4');
+    expect(classes.split(/\s+/)).toContain('h-auto');
+    expect(classes.split(/\s+/)).toContain('px-0');
+    expect(classes.split(/\s+/)).toContain('rounded-sm');
+  });
+
+  test.each(['sm', 'md', 'lg'] as const)('size %s drops its height and padding too', (size) => {
+    const classes = buttonClassName({ variant: 'link', size }).split(/\s+/);
+    expect(classes.some((c) => c.startsWith('h-(') || c.startsWith('h-['))).toBe(false);
+    expect(classes.some((c) => /^px-[1-9]/.test(c))).toBe(false);
+  });
+
+  test('it reads the accent, falls back to ink, and underlines on hover', () => {
+    const classes = buttonClassName({ variant: 'link' }).split(/\s+/);
+    expect(classes).toContain('text-[color:var(--color-accent,var(--color-ink))]');
+    expect(classes).toContain('hover:underline');
+    expect(classes).toContain('underline-offset-4');
+  });
+
+  test('a button renders it', () => {
+    render(<Button variant="link">Read more</Button>);
+    expect(screen.getByRole('button').className).toContain('hover:underline');
+  });
+});
+
+/** Tailwind's own compile over `tokens.css` and `material.css`, for `candidates`. */
+async function build(candidates: string[]): Promise<string> {
+  const root = new URL('..', import.meta.url).pathname;
+  const tailwind = new URL('../../node_modules/tailwindcss/', import.meta.url).pathname;
+  const compiled = await compile(
+    `@import "tailwindcss/utilities";\n@import "${root}tokens.css";\n@import "${root}material.css";`,
+    {
+      base: root,
+      loadStylesheet: async (id, base) => {
+        const path = id === 'tailwindcss/utilities'
+          ? `${tailwind}utilities.css`
+          : id.startsWith('.')
+            ? new URL(id, `file://${base}/`).pathname
+            : id;
+        return {
+          path,
+          base: path.slice(0, path.lastIndexOf('/')),
+          content: readFileSync(path, 'utf8'),
+        };
+      },
+    },
+  );
+  return compiled.build(candidates);
+}
 
 /**
  * BUG-20260930-001 (SYS-15) — at the desk `sm` was a fixed 32px over a 28px

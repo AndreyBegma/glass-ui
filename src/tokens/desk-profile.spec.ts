@@ -39,10 +39,12 @@ const DESK_OVERRIDES = [
   '--dur-fast', '--dur-base', '--dur-sheet',
   '--color-line', '--color-line-strong', '--color-hover',
   '--size-row', '--size-control', '--size-control-sm', '--size-field', '--size-nav',
-  // FEAT-20260930-004 — `Chip md`, at `control-sm`'s desk height.
+  // FEAT-20260930-004 — `Chip md`, held at 24px when W237 grew `control-sm`.
   '--size-chip',
   // BUG-20260923-019 — raised to 4.5:1; the gate is `desk.spec.ts`.
   '--color-ink-3',
+  // W237 — the workspace ring: 2px at a 2px offset, in a softened ink.
+  '--focus-width', '--focus-offset', '--color-focus',
 ];
 
 /** Tokens that exist *only* under the desk profile. */
@@ -54,7 +56,7 @@ const DESK_ONLY = ['--color-accent', '--color-accent-ink', '--color-accent-soft'
  *  card edge *is* `--color-line`, by reference, and follows it for free. */
 const DESK_LIGHT = [
   '--color-line', '--color-line-strong', '--color-hover', '--color-ink-3',
-  '--color-card-line', ...DESK_ONLY,
+  '--color-focus', '--color-card-line', ...DESK_ONLY,
 ];
 
 const DESK = block(':root:where([data-scale="desk"])');

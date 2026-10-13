@@ -302,6 +302,8 @@ const ADDED: Record<string, string> = {
   '--color-card': 'FEAT-20260930-004 (SYS-04) — the card, `raised` in dark, the ground\'s white in light',
   '--color-card-line': 'FEAT-20260930-004 (SYS-04) — the card\'s edge, `line` in dark, the lift in light',
   '--size-chip': 'FEAT-20260930-004 — `Chip md`, named so the desk can move it',
+  '--focus-width': 'FEAT-20261013-001 (W237) — the ring\'s width, named so the desk can thin it',
+  '--focus-offset': 'FEAT-20261013-001 (W237) — the ring\'s offset, named so the desk can tighten it',
 };
 
 const BASELINE: { commit: string; tokens: Record<string, string> } = JSON.parse(
@@ -436,10 +438,29 @@ describe('a card is raised in both themes (SYS-04)', () => {
 describe('the chip and the rows are pinned at the desk', () => {
   const desk = declarations(block(':root:where([data-scale="desk"])'));
 
-  test('`--size-chip` is 28px on the sofa, and 24px — `control-sm` — at the desk', () => {
+  test('`--size-chip` is 28px on the sofa, and stays 24px at the desk', () => {
+    // W237 grew `control-sm` to 28px; the chip does not follow it.
     expect(DARK).toContain('--size-chip: 28px');
     expect(desk).toContain('--size-chip: 24px');
-    expect(tokenIn(desk, '--size-chip')).toBe(tokenIn(desk, '--size-control-sm'));
+  });
+
+  test('W237 — the desk heights are 32/28/32/36/32 and the radii 8/12/16', () => {
+    expect(desk).toContain('--size-control: 32px');
+    expect(desk).toContain('--size-control-sm: 28px');
+    expect(desk).toContain('--size-field: 32px');
+    expect(desk).toContain('--size-row: 36px');
+    expect(desk).toContain('--size-nav: 32px');
+    expect(desk).toContain('--radius-control: 8px');
+    expect(desk).toContain('--radius-surface: 12px');
+    expect(desk).toContain('--radius-sheet: 16px');
+  });
+
+  test('W237 — the sofa keeps its 3px ring at a 4px offset', () => {
+    expect(DARK).toContain('--focus-width: 3px');
+    expect(DARK).toContain('--focus-offset: 4px');
+    expect(DARK).toContain('--color-focus: #ffffff');
+    expect(desk).toContain('--focus-width: 2px');
+    expect(desk).toContain('--focus-offset: 2px');
   });
 
   test('under a thumb the desk gives rows and navigation `--size-tap`', () => {

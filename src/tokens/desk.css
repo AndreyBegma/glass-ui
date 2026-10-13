@@ -48,9 +48,9 @@
      silhouette that survives the distance; at 60cm the same corner reads as a
      toy. Three radii stay three radii — the argument above against a fourth is
      about the scale, not about the distance. */
-  --radius-control: 6px;
-  --radius-surface: 8px;
-  --radius-sheet: 12px;
+  --radius-control: 8px;
+  --radius-surface: 12px;
+  --radius-sheet: 16px;
 
   /* Motion. The curve is right and is not touched; the distances are not. A
      pointer is not a remote control — at a desk the animation is a thing the
@@ -92,12 +92,22 @@
      absence rather than tolerating it. It is a hit area rather than a visual
      size and a finger is the same size at either distance; overriding it here
      would be this row quietly undoing the rule the README states. */
-  --size-row: 32px;
-  --size-control: 28px;
-  --size-control-sm: 24px;
-  --size-field: 28px;
-  --size-nav: 28px;
+  --size-row: 36px;
+  --size-control: 32px;
+  --size-control-sm: 28px;
+  --size-field: 32px;
+  --size-nav: 32px;
   --size-chip: 24px;
+
+  /* FEAT-20260930-004 / W237 — the focus ring, a workspace ring. The sofa's
+     3px at 4px is for a ring somebody navigates a television with; at a desk
+     it is a harsh white outline. 2px at 2px, in a softened ink (0.72 alpha),
+     and not the accent: `E-127` keeps the accent to three places. The light
+     blocks below turn the colour back over. `desk.spec.ts` gates it at 3:1
+     (WCAG 1.4.11) on the ground, a card and a hovered row, in both themes. */
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --color-focus: rgb(242 242 246 / 0.72);
 
   /* FEAT-20260911-001 — the accent returns, desk-only.
    *
@@ -176,6 +186,7 @@
     --color-hover: rgb(0 0 0 / 0.06);
 
     --color-ink-3: rgb(24 24 27 / 0.64);
+    --color-focus: rgb(24 24 27 / 0.72);
 
     /* SYS-04 — the card's edge, lifted as far as the desk's dark card; the
        measurement is in `light.css`. */
@@ -198,6 +209,7 @@
   --color-hover: rgb(0 0 0 / 0.06);
 
   --color-ink-3: rgb(24 24 27 / 0.64);
+  --color-focus: rgb(24 24 27 / 0.72);
 
   /* SYS-04 — the card's edge, lifted as far as the desk's dark card; the
      measurement is in `light.css`. */

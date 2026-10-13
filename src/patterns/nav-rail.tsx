@@ -1,12 +1,21 @@
 'use client';
 
-import type { LucideIcon } from 'lucide-react';
+import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
-import { type ReactNode, useId } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
 import { Badge } from '../primitives/badge';
 import { Tooltip } from '../primitives/tooltip';
 import type { NavLinkRender } from './nav-link';
+import {
+  hasBadge,
+  type RailBadge,
+  RailBadgeMark,
+  RailBadgeSpeech,
+  useScrollFade,
+} from './nav-rail-parts';
+
+export type { RailBadge } from './nav-rail-parts';
 
 /**
  * FEAT-20260902-004 — the vertical rail, for a product with more than four
@@ -49,6 +58,11 @@ export interface NavRailItem {
    * — "unavailable", "not connected" — rather than a flag.
    */
   unavailable?: string;
+  /**
+   * A count or a dot after the label ("Approvals 3"), in a status tone. A zero
+   * count draws nothing. Its `label` is what a reader hears after the item's.
+   */
+  badge?: RailBadge;
 }
 
 export interface NavRailGroup {
@@ -56,6 +70,127 @@ export interface NavRailGroup {
   /** Drawn above the group; the group's accessible name. */
   title: string;
   items: NavRailItem[];
+  /**
+   * The heading becomes a button that shows and hides the items
+   * (`aria-expanded`, `aria-controls`). Ignored on an icon-only rail, where
+   * the headings are not drawn.
+   */
+  collapsible?: boolean;
+  /** Controlled. Pair with `onOpenChange`, which the rail also calls to auto-expand. */
+  open?: boolean;
+  /** Uncontrolled initial state. Defaults to open. */
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+/**
+ * One group: its heading and its list. When `collapsible`, the heading is the
+ * toggle and the list sits in a `0fr` → `1fr` grid row — `Disclosure`'s
+ * technique, instant under reduced motion — and is `inert` while shut, so a
+ * hidden item is neither tabbable nor read.
+ *
+ * A group that gains the active item opens itself (and says so through
+ * `onOpenChange`, so a controlled owner stays in step): a rail must never show
+ * the person a closed group holding the page they are on.
+ */
+function GroupSection({
+  group,
+  headingId,
+  collapsed,
+  reduced,
+  hasActive,
+  children,
+}: {
+  group: NavRailGroup;
+  headingId: string;
+  collapsed: boolean;
+  reduced: boolean;
+  hasActive: boolean;
+  children: ReactNode;
+}) {
+  const panelId = useId();
+  const toggleable = !!group.collapsible && !collapsed;
+  const controlled = group.open !== undefined;
+  const [inner, setInner] = useState((group.defaultOpen ?? true) || hasActive);
+  const open = controlled ? !!group.open : inner;
+  const { onOpenChange } = group;
+
+  const set = (next: boolean) => {
+    if (!controlled) setInner(next);
+    onOpenChange?.(next);
+  };
+
+  const openRef = useRef(open);
+  openRef.current = open;
+  const setRef = useRef(set);
+  setRef.current = set;
+  useEffect(() => {
+    if (group.collapsible && hasActive && !openRef.current) setRef.current(true);
+  }, [group.collapsible, hasActive]);
+
+  const title = (
+    <h2
+      id={headingId}
+      className={cn(
+        collapsed
+          ? 'sr-only'
+          : 'text-ink-3 text-[10px] font-semibold uppercase tracking-widest',
+        !collapsed && !toggleable && 'px-3 py-2',
+      )}
+    >
+      {toggleable ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => set(!open)}
+          className={cn(
+            'lit flex w-full items-center justify-between gap-2 rounded-control px-3 py-2 text-left',
+            'uppercase tracking-widest hover:text-ink-2 motion-safe:transition-colors duration-(--dur-fast)',
+          )}
+        >
+          {group.title}
+          <ChevronDown
+            size={12}
+            aria-hidden="true"
+            className={cn(
+              'shrink-0 ease-out motion-safe:transition-transform',
+              open ? 'rotate-0' : '-rotate-90',
+            )}
+            style={{ transitionDuration: reduced ? '0ms' : 'var(--dur-base)' }}
+          />
+        </button>
+      ) : (
+        group.title
+      )}
+    </h2>
+  );
+
+  if (!toggleable) {
+    return (
+      <>
+        {title}
+        {children}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {title}
+      <div
+        id={panelId}
+        inert={!open}
+        className="grid ease-out transition-[grid-template-rows]"
+        style={{
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transitionDuration: reduced ? '0ms' : 'var(--dur-base)',
+        }}
+      >
+        <div className="min-h-0 overflow-hidden">{children}</div>
+      </div>
+    </>
+  );
 }
 
 export interface NavRailProps {
@@ -94,6 +229,8 @@ export function NavRail({
 }: NavRailProps) {
   const reduced = useReducedMotion();
   const headingPrefix = useId();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const fade = useScrollFade(scrollRef);
 
   /**
    * One element, one `layoutId`: walking the rail slides the highlight down it
@@ -128,7 +265,7 @@ export function NavRail({
     >
       {head ? <div className="shrink-0">{head}</div> : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={scrollRef} style={fade} className="min-h-0 flex-1 overflow-y-auto">
         {groups.map((group, index) => {
           const headingId = `${headingPrefix}-${group.id}`;
 
@@ -143,16 +280,13 @@ export function NavRail({
                 !collapsed && index > 0 && 'mt-3',
               )}
             >
-              <h2
-                id={headingId}
-                className={cn(
-                  collapsed
-                    ? 'sr-only'
-                    : 'text-ink-3 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest',
-                )}
+              <GroupSection
+                group={group}
+                headingId={headingId}
+                collapsed={collapsed}
+                reduced={!!reduced}
+                hasActive={group.items.some((item) => item.active)}
               >
-                {group.title}
-              </h2>
 
               {/*
                   The heading names the list rather than a wrapping
@@ -182,13 +316,20 @@ export function NavRail({
                         <Icon size={18} aria-hidden="true" />
                         {item.unavailable && collapsed ? (
                           // Collapsed there is no label to sit beside, so the
-                          // dot rides the glyph.
+                          // dot rides the glyph. Under a badge it drops to the
+                          // opposite corner rather than sitting on it.
                           <Badge
                             dot
                             tone="warn"
                             aria-hidden="true"
-                            className="absolute -right-1 -top-1 size-1.5"
+                            className={cn(
+                              'absolute -right-1 size-1.5',
+                              hasBadge(item.badge) ? '-bottom-1' : '-top-1',
+                            )}
                           />
+                        ) : null}
+                        {collapsed && hasBadge(item.badge) ? (
+                          <RailBadgeMark badge={item.badge} placement="corner" />
                         ) : null}
                       </span>
 
@@ -199,6 +340,14 @@ export function NavRail({
                           {item.label}
                         </span>
                       )}
+
+                      {hasBadge(item.badge) ? (
+                        collapsed ? (
+                          <RailBadgeSpeech badge={item.badge} />
+                        ) : (
+                          <RailBadgeMark badge={item.badge} placement="inline" />
+                        )
+                      ) : null}
 
                       {item.unavailable ? (
                         <>
@@ -253,6 +402,7 @@ export function NavRail({
                   );
                 })}
               </ul>
+              </GroupSection>
             </div>
           );
         })}

@@ -35,6 +35,13 @@ const fill = tv({
   },
 });
 
+/**
+ * #110 — the fill, for a bar drawn by a pattern that is not a `Progress`.
+ * `FileItem` carries its name on its own line and cannot take `Progress`'s
+ * label row, but its bar is this one: same track, same four tones.
+ */
+export const progressFill = fill;
+
 type ProgressProps = Omit<ComponentProps<'div'>, 'className' | 'children'> &
   VariantProps<typeof fill> & {
     className?: string;

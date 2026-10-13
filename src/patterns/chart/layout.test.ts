@@ -55,7 +55,7 @@ describe('bars on a sparse time axis', () => {
     for (const g of gaps(l.bars)) expect(g).toBeGreaterThan(MAX_BAR);
     expect(l.yTicks.length).toBeGreaterThanOrEqual(2);
     // The tooltip finds every bar from its own centre.
-    l.centers.forEach((c, i) => expect(l.indexAt(c)).toBe(i));
+    for (const [i, c] of l.centers.entries()) expect(l.indexAt(c)).toBe(i);
   });
 
   test('a dense month is unchanged: 80 % of the day band, below the cap', () => {

@@ -548,3 +548,40 @@ year. No date logic: the caller formats `label`, moves the period in
 `nextLabel`, `todayLabel`). `onToday` omitted → no Today button; `isCurrent`
 disables it. `headingLevel={2 | 3}` renders the label as a heading instead of
 a `<span>`.
+
+## Dates and times in the interface's language
+
+Chromium draws `<input type="date">` and `type="time"` in the browser's
+language whatever `lang` says. `DateField` and `TimeField` draw everything from
+`Intl` in the `locale` they are given, and speak the native inputs' strings, so
+a call site swaps without logic changes. `DateInput` remains for
+`datetime-local` and until every caller has moved.
+
+**`DateField`** — `value` / `onValueChange` carry `YYYY-MM-DD` or `''`.
+- At rest: `вт, 13 окт.` / `Tue, Oct 13` — the year only when it is not this
+  one. Focused: the locale's numbers, `13.10.2026` / `10/13/2026`. Empty: the
+  locale's pattern as the placeholder (`DD.MM.YYYY`, built from `Intl`, not
+  hard-coded).
+- Typed text is read on blur or Enter, in the locale's order with any
+  separator: `13.10.2026`, `13/10/26`, `13 10`, `13102026`. No year → this
+  year; a two-digit year → 20YY. A day that does not exist, or is outside
+  `min` / `max`, keeps the text, sets `aria-invalid` and calls nothing.
+  Clearing the text calls `onValueChange('')`.
+- The calendar button (`calendarLabel`) opens a month grid in a popover:
+  `PeriodSwitcher` header, `weekStartsOn` (default Monday), `role="grid"`.
+  Arrows move a day, PageUp / PageDown a month (Shift: a year), Home / End the
+  week's ends, Enter or Space picks, Escape closes and returns focus to the
+  button. Today is ringed, the chosen day is ink. Days outside `min` / `max`
+  are `aria-disabled` — reachable by keyboard, not pickable.
+- The month arrows are named `previousMonthLabel` / `nextMonthLabel`; omitted,
+  they are named after the month they go to (`September 2026`).
+
+**`TimeField`** — `value` / `onValueChange` carry `HH:MM` (24-hour) or `''`.
+- Shown on `hourCycle`, by default the locale's: `14:30` in ru and uk,
+  `2:30 PM` in en.
+- Accepts `1430`, `14:30`, `14.30`, `14 30`, `9`, `930`, `9:5` (→ `09:05`);
+  under `h12` also an `a` / `p` / `am` / `pm` suffix or the locale's own.
+  Without a suffix the hour is read on the 24-hour clock. Out of range keeps
+  the text and sets `aria-invalid`.
+- ArrowUp / ArrowDown move by `step` minutes (default 15), wrapping at
+  midnight.

@@ -70,6 +70,20 @@ import { cn } from '../lib/cn';
  * normalised on the way in, and it renders exactly what the default renders.
  * `on-glass` is untouched — it is the one that carries no `backdrop-filter`,
  * and that is why it exists.
+ *
+ * #93 — a segment is never narrower than its label. The item was `min-w-0
+ * flex-1`, which let a row of four labels in a 240 px column shrink each
+ * slice below its text: "Mentions" ran into "Archived" and "Unread" was cut.
+ * It is now `min-w-max flex-1`, so a segment grows to fit its label and
+ * still shares any width left over. The glass pill is `min-w-max` too: its
+ * items no longer stick out past its right edge, where the rim and the
+ * shadow stopped short of the last segment. A pill wider than its column
+ * now overflows the column, which is the parent's to scroll, rather than
+ * clipping a label. `on-glass` wraps, so its shell takes no minimum.
+ *
+ * #93 — the selection is the accent: the travelling capsule is
+ * `bg-accent-soft` and the active item's text `text-accent-ink`, which a
+ * child that sets no colour of its own inherits.
  */
 type SegmentedControlVariant = 'glass' | 'on-glass';
 
@@ -107,14 +121,14 @@ const SegmentedControlContext = createContext<SegmentedControlShape>({
 });
 
 const WRAPPER_CLASSES: Record<SegmentedControlVariant, string> = {
-  glass: 'flex gap-1 rounded-full glass p-1',
+  glass: 'flex min-w-max gap-1 rounded-full glass p-1',
   'on-glass': 'flex gap-1 rounded-control border border-line p-1',
 };
 
 const CAPSULE_CLASSES: Record<SegmentedControlVariant, string> = {
-  glass: 'absolute inset-0 rounded-full bg-hover',
+  glass: 'absolute inset-0 rounded-full bg-accent-soft',
   'on-glass':
-    'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-hover',
+    'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-accent-soft',
 };
 
 /** The one place the old name is spelt: everything past it knows two variants. */
@@ -151,11 +165,10 @@ interface SegmentedControlItemProps {
   layoutId: string;
   children: ReactNode;
   /**
-   * BUG-20260916-607 — merged after the item's own `relative min-w-0 flex-1`,
-   * the way `TabsItem` takes one (BUG-20260914-578). `flex-none
-   * whitespace-nowrap` is the opt-out for a row whose width nobody set: the
-   * items keep their labels whole instead of collapsing to the narrowest
-   * width `min-w-0` allows.
+   * BUG-20260916-607 — merged after the item's own `relative min-w-max
+   * flex-1`, the way `TabsItem` takes one (BUG-20260914-578). Since #93 a
+   * label is kept whole by default; `flex-none` still opts an item out of
+   * sharing the spare width.
    */
   className?: string;
 }
@@ -170,7 +183,13 @@ export function SegmentedControlItem({
   const { listless, variant } = useContext(SegmentedControlContext);
   const Item = listless ? 'div' : 'li';
   return (
-    <Item className={cn('relative min-w-0 flex-1', className)}>
+    <Item
+      className={cn(
+        'relative min-w-max flex-1',
+        active && 'text-accent-ink',
+        className,
+      )}
+    >
       {active ? (
         <motion.span
           layoutId={layoutId}

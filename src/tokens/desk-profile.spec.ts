@@ -19,7 +19,7 @@ import { block as blockOf, contrast, declarations, tokenRules, value } from './r
  * and the next person to read `tokens.css` has no way to tell an intended
  * asymmetry from an accident unless every intended one is written down.
  *
- * Sixteen overrides and three definitions, and the split matters: an override
+ * Nineteen overrides and eleven definitions, and the split matters: an override
  * has a base value to fall back to, a definition does not. `--color-accent`
  * resolving to nothing outside the desk profile is the point of decision 6,
  * not a gap in it.
@@ -48,7 +48,12 @@ const DESK_OVERRIDES = [
 ];
 
 /** Tokens that exist *only* under the desk profile. */
-const DESK_ONLY = ['--color-accent', '--color-accent-ink', '--color-accent-soft'];
+const ACCENT = ['--color-accent', '--color-accent-ink', '--color-accent-soft'];
+
+/** FEAT-20261013-709 (W359) — the eight categorical marks, desk-only like the accent. */
+const MARKS = Array.from({ length: 8 }, (_, i) => `--color-mark-${i + 1}`);
+
+const DESK_ONLY = [...ACCENT, ...MARKS];
 
 /** The theme-dependent half, repeated in the two light-desk blocks. A radius
  *  and a row height do not know what colour the page is, so they are not.
@@ -80,7 +85,7 @@ describe('the desk profile changes exactly what it says it changes', () => {
     }
   });
 
-  test('it defines the three accent tokens', () => {
+  test('it defines the three accent tokens and the eight marks', () => {
     const names = declarations(DESK).map((d) => d.split(':')[0]);
     expect(names.filter((n) => DESK_ONLY.includes(n)).sort()).toEqual(
       [...DESK_ONLY].sort(),
@@ -151,8 +156,10 @@ describe('the desk profile changes exactly what it says it changes', () => {
  *
  * That only holds while no other block declares it, which is one careless line
  * away at any time and is not visible in a diff that only shows the line.
+ *
+ * FEAT-20261013-709 (W359) — the eight marks are held to the same rule.
  */
-describe('the accent is undefined when `data-scale` is unset', () => {
+describe('the accent and the marks are undefined when `data-scale` is unset', () => {
   test.each(DESK_ONLY)('%s is not in the base set', (token) => {
     expect(BASE_NAMES).not.toContain(token);
   });
@@ -216,5 +223,36 @@ describe('the accent clears its contrast gate in both themes', () => {
       value(desk, '--color-accent'),
     );
     expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
+ * FEAT-20261013-709 (W359) — a mark can be found on every ground it is drawn on.
+ *
+ * A categorical dot is not text, so the bar is WCAG 1.4.11's 3:1, on the same
+ * three grounds the accent is gated on. The table in `desk.css` records the
+ * values; this is what keeps them true when somebody retunes a hue. Light has
+ * the least room (`mark-6`, 3.71:1 on raised).
+ */
+describe('the marks clear 3:1 in both themes', () => {
+  const GROUNDS = ['--color-ground', '--color-surface', '--color-raised'];
+  const cases = [
+    ['dark', declarations(DESK), DARK],
+    ['light', declarations(DESK_SYSTEM), declarations(SYSTEM)],
+    ['light (explicit)', declarations(DESK_EXPLICIT), declarations(EXPLICIT)],
+  ] as const;
+
+  for (const [theme, desk, palette] of cases) {
+    test.each(MARKS)(`${theme}: %s is 3:1 on ground, surface and raised`, (mark) => {
+      for (const ground of GROUNDS) {
+        expect(contrast(value(desk, mark), value(palette, ground))).toBeGreaterThanOrEqual(3);
+      }
+    });
+  }
+
+  test('the eight are eight colours, in each theme', () => {
+    for (const [, desk] of cases) {
+      expect(new Set(MARKS.map((m) => value(desk, m).toLowerCase())).size).toBe(8);
+    }
   });
 });

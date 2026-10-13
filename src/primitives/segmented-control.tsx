@@ -43,6 +43,11 @@ interface SegmentedControlProps {
    * default is the width of the labels: a two-word control is not 672px wide.
    */
   full?: boolean;
+  /**
+   * Wrap onto a second line instead of scrolling. The row breaks between
+   * items; a label never does. With `full`, `full` decides the width.
+   */
+  wrap?: boolean;
 }
 
 interface SegmentedControlContextValue {
@@ -61,32 +66,46 @@ const SegmentedControlContext = createContext<SegmentedControlContextValue>({
  * side with more, the bar is hidden, and the active item brings itself into
  * view (`useScrollIntoRow`). A label never wraps (`[&>*]:whitespace-nowrap` on
  * the item) and an item never shrinks below it (no `min-w-0`).
+ *
+ * FEAT-20261013-709 (W359) — `wrap` is the other answer to a narrow row: the
+ * items break onto a second line and nothing scrolls, so there is no scroller
+ * and no fades. It replaces consumers reaching past `className` with
+ * `[&>ul]:flex-wrap`, which depended on this markup staying where it is.
  */
 export function SegmentedControl({
   children,
   className,
   role,
   full = false,
+  wrap = false,
   ...props
 }: SegmentedControlProps) {
   const Wrapper = role ? 'div' : 'ul';
+  const box = cn('rounded-control bg-surface p-1', full ? 'w-full' : 'w-fit max-w-full', className);
+  const list = (
+    <Wrapper
+      role={role}
+      className={wrap ? 'flex w-auto flex-wrap gap-1' : 'flex w-max min-w-full gap-1'}
+      {...props}
+    >
+      {children}
+    </Wrapper>
+  );
   return (
     <SegmentedControlContext.Provider value={{ listless: !!role, full }}>
-      {/* BUG-20261013-001 — the scroller is `ScrollHintRow`'s inner div (what it
-          measures); the list inside is `w-max min-w-full`, so it is as wide as
-          its items and the overflow lands on the scroller. */}
-      <ScrollHintRow
-        edgeClassName="from-surface"
-        className={cn(
-          'scrollbar-hide relative overflow-x-auto rounded-control bg-surface p-1',
-          full ? 'w-full' : 'w-fit max-w-full',
-          className,
-        )}
-      >
-        <Wrapper role={role} className="flex w-max min-w-full gap-1" {...props}>
-          {children}
-        </Wrapper>
-      </ScrollHintRow>
+      {wrap ? (
+        <div className={cn('overflow-visible', box)}>{list}</div>
+      ) : (
+        /* BUG-20261013-001 — the scroller is `ScrollHintRow`'s inner div (what it
+           measures); the list inside is `w-max min-w-full`, so it is as wide as
+           its items and the overflow lands on the scroller. */
+        <ScrollHintRow
+          edgeClassName="from-surface"
+          className={cn('scrollbar-hide relative overflow-x-auto', box)}
+        >
+          {list}
+        </ScrollHintRow>
+      )}
     </SegmentedControlContext.Provider>
   );
 }

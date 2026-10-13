@@ -135,6 +135,16 @@ dark, a dark fill with white text in light. Never write anything on the accent
 in a colour of your own choosing; `--color-accent-ink` is the only one measured
 against it.
 
+**Eight marks, for categories.** `--color-mark-1` … `--color-mark-8` are
+desk-only like the accent and undefined everywhere else. Eight hues 45° apart,
+starting at the accent's, at one lightness per theme, each at least 3:1 on
+ground, surface and raised (WCAG 1.4.11 — a mark is not text). They are for a
+dot or a swatch that tells one category from another, picked by index:
+``style={{ backgroundColor: `var(--color-mark-${n})` }}``. There is no
+`bg-mark-*` utility, because a class built from an index is one Tailwind
+cannot see. Never write text in a mark, and never give one a meaning — they
+are not `ok`/`warn`/`danger`.
+
 **Hit area, visual size and the density scale are three different things.**
 `--size-row` (40px, a list row), `--size-control` (40px, a button),
 `--size-control-sm` (32px, a small button), `--size-field` (44px, an input)
@@ -541,6 +551,12 @@ scrolls sideways (bar hidden, `ScrollHintRow` fade, the active item brought
 into view). `TabsItem` never wraps its label either. The scrolling is
 `useScrollIntoRow(ref, active)`, exported for any row of items that has an
 active one.
+
+**`wrap` breaks the row instead of scrolling it.** Items move onto a second
+line; a label still never breaks. There is no scroller and no fade. With
+`full`, `full` decides the width and items stretch per line. Use the prop —
+never a `[&>ul]:` selector in `className`, which depends on markup this package
+is free to move.
 
 **`PeriodSwitcher`** — `‹ label › Today`, one picker for every week, month and
 year. No date logic: the caller formats `label`, moves the period in

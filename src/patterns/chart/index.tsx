@@ -100,14 +100,16 @@ export function Chart({
     [full, downsampled, width],
   );
 
-  const span = kind === 'time' ? (model.xs[model.xs.length - 1] ?? 0) - (model.xs[0] ?? 0) : 0;
-  const fx = useMemo(() => formatX ?? defaultFormatX(kind, span), [formatX, kind, span]);
   const fy = formatY ?? defaultFormatY;
 
   const layout = useMemo(
     () => layoutChart(model, { kind, width, height, stacked, yMin, yMax, formatY: fy }),
     [model, kind, width, height, stacked, yMin, yMax, fy],
   );
+
+  // The unit follows the axis, which can be wider than the data (#93).
+  const span = layout.xSpan;
+  const fx = useMemo(() => formatX ?? defaultFormatX(kind, span), [formatX, kind, span]);
 
   const tableOpen = showTable ?? ownTable;
   const toggleTable = () => {

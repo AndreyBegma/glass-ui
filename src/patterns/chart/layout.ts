@@ -14,6 +14,14 @@ const DAY = 24 * 60 * 60 * 1000;
 const PAD = { top: 8, right: 12, bottom: 24 };
 /** An axis label is about this wide per character at `text-xs` tabular-nums. */
 const CHAR = 6.5;
+/**
+ * #93 — a time axis with bars spans at least this many steps. The step is
+ * the smallest gap between the points given, so one daily bucket was a
+ * one-day axis labelled in hours with a bar across most of it, and two
+ * were two slabs. Short series now sit centred in a week of steps, and the
+ * axis reads in the unit of the step.
+ */
+const MIN_SLOTS = 7;
 
 export type ChartLayout = {
   width: number;
@@ -24,6 +32,12 @@ export type ChartLayout = {
   /** The pixel centre of each x position. */
   centers: number[];
   xTicks: { px: number; value: Date | string | number }[];
+  /**
+   * #93 — the time axis's width in ms (0 on a category axis). The default x
+   * format picks its unit from this, not from the data: one bucket has no
+   * data span and was labelled "00:00" on every tick of a week-wide axis.
+   */
+  xSpan: number;
   bars: (BarRect & { seriesIndex: number })[];
   areas: { seriesIndex: number; d: string }[];
   lines: { seriesIndex: number; d: string }[];
@@ -107,6 +121,7 @@ export function layoutChart(model: ChartModel, o: LayoutOptions): ChartLayout {
   let centers: number[];
   let band: number;
   let xTicks: ChartLayout['xTicks'];
+  let xSpan = 0;
   if (o.kind === 'category') {
     const b = bandScale(n, [plot.left, plot.right]);
     centers = model.xs.map((_, i) => b.center(i));
@@ -123,11 +138,15 @@ export function layoutChart(model: ChartModel, o: LayoutOptions): ChartLayout {
     for (let i = 1; i < n; i++) gap = Math.min(gap, (model.xs[i] as number) - (model.xs[i - 1] as number));
     if (!Number.isFinite(gap) || gap <= 0) gap = DAY;
     // Bars need half a step either side, or the first and last are cut in half.
-    const pad = hasBars || n === 1 ? gap / 2 : 0;
-    const x = linearScale([first - pad, last + pad], [plot.left, plot.right]);
+    const padded = hasBars || n === 1;
+    const pad = padded ? gap / 2 : 0;
+    const short = padded ? MIN_SLOTS * gap - (last - first + 2 * pad) : 0;
+    const widen = Math.max(short, 0) / 2;
+    const x = linearScale([first - pad - widen, last + pad + widen], [plot.left, plot.right]);
     centers = model.xs.map((v) => x(v));
     band = Math.abs(x(first + gap) - x(first));
     const count = Math.max(2, Math.floor((plot.right - plot.left) / 80));
+    xSpan = x.domain[1] - x.domain[0];
     xTicks = timeTicks(x.domain[0], x.domain[1], count, o.timeZone).ticks.map((t) => ({
       px: x(t),
       value: new Date(t),
@@ -170,6 +189,7 @@ export function layoutChart(model: ChartModel, o: LayoutOptions): ChartLayout {
     yTicks,
     centers,
     xTicks,
+    xSpan,
     bars,
     areas,
     lines,

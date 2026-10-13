@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { buildModel } from './data';
 import { layoutChart } from './layout';
-import { areaPath, barRects, linePath, runs, stackRows } from './path';
+import { areaPath, barRects, linePath, MAX_BAR, runs, stackRows } from './path';
 import { linearScale } from './scale';
 import type { ChartSeries } from './types';
 
@@ -65,16 +65,25 @@ describe('path builder', () => {
   test('bars: grouped side by side, stacked in one column, none for null', () => {
     const y = linearScale([0, 10], [100, 0]);
     const stack = stackRows([[2, null], [3, 4]], false);
-    const grouped = barRects({ centers: [50, 150], band: 100, stack, stacked: false, y });
+    // A 40px band, below MAX_BAR: 80% of it is 32, shared by two bars.
+    const grouped = barRects({ centers: [50, 150], band: 40, stack, stacked: false, y });
     expect(grouped).toHaveLength(3);
     const [a, b] = grouped.filter((r) => r.index === 0);
-    expect(a?.width).toBe(40);
-    expect(b?.x).toBe((a?.x ?? 0) + 40);
-    const stacked = barRects({ centers: [50, 150], band: 100, stack: stackRows([[2, 1], [3, 4]], true), stacked: true, y });
+    expect(a?.width).toBe(16);
+    expect(b?.x).toBe((a?.x ?? 0) + 16);
+    const stacked = barRects({ centers: [50, 150], band: 40, stack: stackRows([[2, 1], [3, 4]], true), stacked: true, y });
     const col = stacked.filter((r) => r.index === 0);
-    expect(col.map((r) => r.x)).toEqual([10, 10]);
+    expect(col.map((r) => r.x)).toEqual([34, 34]);
     // The upper bar starts where the lower one ends.
     expect(col[1]?.y as number + (col[1]?.height as number)).toBe(col[0]?.y);
+  });
+
+  // #93 — a wide band no longer makes a slab.
+  test('bars: a band wider than MAX_BAR / 0.8 is capped at MAX_BAR, centred', () => {
+    const y = linearScale([0, 10], [100, 0]);
+    const [bar] = barRects({ centers: [300], band: 500, stack: stackRows([[5]], false), stacked: false, y });
+    expect(bar?.width).toBe(MAX_BAR);
+    expect(bar?.x).toBe(300 - MAX_BAR / 2);
   });
 });
 

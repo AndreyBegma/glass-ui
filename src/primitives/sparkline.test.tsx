@@ -71,6 +71,17 @@ describe('Sparkline', () => {
     expect(container.querySelector('path')?.getAttribute('stroke')).toBe('currentColor');
   });
 
+  // #93 — a trend is data, so by default it is the accent; `neutral` keeps
+  // the old ink-2 for a trend that should stay quiet.
+  test('the default tone is the accent; neutral is still ink-2', () => {
+    const { container, rerender } = render(<Sparkline values={[1, 2]} />);
+    expect(container.querySelector('svg')?.getAttribute('class')).toContain('text-accent');
+    rerender(<Sparkline values={[1, 2]} tone="neutral" />);
+    const cls = container.querySelector('svg')?.getAttribute('class') ?? '';
+    expect(cls).toContain('text-ink-2');
+    expect(cls).not.toContain('text-accent');
+  });
+
   test('renders under data-theme light, dark and data-material flat', () => {
     for (const attr of [
       ['data-theme', 'light'],

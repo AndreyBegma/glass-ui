@@ -83,6 +83,53 @@ describe('CodeBlock', () => {
     expect(pre(container).style.whiteSpace).toBe('pre');
   });
 
+  // #93 — a one-line command has nothing to wrap.
+  test('one line: no wrap toggle, and a trailing newline is not a second line', () => {
+    for (const one of ['bun add x', 'bun add x\n', 'bun add x\n\n']) {
+      const { unmount } = render(<CodeBlock code={one} language="sh" />);
+      expect(screen.queryByRole('button', { name: 'Wrap lines' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Copy code' })).not.toBeNull();
+      unmount();
+    }
+  });
+
+  test('two lines: the wrap toggle is there, with or without a language', () => {
+    for (const language of ['ts', undefined]) {
+      const { unmount } = render(<CodeBlock code={code} language={language} />);
+      expect(screen.getByRole('button', { name: 'Wrap lines' })).not.toBeNull();
+      unmount();
+    }
+  });
+
+  // #93 — no title and no toggle: no empty strip; copy floats in the corner.
+  test('one line and no language: no header bar, copy floats over the block', () => {
+    const { container } = render(<CodeBlock code="bun add x" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.querySelector('.border-b')).toBeNull();
+    const copyBtn = screen.getByRole('button', { name: 'Copy code' });
+    expect(copyBtn.parentElement?.className).toContain('absolute');
+    expect(root.className.split(' ')).toContain('relative');
+    expect(pre(container).className.split(' ')).toContain('pr-12');
+  });
+
+  test('one line, no language and copy={false}: no chrome at all', () => {
+    const { container } = render(<CodeBlock code="bun add x" copy={false} />);
+    expect(container.querySelectorAll('button').length).toBe(0);
+    expect(container.querySelector('.border-b')).toBeNull();
+    expect(pre(container).className.split(' ')).not.toContain('pr-12');
+  });
+
+  test('one line with a language keeps the header for the label', () => {
+    const { container } = render(<CodeBlock code="bun add x" language="sh" />);
+    expect(container.querySelector('.border-b')).not.toBeNull();
+    expect(screen.getByText('sh')).not.toBeNull();
+  });
+
+  test('defaultWrap still applies to a one-line block', () => {
+    const { container } = render(<CodeBlock code="bun add x" defaultWrap />);
+    expect(pre(container).style.whiteSpace).toBe('pre-wrap');
+  });
+
   test('maxHeight bounds the scroll area', () => {
     const { container } = render(<CodeBlock code={code} maxHeight={120} />);
     expect(pre(container).style.maxHeight).toBe('120px');

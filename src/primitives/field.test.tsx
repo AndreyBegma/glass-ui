@@ -96,15 +96,55 @@ describe('the field tone', () => {
     );
   });
 
-  test('`Select` renders the string it always did, with no option guard', () => {
+  // #93 — the select is the package's, not the OS's: the field's string, then
+  // `appearance-none` and a chevron drawn in `ink-3`, and no option guard.
+  test('`Select` is the field string plus the drawn chevron, with no option guard', () => {
     render(
       <Select aria-label="Country">
         <option>UK</option>
       </Select>,
     );
     expect(masked(screen.getByRole('combobox', { name: 'Country' }))).toBe(
-      `${SURFACE_BASE} h-(--size-field) px-3 text-sm`,
+      [
+        `${SURFACE_BASE} h-(--size-field) px-3 text-sm`,
+        'appearance-none pr-9 cursor-pointer bg-no-repeat',
+        'bg-[linear-gradient(45deg,transparent_50%,var(--color-ink-3)_50%),linear-gradient(135deg,var(--color-ink-3)_50%,transparent_50%)]',
+        'bg-[position:calc(100%-1.25rem)_55%,calc(100%-0.875rem)_55%]',
+        'bg-[length:6px_6px,6px_6px]',
+        'forced-colors:appearance-auto',
+      ].join(' '),
     );
+  });
+
+  test('`Select` keeps its fill under the chevron, in both tones', () => {
+    render(
+      <>
+        <Select aria-label="Flat">
+          <option>UK</option>
+        </Select>
+        <Select aria-label="Glass" tone="on-glass">
+          <option>UK</option>
+        </Select>
+      </>,
+    );
+    const flat = screen.getByRole('combobox', { name: 'Flat' }).classList;
+    const glass = screen.getByRole('combobox', { name: 'Glass' }).classList;
+    expect(flat.contains('bg-surface')).toBe(true);
+    expect(glass.contains('bg-hover')).toBe(true);
+    expect(flat.contains('appearance-none')).toBe(true);
+    expect(glass.contains('appearance-none')).toBe(true);
+  });
+
+  test('a caller className still lands on the `<select>` itself', () => {
+    render(
+      <Select aria-label="Narrow" className="w-40">
+        <option>UK</option>
+      </Select>,
+    );
+    const select = screen.getByRole('combobox', { name: 'Narrow' });
+    expect(select.tagName).toBe('SELECT');
+    expect(select.classList.contains('w-40')).toBe(true);
+    expect(select.classList.contains('w-full')).toBe(false);
   });
 
   test('`tone="on-glass"` swaps `bg-surface` for `bg-hover` and keeps the border and the ring', () => {

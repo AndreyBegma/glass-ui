@@ -96,12 +96,31 @@ type SelectProps = Omit<ComponentProps<'select'>, 'className'> & {
  */
 const ON_GLASS_OPTIONS = '[&>option]:bg-surface [&>option]:text-ink';
 
+/**
+ * #93 — the select is drawn by the package, not the OS. Native `<select>`
+ * kept the platform's own bevel and arrow, a grey lozenge beside every
+ * `Input` in every theme. `appearance-none` takes that away, and the chevron
+ * is two token-coloured gradients on the element itself — no wrapper, so
+ * `className` still lands on the `<select>` and nothing about its layout
+ * changes. The list, the keyboard and the screen reader stay native. Under
+ * forced colours the platform's control comes back whole, since a gradient
+ * chevron is dropped there.
+ */
+const CHEVRON = [
+  'appearance-none pr-9 cursor-pointer bg-no-repeat',
+  'bg-[linear-gradient(45deg,transparent_50%,var(--color-ink-3)_50%),linear-gradient(135deg,var(--color-ink-3)_50%,transparent_50%)]',
+  'bg-[position:calc(100%-1.25rem)_55%,calc(100%-0.875rem)_55%]',
+  'bg-[length:6px_6px,6px_6px]',
+  'forced-colors:appearance-auto',
+].join(' ');
+
 export function Select({ className, tone = 'surface', ...props }: SelectProps) {
   return (
     <select
       className={cn(
         base(tone),
         'h-(--size-field) px-3 text-sm',
+        CHEVRON,
         tone === 'on-glass' && ON_GLASS_OPTIONS,
         className,
       )}

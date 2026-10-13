@@ -72,8 +72,41 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     expect(container.querySelector('li')?.className).toBe(
-      'relative min-w-0 flex-1',
+      'relative min-w-max flex-1',
     );
+  });
+
+  // #93 — "Unread" was clipped: `min-w-0` let a segment shrink below its
+  // label. An item is now never narrower than its content.
+  test('a segment is never narrower than its label', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="Filter">
+        <SegmentedControlItem active={false} layoutId="filter-fit">
+          Unread
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const classes = Array.from(container.querySelector('li')?.classList ?? []);
+    expect(classes).toContain('min-w-max');
+    expect(classes).not.toContain('min-w-0');
+  });
+
+  // #93 — the selection is the accent: the capsule is accent-soft and the
+  // active item's text accent-ink; an inactive item takes neither.
+  test('the active item carries the accent ink, an inactive one does not', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="Filter">
+        <SegmentedControlItem active layoutId="filter-accent">
+          All
+        </SegmentedControlItem>
+        <SegmentedControlItem active={false} layoutId="filter-accent">
+          Unread
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const [on, off] = Array.from(container.querySelectorAll('li'));
+    expect(on?.classList.contains('text-accent-ink')).toBe(true);
+    expect(off?.classList.contains('text-accent-ink')).toBe(false);
   });
 
   test('a className on SegmentedControlItem reaches the li, overriding flex-1 so the item keeps its width', () => {
@@ -89,7 +122,7 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     const item = container.querySelector('li');
-    expect(item?.className).toContain('min-w-0');
+    expect(item?.className).toContain('min-w-max');
     expect(item?.className).toContain('flex-none');
     expect(item?.className).toContain('whitespace-nowrap');
     expect(item?.className).not.toContain('flex-1');
@@ -107,13 +140,13 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     expect(container.querySelector('ul')?.className).toBe(
-      'flex gap-1 rounded-full glass p-1',
+      'flex min-w-max gap-1 rounded-full glass p-1',
     );
     expect(container.querySelector('ul')?.className).not.toContain(
       'bg-surface',
     );
     expect(container.querySelector('li > span')?.className).toBe(
-      'absolute inset-0 rounded-full bg-hover',
+      'absolute inset-0 rounded-full bg-accent-soft',
     );
   });
 
@@ -128,10 +161,10 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     expect(container.querySelector('ul')?.className).toBe(
-      'flex gap-1 rounded-full glass p-1',
+      'flex min-w-max gap-1 rounded-full glass p-1',
     );
     expect(container.querySelector('li > span')?.className).toBe(
-      'absolute inset-0 rounded-full bg-hover',
+      'absolute inset-0 rounded-full bg-accent-soft',
     );
     expect(container.querySelector('ul')?.hasAttribute('variant')).toBe(false);
   });
@@ -148,11 +181,11 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     const list = container.querySelector('ul');
-    expect(list?.className).toBe('flex gap-1 rounded-full glass p-1');
+    expect(list?.className).toBe('flex min-w-max gap-1 rounded-full glass p-1');
     expect(list?.className).not.toContain('bg-surface');
     expect(list?.hasAttribute('variant')).toBe(false);
     expect(container.querySelector('li > span')?.className).toBe(
-      'absolute inset-0 rounded-full bg-hover',
+      'absolute inset-0 rounded-full bg-accent-soft',
     );
     // The inactive item mounts no capsule in either variant.
     expect(container.querySelectorAll('li > span').length).toBe(1);
@@ -169,7 +202,7 @@ describe('SegmentedControl', () => {
     const wrapper = container.querySelector('[role="presentation"]');
     expect(wrapper?.className).toContain('glass');
     expect(wrapper?.querySelector('div > span')?.className).toBe(
-      'absolute inset-0 rounded-full bg-hover',
+      'absolute inset-0 rounded-full bg-accent-soft',
     );
   });
 
@@ -177,7 +210,7 @@ describe('SegmentedControl', () => {
   // the capsule as the lift the header uses. FEAT-20260919-624 — and no
   // `backdrop-filter`: the material's utilities are the package's only way
   // to carry one, and none of them is on this wrapper. One blur per stack.
-  test('`variant="on-glass"` is a hairline well at the control radius with a `bg-hover` capsule, and no blur', () => {
+  test('`variant="on-glass"` is a hairline well at the control radius with an accent capsule, and no blur', () => {
     const { container } = render(
       <SegmentedControl aria-label="View" variant="on-glass">
         <SegmentedControlItem active layoutId="view-on-glass">
@@ -198,7 +231,7 @@ describe('SegmentedControl', () => {
       classes.some((c) => ['glass', 'glass-strong', 'glass-clear'].includes(c)),
     ).toBe(false);
     expect(container.querySelector('li > span')?.className).toBe(
-      'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-hover',
+      'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-accent-soft',
     );
     expect(container.querySelectorAll('li > span').length).toBe(1);
   });

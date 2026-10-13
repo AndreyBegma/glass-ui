@@ -92,6 +92,13 @@ export function stackRows(rows: (number | null)[][], stacked: boolean, base = 0)
   return { lo, hi };
 }
 
+/**
+ * #93 — the widest a bar group is ever drawn, in px. Without it the width
+ * follows the band alone, and a band is as wide as the axis makes it: one
+ * daily bucket filled 80 % of the plot. Dense series sit well below it.
+ */
+export const MAX_BAR = 40;
+
 export type BarRect = {
   series: number;
   index: number;
@@ -104,7 +111,7 @@ export type BarRect = {
 /**
  * Bars for every bar series at every x. Grouped bars share the band side by
  * side; stacked bars share one column. Both take 80% of the band, so
- * neighbouring x positions never touch.
+ * neighbouring x positions never touch, and never more than `MAX_BAR`.
  */
 export function barRects({
   centers,
@@ -121,7 +128,7 @@ export function barRects({
 }): BarRect[] {
   const count = stack.hi.length;
   if (count === 0) return [];
-  const inner = Math.max(band * 0.8, 1);
+  const inner = Math.min(Math.max(band * 0.8, 1), MAX_BAR);
   const width = stacked ? inner : inner / count;
   const rects: BarRect[] = [];
   stack.hi.forEach((row, s) => {

@@ -311,3 +311,18 @@ export {
   type ChartSeriesColor,
   type ChartTooltipContext,
 } from './patterns/chart';
+
+/**
+ * #93 — the controls slot. Appended, as every block above is: `g93-material`
+ * appends its own block in a parallel worktree. `Select` is already exported
+ * above, from `./primitives/field`; `./select` is the same component at its
+ * own subpath.
+ */
+export {
+  TabBar,
+  type TabBarItem,
+  type TabBarMore,
+  type TabBarProps,
+} from './patterns/tab-bar';
+/** #93 — `g93-material`'s canvas layer; the barrel is this slot's file. */
+export { Canvas } from './patterns/canvas';

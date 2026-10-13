@@ -356,7 +356,9 @@ export function DataTable<Row>({
   }
 
   const headerCell = cn(
-    'h-(--size-row) whitespace-nowrap bg-surface py-0',
+    // #93 — opaque `paper`, the colour the content surface is 96 % of: a
+    // sticky header has rows scrolling under it and must hide them.
+    'h-(--size-row) whitespace-nowrap bg-paper py-0',
     stickyHeader && 'sticky top-0 z-raised shadow-[inset_0_-1px_0_var(--color-line)]',
   );
 
@@ -412,8 +414,10 @@ export function DataTable<Row>({
           onKeyDown={activatable ? (event) => onRowKeyDown(event, index, row) : undefined}
           onClick={onRowActivate ? () => onRowActivate(row) : undefined}
           className={cn(
-            'bg-surface text-ink',
-            selected && 'bg-hover',
+            // #93 — rows have no fill of their own, so the frame's content
+            // surface is what shows; a selected row is the accent's tint.
+            'text-ink',
+            selected && 'bg-accent-soft',
             activatable && 'cursor-pointer',
           )}
           style={{ height: rowHeight }}
@@ -497,7 +501,7 @@ export function DataTable<Row>({
       <div
         ref={scrollRef}
         data-data-table=""
-        className="relative overflow-auto rounded-surface border border-line bg-surface"
+        className="surface-content relative overflow-auto rounded-surface"
         style={viewport !== undefined ? { height: viewport } : undefined}
         onScroll={(event: UIEvent<HTMLDivElement>) => setScrollTop(event.currentTarget.scrollTop)}
       >

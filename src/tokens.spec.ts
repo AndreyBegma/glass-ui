@@ -43,11 +43,11 @@ const LITERAL = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/g;
  * a new one fails the build.
  */
 const ALLOWED: Record<string, string[]> = {
-  'primitives/button.tsx': ['bg-white'],
+  // #93 — the dialog and sheet scrims are `bg-scrim` now, and the primary
+  // button is the accent: three survivors fewer.
   'primitives/chip.tsx': ['bg-black/55'],
-  'primitives/dialog.tsx': ['bg-black/55'],
   'primitives/field.tsx': ['ring-white/22'],
-  'primitives/sheet.tsx': ['bg-black/55', 'bg-white/25'],
+  'primitives/sheet.tsx': ['bg-white/25'],
 };
 
 const MONOCHROME =
@@ -298,6 +298,10 @@ function value(decls: string[], token: string): string {
   const found = decls.find((d) => d.startsWith(`${token}:`));
   if (!found) throw new Error(`no \`${token}\` in this set`);
   const hex = found.slice(token.length + 1).trim();
+  // #93 — `--color-series-1` is `var(--color-accent)`. A reference to another
+  // token of the same set is measured as that token.
+  const ref = /^var\((--[a-z0-9-]+)\)$/.exec(hex);
+  if (ref) return value(decls, ref[1]);
   if (!/^#[0-9a-f]{6}$/i.test(hex))
     throw new Error(`\`${token}\` is \`${hex}\`, which is not an opaque hex`);
   return hex;
@@ -390,6 +394,31 @@ const ADDED: Record<string, string> = {
       '#74 D5 — the categorical series colours for Chart',
     ]),
   ),
+  ...Object.fromEntries(
+    ['--color-accent', '--color-on-accent', '--color-accent-soft', '--color-accent-ink'].map(
+      (t) => [t, '#93 — the accent, global; reverses E-92 / FEAT-20260911-001 decision 6'],
+    ),
+  ),
+  '--color-content': '#93 — the content surface, near-opaque paper',
+  '--color-scrim': '#93 — the lighter dialog and sheet scrim',
+  '--blur-scrim': '#93 — the scrim blur, much less than `backdrop-blur-sm`',
+  '--canvas-glow': '#93 — how strongly `.canvas` paints the accent',
+  '--press-scale': '#93 — the press feedback on controls',
+  '--dur-press': '#93 — the press feedback on controls',
+  '--dur-spring': '#93 — the dialog spring',
+  '--ease-spring': '#93 — the dialog spring, a critically damped `linear()`',
+  '--font-mono': '#93 — the monospace face, set by the consumer',
+  ...Object.fromEntries(
+    [
+      '--text-display', '--text-display--line-height', '--text-display--letter-spacing',
+      '--text-display--font-weight',
+      '--text-heading', '--text-heading--line-height', '--text-heading--letter-spacing',
+      '--text-heading--font-weight',
+      '--text-section', '--text-section--line-height', '--text-section--font-weight',
+      '--text-body', '--text-body--line-height',
+      '--text-label', '--text-label--line-height', '--text-label--font-weight',
+    ].map((t) => [t, '#93 — the type scale']),
+  ),
 };
 
 const BASELINE: {
@@ -465,10 +494,9 @@ describe(`Luna Watch does not move (baseline ${BASELINE.commit})`, () => {
  * person to read `tokens.css` has no way to tell an intended asymmetry from an
  * accident unless every intended one is written down.
  *
- * Fifteen overrides and three definitions, and the split matters: an override
- * has a base value to fall back to, a definition does not. `--color-accent`
- * resolving to nothing outside the desk profile is the point of decision 6,
- * not a gap in it.
+ * Overrides only, since #93: an override has a base value to fall back to, a
+ * definition does not. The desk used to define the accent (decision 6); the
+ * accent is global now and the desk does not re-value it.
  */
 
 /** Tokens the desk rung re-values. Each already exists in `@theme static`. */
@@ -481,14 +509,12 @@ const DESK_OVERRIDES = [
   '--color-ink-3',
 ];
 
-/** Tokens that exist *only* under the desk profile. */
-const DESK_ONLY = ['--color-accent', '--color-accent-ink', '--color-accent-soft'];
+/** The accent family. Global since #93, and never re-valued by the desk. */
+const ACCENT = ['--color-accent', '--color-on-accent', '--color-accent-soft', '--color-accent-ink'];
 
 /** The theme-dependent half, repeated in the two light-desk blocks. A radius
  *  and a row height do not know what colour the page is, so they are not. */
-const DESK_LIGHT = [
-  '--color-line', '--color-line-strong', '--color-hover', '--color-ink-3', ...DESK_ONLY,
-];
+const DESK_LIGHT = ['--color-line', '--color-line-strong', '--color-hover', '--color-ink-3'];
 
 const DESK = block(':root:where([data-scale="desk"])');
 const DESK_SYSTEM = block(':root:where(:not([data-theme="dark"])[data-scale="desk"])');
@@ -497,9 +523,7 @@ const DESK_EXPLICIT = block(':root:where([data-theme="light"][data-scale="desk"]
 describe('the desk profile changes exactly what it says it changes', () => {
   test('the desk rung overrides these tokens and no others', () => {
     const names = declarations(DESK).map((d) => d.split(':')[0]);
-    expect(names.filter((n) => !DESK_ONLY.includes(n)).sort()).toEqual(
-      [...DESK_OVERRIDES].sort(),
-    );
+    expect(names.sort()).toEqual([...DESK_OVERRIDES].sort());
   });
 
   test('every token it overrides exists in the base set to be overridden', () => {
@@ -511,11 +535,11 @@ describe('the desk profile changes exactly what it says it changes', () => {
     }
   });
 
-  test('it defines the three accent tokens', () => {
-    const names = declarations(DESK).map((d) => d.split(':')[0]);
-    expect(names.filter((n) => DESK_ONLY.includes(n)).sort()).toEqual(
-      [...DESK_ONLY].sort(),
-    );
+  test('it does not re-value the accent (#93)', () => {
+    for (const body of [DESK, DESK_SYSTEM, DESK_EXPLICIT]) {
+      const names = declarations(body).map((d) => d.split(':')[0]);
+      for (const token of ACCENT) expect(names).not.toContain(token);
+    }
   });
 
   test('`--size-tap` is deliberately not among them', () => {
@@ -571,81 +595,116 @@ describe('the desk profile changes exactly what it says it changes', () => {
 });
 
 /**
- * FEAT-20260911-001 — the accent exists in the desk profile and nowhere else.
+ * #93 — the accent exists in every set.
  *
- * `E-92` retired the accent and decision 6 does not un-retire it; it grants one
- * back to a profile that has no artwork to take colour from. Outside that
- * profile `--color-accent` must resolve to *nothing*, so a component that
- * reaches for it in Luna Watch renders visibly wrong rather than quietly
- * falling back to something plausible.
- *
- * That only holds while no other block declares it, which is one careless line
- * away at any time and is not visible in a diff that only shows the line.
+ * This used to assert the opposite: `E-92` retired the accent and
+ * FEAT-20260911-001 decision 6 granted one to the desk profile only, so
+ * `--color-accent` resolved to nothing anywhere else. #93 reverses that on
+ * purpose. AgentDock's UI audit found the system read as a grey admin template
+ * with no colour of its own, and g93-controls reads these four names through
+ * Tailwind with no fallback. So they must exist in every set, and only there:
+ * the dark set and the two light blocks.
  */
-describe('the accent is undefined when `data-scale` is unset', () => {
-  test.each(DESK_ONLY)('%s is not in the base set', (token) => {
-    expect(Object.keys(LIVE)).not.toContain(token);
+describe('the accent is defined in every theme (#93)', () => {
+  test.each(ACCENT)('%s is in the base set', (token) => {
+    expect(Object.keys(LIVE)).toContain(token);
   });
 
-  test.each(DESK_ONLY)('%s is not in either light block', (token) => {
-    expect(declarations(SYSTEM).map((d) => d.split(':')[0])).not.toContain(token);
-    expect(declarations(EXPLICIT).map((d) => d.split(':')[0])).not.toContain(token);
+  test.each(ACCENT)('%s is in both light blocks', (token) => {
+    expect(declarations(SYSTEM).map((d) => d.split(':')[0])).toContain(token);
+    expect(declarations(EXPLICIT).map((d) => d.split(':')[0])).toContain(token);
   });
 
-  test('no block outside the desk profile declares one', () => {
-    // The three blocks above are the whole story only if they are the only
-    // three. Counting is what catches a fourth appearing somewhere this file
-    // does not name a selector for.
-    for (const token of DESK_ONLY) {
+  test('no other block re-values it', () => {
+    for (const token of ACCENT) {
       const everywhere = [...TOKENS.matchAll(new RegExp(`${token}\\s*:`, 'g'))];
       expect(everywhere).toHaveLength(3);
     }
   });
+
+  test('chart series 1 is the accent, in every set', () => {
+    for (const decls of [DARK, declarations(SYSTEM), declarations(EXPLICIT)]) {
+      expect(decls).toContain('--color-series-1: var(--color-accent)');
+    }
+  });
 });
 
-/**
- * FEAT-20260911-001 — the accent stays readable, whoever retunes it.
- *
- * The comment table in `tokens.css` records what was sampled out of a browser
- * on 2026-09-11. A comment is a record, not a constraint: this is the
- * constraint, and it is written to survive somebody changing the hue — which
- * decision 6 expects, since the exact values were `[Unknown]` when the row was
- * specified and arrived by measurement.
- *
- * 4.5:1 on all three grounds because a link is body text, and 4.5:1 for the
- * ink because the primary action's label is too.
- *
- * Worth knowing before changing either value: in dark these two gates pull
- * against each other. White ink on the accent needs its luminance at or below
- * 0.1833 and 4.5:1 against `--color-raised` needs it at or above 0.2150, so
- * there is no dark accent of any hue that takes white text. That is why the
- * ink flips with the theme, and it is why this asserts the pair rather than
- * the accent alone.
- */
-describe('the accent clears its contrast gate in both themes', () => {
-  const GROUNDS = ['--color-ground', '--color-surface', '--color-raised'];
+/** An `rgb(r g b / a)` over an opaque `#rrggbb`, as the compositor would draw it. */
+function over(rgba: string, hex: string): string {
+  const m = /^rgb\((\d+) (\d+) (\d+) \/ ([\d.]+)\)$/.exec(rgba);
+  if (!m) throw new Error(`\`${rgba}\` is not an \`rgb(r g b / a)\``);
+  const a = Number(m[4]);
+  const under = [0, 2, 4].map((i) => Number.parseInt(hex.slice(1 + i, 3 + i), 16));
+  return `#${[1, 2, 3]
+    .map((i, k) => Math.round(Number(m[i]) * a + under[k] * (1 - a)).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
 
-  test.each([
-    ['dark', declarations(DESK), DARK],
-    ['light', declarations(DESK_SYSTEM), declarations(SYSTEM)],
-    ['light (explicit)', declarations(DESK_EXPLICIT), declarations(EXPLICIT)],
-  ])('%s: the accent is readable on every ground', (_n, desk, theme) => {
-    const accent = value(desk, '--color-accent');
-    for (const ground of GROUNDS) {
-      expect(contrast(accent, value(theme, ground))).toBeGreaterThanOrEqual(4.5);
+/** The value a set gives a token, as written, with no opacity check. */
+function raw(decls: string[], token: string): string {
+  const found = decls.find((d) => d.startsWith(`${token}:`));
+  if (!found) throw new Error(`no \`${token}\` in this set`);
+  return found.slice(token.length + 1).trim();
+}
+
+/**
+ * #93 — the accent stays readable, whoever retunes it.
+ *
+ * The table in `tokens.css` is the record; this is the constraint.
+ *
+ *   - `--color-on-accent` on `--color-accent` is 4.5:1: the primary button's
+ *     label is text.
+ *   - `--color-accent` against every surface is 3:1 (WCAG 1.4.11): it is the
+ *     fill of a toggle, a selected segment and a chart line, which are
+ *     graphical objects. Links do not read it, so it is not held to 4.5:1.
+ *   - `--color-accent-ink` is 4.5:1 on every surface, and on the soft tint
+ *     laid over each: it is the colour of links and of selected rows' text.
+ *
+ * FEAT-20260911-001 found no dark accent that takes white text and is also a
+ * 4.5:1 link. Both gates are kept; they no longer fall on the same colour.
+ */
+describe('the accent clears its contrast gates in both themes (#93)', () => {
+  const SURFACES = ['--color-ground', '--color-surface', '--color-raised', '--color-paper'];
+  const SETS = [
+    ['dark', DARK],
+    ['light', declarations(SYSTEM)],
+    ['light (explicit)', declarations(EXPLICIT)],
+  ] as const;
+
+  test.each(SETS)('%s: the label on the accent is readable', (_n, decls) => {
+    expect(
+      contrast(value(decls, '--color-on-accent'), value(decls, '--color-accent')),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test.each(SETS)('%s: the accent fill can be seen on every surface', (_n, decls) => {
+    const accent = value(decls, '--color-accent');
+    for (const surface of SURFACES) {
+      expect({ surface, ok: contrast(accent, value(decls, surface)) >= 3 }).toEqual({
+        surface,
+        ok: true,
+      });
     }
   });
 
-  test.each([
-    ['dark', declarations(DESK)],
-    ['light', declarations(DESK_SYSTEM)],
-    ['light (explicit)', declarations(DESK_EXPLICIT)],
-  ])('%s: the accent ink is readable on the accent', (_n, desk) => {
-    const ratio = contrast(
-      value(desk, '--color-accent-ink'),
-      value(desk, '--color-accent'),
-    );
-    expect(ratio).toBeGreaterThanOrEqual(4.5);
+  test.each(SETS)('%s: accent ink reads on every surface and on the tint over it', (_n, decls) => {
+    const ink = value(decls, '--color-accent-ink');
+    const soft = raw(decls, '--color-accent-soft');
+    for (const surface of SURFACES) {
+      const under = value(decls, surface);
+      expect({ surface, ok: contrast(ink, under) >= 4.5 }).toEqual({ surface, ok: true });
+      expect({ surface, tinted: contrast(ink, over(soft, under)) >= 4.5 }).toEqual({
+        surface,
+        tinted: true,
+      });
+    }
+  });
+
+  test.each(SETS)('%s: the focus ring can be seen on every surface', (_n, decls) => {
+    const focus = value(decls, '--color-focus');
+    for (const surface of SURFACES) {
+      expect(contrast(focus, value(decls, surface))).toBeGreaterThanOrEqual(3);
+    }
   });
 });
 
@@ -746,6 +805,83 @@ describe('the flat rung resolves every rung to an opaque surface', () => {
         expect(Object.keys(FLATTENED)).toContain(token);
       }
     }
+  });
+});
+
+/**
+ * #93 — the content surface and the canvas follow the material's rules.
+ *
+ * `surface-content` reads tokens only, and the flat rung makes it opaque. The
+ * canvas is part of the material: whoever has switched the material off,
+ * through the OS, the attribute or forced colours, gets the flat ground and
+ * no gradient. And it never costs a filter pass or an animation.
+ */
+describe('the content surface and the canvas (#93)', () => {
+  test('`surface-content` reads the content token, a hairline and nothing literal', () => {
+    const body = materialBlocks('@utility surface-content {')[0];
+    expect(body).toContain('background: var(--color-content);');
+    expect(body).toContain('border: 1px solid var(--color-line);');
+    expect(body).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
+    expect(body).not.toContain('backdrop-filter');
+  });
+
+  test.each([
+    ['prefers-reduced-transparency', '@media (prefers-reduced-transparency: reduce)'],
+    ['data-material="flat"', ':root[data-material="flat"] {'],
+  ])('%s makes the content surface opaque paper', (_n, marker) => {
+    expect(materialBlocks(marker)[0]).toContain('--color-content: var(--color-paper);');
+  });
+
+  const canvas = materialBlocks('.canvas {')[0];
+
+  test('the canvas is a fixed, inert layer behind the app', () => {
+    expect(canvas).toContain('position: fixed;');
+    expect(canvas).toContain('z-index: -1;');
+    expect(canvas).toContain('pointer-events: none;');
+  });
+
+  test('it paints the accent at `--canvas-glow`, with no filter and no animation', () => {
+    expect(canvas.match(/radial-gradient\(/g)).toHaveLength(3);
+    expect(canvas.match(/var\(--canvas-glow\)/g)).toHaveLength(3);
+    expect(canvas).not.toMatch(/filter|animation|transition/);
+  });
+
+  test('it is switched off wherever the material is', () => {
+    expect(MATERIAL).toMatch(
+      /@media \(prefers-reduced-transparency: reduce\) \{\s*\.lit::before,\s*\.canvas \{\s*display: none;/,
+    );
+    expect(MATERIAL).toContain(':root[data-material="flat"] .canvas');
+    expect(MATERIAL).toMatch(/@media \(forced-colors: active\) \{\s*\.canvas \{\s*display: none;/);
+  });
+
+  test('the glow is set in both themes, stronger in dark', () => {
+    const glow = (body: string) =>
+      Number(/--canvas-glow:\s*(\d+)%/.exec(body)?.[1] ?? Number.NaN);
+    const dark = glow(block('@theme static'));
+    expect(dark).toBeGreaterThanOrEqual(14);
+    expect(dark).toBeLessThanOrEqual(20);
+    for (const light of [glow(SYSTEM), glow(EXPLICIT)]) {
+      expect(light).toBeGreaterThanOrEqual(6);
+      expect(light).toBeLessThanOrEqual(10);
+    }
+  });
+});
+
+describe('the press: 0.97 on a control, 0.985 on a row (#93)', () => {
+  test('`.lit` presses to `--press-scale` over `--dur-press`', () => {
+    expect(materialBlocks('.lit:active {')[0]).toContain('transform: scale(var(--press-scale));');
+    expect(materialBlocks('.lit {')[0]).toContain('transition: transform var(--dur-press)');
+    expect(LIVE['--press-scale']).toBe('0.97');
+    expect(LIVE['--dur-press']).toBe('100ms');
+  });
+
+  test('menu items, options and `press-row` keep the quieter press', () => {
+    const at = MATERIAL.indexOf('.lit:is(');
+    const rule = MATERIAL.slice(at, MATERIAL.indexOf('}', at));
+    for (const row of ['[role="menuitem"]', '[role="option"]', '.press-row']) {
+      expect(rule).toContain(row);
+    }
+    expect(rule).toContain('transform: scale(0.985);');
   });
 });
 

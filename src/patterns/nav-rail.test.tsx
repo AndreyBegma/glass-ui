@@ -112,6 +112,29 @@ describe('NavRail', () => {
     expect(capsulesIn(inbox)).toHaveLength(0);
   });
 
+  test('the active item is the accent: its tint, and the ink made for it (#93)', () => {
+    render(<NavRail aria-label="Sections" link={link} groups={groups('today')} />);
+    const active = screen.getByRole('link', { current: 'page' });
+    expect(active.className.split(' ')).toContain('text-accent-ink');
+    const capsule = active.querySelector('[aria-hidden="true"].absolute.inset-0');
+    expect(capsule?.className.split(' ')).toContain('bg-accent-soft');
+    for (const other of screen.getAllByRole('link').filter((a) => a !== active)) {
+      expect(other.className).not.toContain('accent');
+    }
+  });
+
+  test('an expanded item presses like a row, a collapsed one like a control (#93)', () => {
+    const { unmount } = render(<NavRail aria-label="Sections" link={link} groups={groups('today')} />);
+    for (const item of screen.getAllByRole('link')) {
+      expect(item.className.split(' ')).toContain('press-row');
+    }
+    unmount();
+    render(<NavRail aria-label="Sections" link={link} groups={groups('today')} collapsed />);
+    for (const item of screen.getAllByRole('link')) {
+      expect(item.className.split(' ')).not.toContain('press-row');
+    }
+  });
+
   test('the active item carries `aria-current`', () => {
     render(<NavRail aria-label="Sections" link={link} groups={groups('today')} />);
     const current = screen.getByRole('link', { current: 'page' });

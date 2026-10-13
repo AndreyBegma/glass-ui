@@ -1151,19 +1151,34 @@ push to `develop` and `main` (`.woodpecker/ci.yml`).
 
 ## Releasing
 
-The version in `package.json` is the release. A `vX.Y.Z` tag publishes exactly
-that version, and CI refuses a tag that does not match it.
+The version in `package.json` is the release. Merging a version bump into
+`main` publishes it and tags it; there is no manual step.
 
 1. Branch `release/vX.Y.Z` from `develop`, set `"version": "X.Y.Z"` in
    `package.json`, and open a pull request into `main`.
 2. Merge it into `main`.
-3. Tag the merge commit `vX.Y.Z` and push the tag:
-   `git tag vX.Y.Z && git push origin vX.Y.Z`.
-4. `.woodpecker/release.yml` does the rest. It checks the tag against
-   `package.json`, then installs, lints, tests, builds and smoke-tests, and
-   runs `npm publish`. The `npm_token` secret is available only to tag and
-   manual runs. Re-running a tag that already published passes without
-   publishing again.
+3. `.woodpecker/release.yml` does the rest. On the push to `main` it installs,
+   lints, tests, builds and smoke-tests, then runs `npm publish` if X.Y.Z is
+   not on npm yet, and pushes the tag `vX.Y.Z`. A push to `main` without a
+   version bump publishes nothing and passes.
+
+The tag push still works and is idempotent. Pushing `vX.Y.Z` yourself checks the
+tag against `package.json` (a mismatch fails before anything is built) and
+publishes that version; a version that is already on npm passes without
+publishing again, which is also what the tag the pipeline pushes itself does.
+
+**Maint lines never take `latest`.** A push to a `maint/*` branch (for example
+`maint/v0.8`), or any version below the current `latest`, is published with
+`npm publish --tag v<major>.<minor>` (`v0.8` for 0.8.14), so it cannot move the
+`latest` dist-tag. `scripts/release/decide.sh` makes that decision and
+`scripts/release/decide.test.ts` covers it. After a release, check with
+`npm view @andrewbehma/glass-ui dist-tags`.
+
+**Secrets.** `npm_token` must be available to the `push`, `tag` and `manual`
+events. Without `push` the publish step says so and passes. The tag step needs
+`github_token` (contents write on this repository), available to `push` only;
+without it the step says so and passes, and the tag is pushed by hand:
+`git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 To rehearse without a tag, start a manual pipeline in Woodpecker with
 `[glass-release]` in its message. It runs the same steps and ends in

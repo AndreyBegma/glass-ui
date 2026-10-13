@@ -549,6 +549,16 @@ year. No date logic: the caller formats `label`, moves the period in
 disables it. `headingLevel={2 | 3}` renders the label as a heading instead of
 a `<span>`.
 
+## One empty state
+
+**`EmptyState`** has one anatomy: an optional icon in a `size-10` disc, a 16/600
+`title` that says the state ("No starred documents yet", never the page name),
+one `ink-2` sentence of `description`, then `action` and an optional
+`secondaryAction` in one row. `action` is a `Button` `solid` when it creates and
+`glass` when it navigates; `secondaryAction` is `ghost`. `align="center"` (the
+default) suits a card or dialog; `align="start"` begins at the left edge, for a
+page whose content does.
+
 ## Button: three tiers and a link
 
 Four variants read as three tiers and a link. `glass` stays the default and

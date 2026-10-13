@@ -37,7 +37,23 @@ describe('Tabs', () => {
     );
 
     const item = screen.getByRole('listitem');
-    expect(item.className).toBe('relative min-w-fit flex-1');
+    expect(item.className).toBe('relative min-w-fit flex-1 [&>*]:whitespace-nowrap');
+  });
+
+  test('items never wrap their label', () => {
+    render(
+      <Tabs aria-label="Sections">
+        <TabsItem current layoutId="tabs-test-nowrap">
+          <a href="/a">A</a>
+        </TabsItem>
+        <TabsItem current={false} layoutId="tabs-test-nowrap">
+          <a href="/b">B</a>
+        </TabsItem>
+      </Tabs>,
+    );
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item.className).toContain('[&>*]:whitespace-nowrap');
+    }
   });
 
   test('a className on TabsItem reaches the li, overriding flex-1 so the item keeps its width', () => {

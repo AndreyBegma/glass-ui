@@ -1,8 +1,10 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { createContext, type ReactNode, useContext } from 'react';
+import { createContext, type ReactNode, useContext, useRef } from 'react';
+import { useScrollIntoRow } from '../hooks/use-scroll-into-row';
 import { cn } from '../lib/cn';
+import { ScrollHintRow } from './scroll-hint-row';
 
 /**
  * FEAT-20260830-492 — the travelling capsule, as a primitive rather than a
@@ -36,26 +38,53 @@ interface SegmentedControlProps {
   'aria-label'?: string;
   /** Renders a `<div>` in this role instead of the default `<ul>`. */
   role?: string;
+  /**
+   * Stretch to the row, in equal shares — never below a label's width. The
+   * default is the width of the labels: a two-word control is not 672px wide.
+   */
+  full?: boolean;
 }
 
-const SegmentedControlContext = createContext(false);
+interface SegmentedControlContextValue {
+  listless: boolean;
+  full: boolean;
+}
 
+const SegmentedControlContext = createContext<SegmentedControlContextValue>({
+  listless: false,
+  full: false,
+});
+
+/**
+ * FEAT-20261013-005 (W241) — a control sizes to its labels and scrolls when it
+ * is wider than its row, exactly as `Tabs` does: `ScrollHintRow` fades the
+ * side with more, the bar is hidden, and the active item brings itself into
+ * view (`useScrollIntoRow`). A label never wraps (`[&>*]:whitespace-nowrap` on
+ * the item) and an item never shrinks below it (no `min-w-0`).
+ */
 export function SegmentedControl({
   children,
   className,
   role,
+  full = false,
   ...props
 }: SegmentedControlProps) {
   const Wrapper = role ? 'div' : 'ul';
   return (
-    <SegmentedControlContext.Provider value={!!role}>
-      <Wrapper
-        role={role}
-        className={cn('flex gap-1 rounded-control bg-surface p-1', className)}
-        {...props}
-      >
-        {children}
-      </Wrapper>
+    <SegmentedControlContext.Provider value={{ listless: !!role, full }}>
+      <ScrollHintRow edgeClassName="from-surface">
+        <Wrapper
+          role={role}
+          className={cn(
+            'scrollbar-hide relative gap-1 overflow-x-auto rounded-control bg-surface p-1',
+            full ? 'flex w-full' : 'inline-flex w-fit max-w-full',
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </Wrapper>
+      </ScrollHintRow>
     </SegmentedControlContext.Provider>
   );
 }
@@ -68,14 +97,19 @@ interface SegmentedControlItemProps {
 
 export function SegmentedControlItem({ active, layoutId, children }: SegmentedControlItemProps) {
   const reduced = useReducedMotion();
-  const listless = useContext(SegmentedControlContext);
+  const { listless, full } = useContext(SegmentedControlContext);
+  const ref = useRef<HTMLLIElement & HTMLDivElement>(null);
+  useScrollIntoRow(ref, active);
   const Item = listless ? 'div' : 'li';
   return (
-    <Item className="relative min-w-0 flex-1">
+    <Item
+      ref={ref}
+      className={cn('relative [&>*]:whitespace-nowrap', full ? 'min-w-fit flex-1' : 'flex-none')}
+    >
       {active ? (
         <motion.span
           layoutId={layoutId}
-          className="absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised"
+          className="absolute inset-0 rounded-[calc(var(--radius-control)*2/3)] bg-raised"
           transition={
             reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34, mass: 0.9 }
           }

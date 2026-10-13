@@ -1,7 +1,8 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { type ReactNode, useLayoutEffect, useRef } from 'react';
+import { type ReactNode, useRef } from 'react';
+import { useScrollIntoRow } from '../hooks/use-scroll-into-row';
 import { cn } from '../lib/cn';
 import { ScrollHintRow } from './scroll-hint-row';
 
@@ -63,20 +64,10 @@ interface TabsItemProps {
 export function TabsItem({ current, layoutId, children, className }: TabsItemProps) {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLLIElement>(null);
-
-  // The row's own `scrollLeft`, not `scrollIntoView`: that one also scrolls
-  // every ancestor, and a tab row below the fold would drag the page down to
-  // it on load. Centred, so the tabs either side of the current one show too.
-  // The `ul` is `relative`, which makes it the item's `offsetParent`.
-  useLayoutEffect(() => {
-    const item = ref.current;
-    const row = item?.parentElement;
-    if (!current || !item || !row || row.scrollWidth <= row.clientWidth) return;
-    row.scrollLeft = item.offsetLeft - (row.clientWidth - item.offsetWidth) / 2;
-  }, [current]);
+  useScrollIntoRow(ref, current);
 
   return (
-    <li ref={ref} className={cn('relative min-w-fit flex-1', className)}>
+    <li ref={ref} className={cn('relative min-w-fit flex-1 [&>*]:whitespace-nowrap', className)}>
       {current ? (
         <motion.span
           layoutId={layoutId}

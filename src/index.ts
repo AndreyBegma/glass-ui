@@ -62,6 +62,7 @@ export { Toggle } from './primitives/toggle';
  * day when nobody else is in it.
  */
 export { useCommandPaletteShortcut } from './hooks/use-command-palette-shortcut';
+export { useScrollIntoRow } from './hooks/use-scroll-into-row';
 export {
   BottomCapsule,
   type BottomCapsuleAction,
@@ -196,6 +197,7 @@ export {
 export { Combobox, type ComboboxOption, type ComboboxProps } from './primitives/combobox';
 export { InlineEdit } from './primitives/inline-edit';
 export { Toolbar, type ToolbarProps } from './patterns/toolbar';
+export { PeriodSwitcher, type PeriodSwitcherProps } from './patterns/period-switcher';
 
 /**
  * FEAT-20260923-003 — the widget grid (`W1` decision 5). Appended, for the

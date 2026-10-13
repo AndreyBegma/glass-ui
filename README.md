@@ -531,3 +531,20 @@ and 44px on a coarse pointer.
 **Grid items are not glass.** In arrange mode an item is `Card raised`'s
 surface. A test walks every item and everything inside it. The menu is glass,
 because it is a menu.
+
+## Segments, tabs and the period switcher
+
+**`SegmentedControl` is as wide as its labels.** Pass `full` to stretch it to
+its row in equal shares — never below a label's width. In both modes a label
+never wraps, an item never shrinks below it, and a control wider than its row
+scrolls sideways (bar hidden, `ScrollHintRow` fade, the active item brought
+into view). `TabsItem` never wraps its label either. The scrolling is
+`useScrollIntoRow(ref, active)`, exported for any row of items that has an
+active one.
+
+**`PeriodSwitcher`** — `‹ label › Today`, one picker for every week, month and
+year. No date logic: the caller formats `label`, moves the period in
+`onPrevious` / `onNext`, and supplies every string (`previousLabel`,
+`nextLabel`, `todayLabel`). `onToday` omitted → no Today button; `isCurrent`
+disables it. `headingLevel={2 | 3}` renders the label as a heading instead of
+a `<span>`.

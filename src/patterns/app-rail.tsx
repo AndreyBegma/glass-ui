@@ -79,6 +79,16 @@ export interface AppRailProps {
   footerApps?: readonly AppRailItem[];
   /** Below it, pinned under the scroll: an account avatar, a settings door. */
   footer?: ReactNode;
+  /**
+   * Where the name is drawn. `'tooltip'` (default) is icon-only: the name is
+   * `sr-only` text and a `Tooltip`. `'below'` prints it under the icon at
+   * `text-xs` (12px, the floor), truncated to the item's width — the
+   * `Tooltip` stays, because it is what reads a truncated name, and the
+   * `sr-only` copy goes, because the visible one is the accessible name.
+   * Pass a short name as `label`; the long one belongs to the consumer's
+   * panel title.
+   */
+  labels?: 'tooltip' | 'below';
   /** One travelling capsule per rail. */
   layoutId?: string;
   className?: string;
@@ -92,6 +102,7 @@ export function AppRail({
   head,
   footerApps,
   footer,
+  labels = 'tooltip',
   layoutId = 'glass-app-rail',
   className,
 }: AppRailProps) {
@@ -123,11 +134,16 @@ export function AppRail({
   const renderItem = (app: AppRailItem) => {
     const Icon = app.icon;
     const active = app.id === activeId;
+    const below = labels === 'below';
     const itemClassName = cn(
       'lit relative flex items-center justify-center rounded-control',
-      // A square of the rail's own row height, so the desk profile
-      // tightens it with everything else and no height is written here.
-      'h-[var(--size-nav)] w-[var(--size-nav)]',
+      below
+        ? // Icon over name: the height is the content's, the width fixed so
+          // the rail is one column wide whatever the names are.
+          'w-16 flex-col gap-1 py-1.5'
+        : // A square of the rail's own row height, so the desk profile
+          // tightens it with everything else and no height is written here.
+          'h-[var(--size-nav)] w-[var(--size-nav)]',
       'motion-safe:transition-colors duration-(--dur-fast)',
       active
         ? 'text-[var(--color-accent,var(--color-ink))]'
@@ -149,7 +165,11 @@ export function AppRail({
             />
           ) : null}
         </span>
-        <span className="sr-only">{app.label}</span>
+        {below ? (
+          <span className="relative max-w-14 truncate text-xs leading-4">{app.label}</span>
+        ) : (
+          <span className="sr-only">{app.label}</span>
+        )}
         {app.unavailable ? (
           // The marker's meaning, for a reader: a coloured dot is nothing
           // at all in the accessibility tree, and this is the half of it

@@ -72,16 +72,18 @@ export function SegmentedControl({
   const Wrapper = role ? 'div' : 'ul';
   return (
     <SegmentedControlContext.Provider value={{ listless: !!role, full }}>
-      <ScrollHintRow edgeClassName="from-surface">
-        <Wrapper
-          role={role}
-          className={cn(
-            'scrollbar-hide relative gap-1 overflow-x-auto rounded-control bg-surface p-1',
-            full ? 'flex w-full' : 'inline-flex w-fit max-w-full',
-            className,
-          )}
-          {...props}
-        >
+      {/* BUG-20261013-001 — the scroller is `ScrollHintRow`'s inner div (what it
+          measures); the list inside is `w-max min-w-full`, so it is as wide as
+          its items and the overflow lands on the scroller. */}
+      <ScrollHintRow
+        edgeClassName="from-surface"
+        className={cn(
+          'scrollbar-hide relative overflow-x-auto rounded-control bg-surface p-1',
+          full ? 'w-full' : 'w-fit max-w-full',
+          className,
+        )}
+      >
+        <Wrapper role={role} className="flex w-max min-w-full gap-1" {...props}>
           {children}
         </Wrapper>
       </ScrollHintRow>

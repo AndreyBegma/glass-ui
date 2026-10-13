@@ -165,6 +165,74 @@ describe('SidePanel', () => {
     expect(screen.queryByText('pinned')).toBeNull();
   });
 
+  describe('strip', () => {
+    test('by default a collapsed panel is the strip, at the strip width', () => {
+      render(<Panel defaultCollapsed rail={<span>pinned</span>} />);
+      expect(widthOf()).toBe('calc(var(--size-nav) + 1rem)');
+      expect(screen.getByRole('button', { name: 'Show the panel' })).toBeDefined();
+      expect(panel().className.split(' ')).toContain('glass');
+    });
+
+    test('`strip={false}` collapsed draws no strip, no rail, no material, width 0', () => {
+      render(<Panel strip={false} defaultCollapsed rail={<span>pinned</span>} />);
+      expect(panel().getAttribute('data-collapsed')).toBe('true');
+      expect(widthOf()).toBe('0px');
+      expect(screen.queryByRole('button', { name: 'Show the panel' })).toBeNull();
+      expect(screen.queryByText('pinned')).toBeNull();
+      expect(screen.queryByText('Sections go here')).toBeNull();
+      expect(panel().className.split(' ')).not.toContain('glass');
+      // Only the handle is left.
+      expect(panel().children).toHaveLength(1);
+    });
+
+    test('`strip={false}` open is unchanged', () => {
+      render(<Panel strip={false} />);
+      expect(widthOf()).toBe('288px');
+      expect(panel().className.split(' ')).toContain('glass');
+      expect(screen.getByText('Sections go here')).toBeDefined();
+    });
+
+    test('the handle still brings a stripless panel back, by key and by drag', () => {
+      render(<Panel strip={false} defaultCollapsed />);
+      fireEvent.keyDown(handle(), { key: 'Enter' });
+      expect(panel().getAttribute('data-collapsed')).toBeNull();
+      expect(widthOf()).toBe('288px');
+
+      fireEvent.keyDown(handle(), { key: 'Enter' });
+      expect(widthOf()).toBe('0px');
+      drag(0, 300);
+      expect(panel().getAttribute('data-collapsed')).toBeNull();
+      expect(now()).toBe(300);
+    });
+
+    test('a consumer outside the strip expands it through `useSidePanel()`', () => {
+      function Expand() {
+        const state = useSidePanel();
+        return (
+          <button type="button" onClick={state.expand}>
+            Open
+          </button>
+        );
+      }
+      render(
+        <SidePanel storageKey="test-panel" aria-label="Sections" labels={labels} strip={false} defaultCollapsed>
+          <Expand />
+        </SidePanel>,
+      );
+      expect(screen.queryByRole('button', { name: 'Open' })).toBeNull();
+      fireEvent.keyDown(handle(), { key: 'Enter' });
+      expect(screen.getByRole('button', { name: 'Open' })).toBeDefined();
+    });
+
+    test('the handle sits on the content edge when there is no panel', () => {
+      const { unmount } = render(<Panel strip={false} defaultCollapsed side="start" />);
+      expect(handle().className.split(' ')).toContain('left-0');
+      unmount();
+      render(<Panel strip={false} defaultCollapsed side="end" />);
+      expect(handle().className.split(' ')).toContain('right-0');
+    });
+  });
+
   test('a consumer draws its own collapse control from `useSidePanel()`', () => {
     render(
       <SidePanel storageKey="test-panel" aria-label="Sections" labels={labels}>

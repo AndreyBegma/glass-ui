@@ -44,7 +44,9 @@ import { Tooltip } from '../primitives/tooltip';
  * **Collapsing to zero is not possible.** `minWidth` is a prop, and dragging
  * past half of it does not produce a narrower panel — it produces the strip,
  * which carries the expand button and never goes away. A panel that can be
- * dragged to nothing is a panel a person has to know how to get back.
+ * dragged to nothing is a panel a person has to know how to get back. The one
+ * exception is `strip={false}`, for a consumer that keeps its own always-visible
+ * way back (Denitsa's rail head): collapsed, that panel is width 0.
  *
  * **The handle is the WAI-ARIA window splitter.** `role="separator"` with
  * `aria-valuenow` / `min` / `max`, focusable, drag by pointer capture, and
@@ -105,6 +107,15 @@ export interface SidePanelProps {
   override?: boolean;
   /** `glass` for chrome — a rail of sections; `glass-strong` under body text. */
   material?: 'glass' | 'glass-strong';
+  /**
+   * Whether a collapsed panel leaves a strip carrying the expand button
+   * (default). `false` collapses to width 0 and draws nothing: no strip, no
+   * `rail`, no material. The handle stays — keyboard-operable as ever — and
+   * the way back is the consumer's, through `useSidePanel().expand`. Use it
+   * where another control is always on screen to bring the panel back; a
+   * panel with no such control should keep its strip.
+   */
+  strip?: boolean;
   /** What the strip carries under the expand button, when collapsed. */
   rail?: ReactNode;
   children: ReactNode;
@@ -156,6 +167,7 @@ export function SidePanel({
   defaultCollapsed = false,
   override,
   material = 'glass',
+  strip = true,
   rail,
   children,
   className,
@@ -267,6 +279,8 @@ export function SidePanel({
   };
 
   const ExpandIcon = side === 'start' ? PanelLeftOpen : PanelRightOpen;
+  // Collapsed with no strip: nothing of the panel is drawn but its handle.
+  const gone = collapsed && !strip;
 
   return (
     <SidePanelContext.Provider value={state}>
@@ -275,17 +289,20 @@ export function SidePanel({
         data-collapsed={collapsed ? 'true' : undefined}
         style={
           {
-            '--side-panel-width': collapsed ? STRIP_WIDTH : `${width}px`,
+            '--side-panel-width': gone ? '0px' : collapsed ? STRIP_WIDTH : `${width}px`,
           } as CSSProperties
         }
         className={cn(
-          material,
-          'relative flex w-[var(--side-panel-width)] shrink-0 flex-col rounded-surface',
+          // No material at width 0: a glass border on a zero-wide box is a
+          // visible hairline, which is the column this exists to remove.
+          !gone && material,
+          'relative flex w-[var(--side-panel-width)] shrink-0 flex-col',
+          !gone && 'rounded-surface',
           'motion-safe:transition-[width] motion-safe:duration-(--dur-base) motion-safe:ease-(--ease-sheet)',
           className,
         )}
       >
-        {collapsed ? (
+        {gone ? null : collapsed ? (
           <div className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto p-2">
             <Tooltip content={labels.expand} side={side === 'start' ? 'right' : 'left'}>
               <Button
@@ -329,7 +346,9 @@ export function SidePanel({
             'absolute top-0 z-raised h-full w-1.5 cursor-col-resize touch-none',
             'rounded-full motion-safe:transition-colors duration-(--dur-fast)',
             'hover:bg-hover focus-visible:bg-hover',
-            side === 'start' ? 'right-0' : 'left-0',
+            // Inside the panel's content edge; with no panel, inside the
+            // content's edge instead, so the handle is not off the layout.
+            (side === 'start') !== gone ? 'right-0' : 'left-0',
           )}
         />
       </aside>

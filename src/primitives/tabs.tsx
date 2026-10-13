@@ -40,14 +40,18 @@ interface TabsProps {
 
 export function Tabs({ children, className, ...props }: TabsProps) {
   return (
-    <ScrollHintRow edgeClassName="from-surface">
-      <ul
-        className={cn(
-          'scrollbar-hide relative flex gap-1 overflow-x-auto rounded-control bg-surface p-1',
-          className,
-        )}
-        {...props}
-      >
+    // BUG-20261013-001 — `ScrollHintRow`'s inner div is the scroller, because
+    // that is the element it measures and listens to. The list inside is
+    // `w-max min-w-full`: as wide as its tabs, never narrower than the row, so
+    // the overflow lands on the scroller and the fades can see it.
+    <ScrollHintRow
+      edgeClassName="from-surface"
+      className={cn(
+        'scrollbar-hide relative overflow-x-auto rounded-control bg-surface p-1',
+        className,
+      )}
+    >
+      <ul className="flex w-max min-w-full gap-1" {...props}>
         {children}
       </ul>
     </ScrollHintRow>

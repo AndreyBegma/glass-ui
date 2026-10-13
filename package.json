@@ -350,18 +350,10 @@
     "cronstrue": ">=3.0.0"
   },
   "peerDependenciesMeta": {
-    "@xterm/addon-fit": {
-      "optional": true
-    },
-    "@xterm/xterm": {
-      "optional": true
-    },
-    "cron-parser": {
-      "optional": true
-    },
-    "cronstrue": {
-      "optional": true
-    }
+    "@xterm/addon-fit": { "optional": true },
+    "@xterm/xterm": { "optional": true },
+    "cron-parser": { "optional": true },
+    "cronstrue": { "optional": true }
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",

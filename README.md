@@ -608,3 +608,11 @@ a call site swaps without logic changes. `DateInput` remains for
   the text and sets `aria-invalid`.
 - ArrowUp / ArrowDown move by `step` minutes (default 15), wrapping at
   midnight.
+
+## Command palette: keys on a row
+
+`CommandPaletteItem` takes `keys?: readonly string[]`, drawn after the hint as
+one `kbd` keycap per key (`["G", "T"]`), `aria-hidden` because the label is what
+is announced. Pass none on a coarse pointer. The field focus ring is now
+`ring-ink/22` in `Input`, `Select` and `SearchField`, the same spelling as
+`fieldClassName`, so it follows the theme.

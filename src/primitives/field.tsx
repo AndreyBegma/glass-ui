@@ -18,7 +18,7 @@ const base = [
   'w-full bg-surface text-ink placeholder:text-ink-3',
   'border border-line-strong rounded-control',
   'transition-[border-color,box-shadow] duration-(--dur-fast)',
-  'focus:border-ink/70 focus:ring-2 focus:ring-white/22 focus:outline-none',
+  'focus:border-ink/70 focus:ring-2 focus:ring-ink/22 focus:outline-none',
   'disabled:opacity-40',
 ].join(' ');
 

@@ -139,6 +139,34 @@ describe('CommandPalette', () => {
     ]);
   });
 
+  test('W254 — an item with keys draws one aria-hidden kbd per key after the hint; none without', async () => {
+    const keyed: CommandPaletteGroup = {
+      id: 'keyed',
+      title: 'Keyed',
+      items: [
+        { id: 'a', label: 'Inbox', hint: 'Today', keys: ['G', 'I'] },
+        { id: 'b', label: 'Plain', hint: 'Today' },
+      ],
+    };
+    render(<Shell search={() => [keyed]} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open palette' }));
+    await screen.findByRole('dialog');
+
+    const [withKeys, without] = rows();
+    const kbds = withKeys?.querySelectorAll('kbd') ?? [];
+    expect([...kbds].map((k) => k.textContent)).toEqual(['G', 'I']);
+    expect(
+      withKeys?.querySelector('[data-palette-keys]')?.getAttribute('aria-hidden'),
+    ).toBe('true');
+    // After the hint, not before it.
+    const hint = withKeys?.querySelector('span.text-ink-3');
+    expect(
+      hint?.compareDocumentPosition(kbds[0] as Node) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(without?.querySelectorAll('kbd').length).toBe(0);
+  });
+
   test('typing goes through the consumer’s function, not through the palette', async () => {
     const seen: string[] = [];
     const search = (query: string) => {

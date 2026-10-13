@@ -218,3 +218,10 @@ export {
   type WidgetResize,
   type WidgetResizeIntent,
 } from './patterns/widget-grid';
+
+/**
+ * FEAT-20261013-006 (W242) — dates and times in the interface's language.
+ * Appended, for the reason the block above gives.
+ */
+export { DateField, type DateFieldProps } from './primitives/date-field';
+export { TimeField, type TimeFieldProps } from './primitives/time-field';

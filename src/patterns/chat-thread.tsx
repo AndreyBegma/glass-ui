@@ -135,7 +135,9 @@ export function ChatThread({
   const reduced = useReducedMotion();
   const scroller = useRef<HTMLDivElement>(null);
   const atEnd = useRef(true);
-  const seen = useRef(messages.length);
+  // Zero, not `messages.length`: on mount every message counts as new while
+  // the thread is "at the end", so it opens on the latest one.
+  const seen = useRef(0);
   const [unseen, setUnseen] = useState(0);
 
   const toEnd = useCallback(

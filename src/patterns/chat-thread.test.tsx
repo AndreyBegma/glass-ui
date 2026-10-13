@@ -95,6 +95,28 @@ describe('ChatThread', () => {
     expect(done?.querySelector('[role="progressbar"]')).toBeNull();
   });
 
+  test('it opens on the latest message, not the first', () => {
+    // Before mount, so the first layout effect already sees a tall list.
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'scrollHeight',
+    );
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get: () => 1_000,
+    });
+    try {
+      render(<ChatThread messages={many(20)} />);
+      expect(log().scrollTop).toBe(1_000);
+    } finally {
+      if (original)
+        Object.defineProperty(HTMLElement.prototype, 'scrollHeight', original);
+      else
+        delete (HTMLElement.prototype as { scrollHeight?: number })
+          .scrollHeight;
+    }
+  });
+
   test('at the end, a new message keeps it at the end and shows no chip', () => {
     const { rerender, container } = render(<ChatThread messages={many(3)} />);
     stubMetrics(log(), 1_000, 400);

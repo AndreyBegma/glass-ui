@@ -415,18 +415,18 @@ describe('DataTable', () => {
         </div>,
       );
       const scroller = container.querySelector('[data-data-table]') as HTMLElement;
-      // Solid, token-built surfaces; glass is the menu's alone (D3).
-      expect(scroller.className).toContain('bg-surface');
-      expect(scroller.className).toContain('border-line');
+      // The content surface (#93), token-built; glass is the menu's alone (D3).
+      expect(scroller.className).toContain('surface-content');
       expect(container.querySelector('[class*="glass"]')).toBeNull();
       const [selected, ...rest] = bodyRows(container);
       for (const row of rest) {
-        expect(row.className).toContain('bg-surface');
+        // No fill of its own: the frame's content surface shows through.
+        // (`Table`'s `hover:bg-hover` is a hover state, not a fill.)
+        expect(row.className).not.toMatch(/(^|\s)bg-/);
         expect(row.className).toContain('text-ink');
       }
-      // The selected row trades the surface for the hover token, not a colour.
-      expect(selected.className).toContain('bg-hover');
-      expect(selected.className).not.toContain('bg-surface');
+      // The selected row is the accent's tint, a token rather than a colour.
+      expect(selected.className).toContain('bg-accent-soft');
       unmount();
     }
   });

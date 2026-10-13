@@ -170,6 +170,74 @@
     0 6px 20px var(--glass-shadow-clear);
 }
 
+/* #93 — the second surface level: content.
+ *
+ * The material above is for *chrome*: a rail, a top bar, a sheet, the
+ * palette, a popover. Those float, and the canvas behind them is what they
+ * refract. A card and a table are not chrome. They are read, sometimes for a
+ * long time, and a blurred grey panel under a column of numbers is worse at
+ * that than paper is. So content is near-opaque `--color-content` (`paper` at
+ * 96 %) with a hairline and the faintest lift. There is no blur, so fifty
+ * cards cost what fifty `div`s cost, and no grey fill: the 4 % that shows
+ * through is the canvas tint, not a shade of grey.
+ *
+ * Which one to use: if it holds the page's content, `surface-content`; if it
+ * holds the controls that move you around the content, `glass` or
+ * `glass-strong`. `Card` defaults to this one, and `DataTable`'s frame reads it
+ * too. */
+@utility surface-content {
+  background: var(--color-content);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 1px 2px var(--glass-shadow-clear);
+}
+
+/* #93 — the canvas: something behind the glass to refract.
+ *
+ * On a plain `#fff` or `#09090c` page the material has nothing to bend, and
+ * reads as grey. The canvas paints three large, soft radial gradients of the
+ * accent behind the whole app: `--canvas-glow` (18 % dark, 10 % light) of the
+ * accent at each centre, fading to nothing. A radial gradient is already
+ * soft, so there is no `filter: blur()` to pay for, and the layer is
+ * `position: fixed`, so the compositor keeps it as one texture that never
+ * repaints on scroll. Nothing animates.
+ *
+ * Opt-in. Put `<Canvas />` (or any element with `.canvas`) once at the top of
+ * the app, outside `#main-content`. A fixed layer inside it is re-anchored by
+ * the depth effect's transform; see the contract in `base.css`. It sits at
+ * `z-index: -1` in the root stacking context, so `body` must not paint its own
+ * background over it: `html` already paints `--color-ground` under it.
+ *
+ * It goes wherever the material goes: under reduced transparency, the flat
+ * rung and forced colours there is no canvas, only the flat ground. */
+.canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60vmax 50vmax at 10% 0%,
+      color-mix(in oklab, var(--color-accent) var(--canvas-glow), transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50vmax 45vmax at 95% 35%,
+      color-mix(in oklab, var(--color-accent-ink) var(--canvas-glow), transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70vmax 50vmax at 45% 110%,
+      color-mix(in oklab, var(--color-accent) var(--canvas-glow), transparent),
+      transparent 70%
+    );
+}
+
+@media (forced-colors: active) {
+  .canvas {
+    display: none;
+  }
+}
+
 /* The hover response for a control that is itself glass.
  *
  * `hover:bg-hover` cannot do this: `glass` paints with `background`, a
@@ -238,8 +306,26 @@
   );
 }
 
-/* Pressed: the surface takes the weight and gives the light back. */
+/* Pressed: the surface takes the weight and gives the light back.
+ *
+ * #93 — 0.97 over 100ms (`--press-scale`, `--dur-press`), from 0.985 over
+ * `--dur-fast`, on a button or a compact control: a press you can see is the
+ * cheapest thing that makes an interface feel physical. A full-width row
+ * keeps 0.985, because 3 % of a 300px row reads as a glitch. A row is a menu
+ * item or a listbox option, which Radix and `Combobox` mark by role, or
+ * anything that says so with `press-row` (`NavRail`'s items). The global
+ * reduced-motion rule in `base.css` already takes the transition away. */
 .lit:active {
+  transform: scale(var(--press-scale));
+}
+
+.lit:is(
+    [role="menuitem"],
+    [role="menuitemcheckbox"],
+    [role="menuitemradio"],
+    [role="option"],
+    .press-row
+  ):active {
   transform: scale(0.985);
 }
 
@@ -249,7 +335,7 @@
 }
 
 .lit {
-  transition: transform var(--dur-fast) var(--ease-sheet);
+  transition: transform var(--dur-press) var(--ease-sheet);
 }
 
 /* FEAT-20260823-364 — the rungs the material can be rendered on.
@@ -316,6 +402,7 @@
     --glass-refract: transparent;
     --glass-filter: none;
     --glass-filter-strong: none;
+    --color-content: var(--color-paper);
   }
 }
 
@@ -333,6 +420,7 @@
   --glass-refract: transparent;
   --glass-filter: none;
   --glass-filter-strong: none;
+  --color-content: var(--color-paper);
 }
 
 /* FEAT-20260919-618 — the television pays less for the blur.
@@ -351,14 +439,19 @@
   }
 }
 
-/* The pointer highlight is part of the material, so it goes with it. */
+/* The pointer highlight is part of the material, so it goes with it. So does
+   the canvas (#93): with no material there is nothing for it to be seen
+   through, and the reader who asked for less transparency gets a flat
+   ground. */
 @media (prefers-reduced-transparency: reduce) {
-  .lit::before {
+  .lit::before,
+  .canvas {
     display: none;
   }
 }
 
-:root[data-material="flat"] .lit::before {
+:root[data-material="flat"] .lit::before,
+:root[data-material="flat"] .canvas {
   display: none;
 }
 

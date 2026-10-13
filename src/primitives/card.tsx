@@ -10,11 +10,15 @@ import { cn } from '../lib/cn';
  * it in dozens more. This is that, with the shades taken from the token
  * layer.
  *
+ * #93 — the default is `content`: the content surface (`surface-content` in
+ * `material.css`), near-opaque paper with a hairline and no grey fill. A card
+ * is content, and content is read; the glass material is for chrome. `raised`
+ * and `surface` stay for an application that wants the old flat grey panel.
+ *
  * `glass` is offered but is not the default, and that is on purpose. The
- * material only reads when there is content behind it, and a card usually sits
- * on the flat ground where it would be invisible. Reach for `glass` when the
- * card floats over artwork — the resume banner over a paused film, the quality
- * menu over the player — and for `raised` everywhere else.
+ * material only reads when there is something behind it. Reach for `glass`
+ * when the card floats over artwork or over the canvas as chrome — the resume
+ * banner over a paused film, the quality menu over the player.
  *
  * Never on a grid item. Fifty blurred surfaces in a catalogue is both the
  * cheap-looking version of this effect and the one that costs the television
@@ -24,6 +28,8 @@ const card = tv({
   base: 'rounded-surface',
   variants: {
     variant: {
+      /** Near-opaque paper with a hairline: the content surface (#93). */
+      content: 'surface-content',
       raised: 'bg-raised border border-line',
       surface: 'bg-surface border border-line',
       glass: 'glass',
@@ -38,7 +44,7 @@ const card = tv({
     },
   },
   defaultVariants: {
-    variant: 'raised',
+    variant: 'content',
     pad: 'md',
   },
 });

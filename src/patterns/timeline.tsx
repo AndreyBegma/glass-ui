@@ -30,6 +30,12 @@ export type TimelineItem = {
   /** A link when set; a button when `onSelect` is set; plain otherwise. */
   href?: string;
   onSelect?: () => void;
+  /**
+   * Secondary controls (a link chip, a button) at the row's end. Rendered as a
+   * sibling of the row's `<a>` / `<button>`, never inside it, so an `href` row can
+   * carry its own links without nesting anchors. Tab order: the row, then the actions.
+   */
+  actions?: ReactNode;
 };
 
 export type TimelineProps = {
@@ -99,7 +105,9 @@ function group(items: TimelineItem[]): Group[] {
 
 const ROW =
   'flex w-full min-h-(--size-row) items-start gap-3 rounded-control px-2 py-2 text-start pointer-coarse:min-h-(--size-tap)';
-const PRESSABLE = 'cursor-pointer hover:bg-hover';
+// The row shares the `li` with a sibling actions slot, so it fills what the actions leave.
+const ROW_FILL = 'min-w-0 flex-1';
+const PRESSABLE ='cursor-pointer hover:bg-hover';
 
 function ItemBody({
   item,
@@ -182,20 +190,32 @@ export function Timeline({
             </h3>
             <ol className="flex flex-col">
               {g.items.map(({ item, at }) => (
-                <li key={item.id} className="rounded-control bg-raised">
+                <li key={item.id} className="flex items-start rounded-control bg-raised">
                   {item.href ? (
-                    <a href={item.href} className={cn(ROW, PRESSABLE)}>
+                    <a href={item.href} className={cn(ROW, PRESSABLE, ROW_FILL)}>
                       <ItemBody item={item} at={at} formatTime={formatTime} />
                     </a>
                   ) : item.onSelect ? (
-                    <button type="button" onClick={item.onSelect} className={cn(ROW, PRESSABLE)}>
+                    <button
+                      type="button"
+                      onClick={item.onSelect}
+                      className={cn(ROW, PRESSABLE, ROW_FILL)}
+                    >
                       <ItemBody item={item} at={at} formatTime={formatTime} />
                     </button>
                   ) : (
-                    <div className={ROW}>
+                    <div className={cn(ROW, ROW_FILL)}>
                       <ItemBody item={item} at={at} formatTime={formatTime} />
                     </div>
                   )}
+                  {item.actions ? (
+                    <div
+                      data-timeline-actions
+                      className="flex shrink-0 items-center gap-1.5 py-2 pe-2 pointer-coarse:min-h-(--size-tap)"
+                    >
+                      {item.actions}
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ol>

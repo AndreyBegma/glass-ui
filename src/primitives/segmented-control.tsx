@@ -84,8 +84,23 @@ import { cn } from '../lib/cn';
  * #93 — the selection is the accent: the travelling capsule is
  * `bg-accent-soft` and the active item's text `text-accent-ink`, which a
  * child that sets no colour of its own inherits.
+ *
+ * #130 — `size="sm"`: a control that sits in a toolbar beside a `Select`.
+ * The UX review found the switch a few pixels taller than the field next to
+ * it, because the shell's height was its padding plus whatever the caller's
+ * button happened to be. `sm` fixes the shell at `--size-control` (28px under
+ * the desk profile, where it equals `--size-field`, so it is flush with a
+ * `Select`) with a 2px inset, and makes each item a flex box so the caller's
+ * button stretches to the height instead of choosing one. Under the sofa
+ * profile `--size-control` is 40px — `Button md`'s height — while a field is
+ * 44px; the issue names the control token, and a toolbar's buttons are what
+ * the switch lines up with there. A child under `sm` must not carry its own
+ * `min-h` (a tap-sized `min-h-(--size-tap)` would overflow the shell); it
+ * stays on `md`. `md` is the default, and its strings are unchanged.
  */
 type SegmentedControlVariant = 'glass' | 'on-glass';
+
+type SegmentedControlSize = 'sm' | 'md';
 
 /**
  * @deprecated FEAT-20260919-624 — `surface` is `glass`; the opaque well is
@@ -107,17 +122,25 @@ interface SegmentedControlProps {
    * as the old name for the default.
    */
   variant?: SegmentedControlVariant | DeprecatedSegmentedControlVariant;
+  /**
+   * #130 — `md` (default) is the shell's padding around the caller's
+   * button; `sm` pins the shell to `--size-control`, so it lines up with a
+   * `Select` in a desk toolbar.
+   */
+  size?: SegmentedControlSize;
 }
 
 interface SegmentedControlShape {
   /** The wrapper is a `<div>` in a role, so the items are `<div>`s too. */
   listless: boolean;
   variant: SegmentedControlVariant;
+  size: SegmentedControlSize;
 }
 
 const SegmentedControlContext = createContext<SegmentedControlShape>({
   listless: false,
   variant: 'glass',
+  size: 'md',
 });
 
 const WRAPPER_CLASSES: Record<SegmentedControlVariant, string> = {
@@ -129,6 +152,16 @@ const CAPSULE_CLASSES: Record<SegmentedControlVariant, string> = {
   glass: 'absolute inset-0 rounded-full bg-accent-soft',
   'on-glass':
     'absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-accent-soft',
+};
+
+/** #130 — the `sm` shell: control height, a 2px inset in place of 4px. */
+const SM_WRAPPER_CLASSES = 'h-(--size-control) p-0.5';
+
+/** #130 — the inset is 2px, so the `on-glass` capsule's radius steps in by 2. */
+const SM_CAPSULE_CLASSES: Record<SegmentedControlVariant, string> = {
+  glass: CAPSULE_CLASSES.glass,
+  'on-glass':
+    'absolute inset-0 rounded-[calc(var(--radius-control)-2px)] bg-accent-soft',
 };
 
 /** The one place the old name is spelt: everything past it knows two variants. */
@@ -143,15 +176,22 @@ export function SegmentedControl({
   className,
   role,
   variant: requested = 'glass',
+  size = 'md',
   ...props
 }: SegmentedControlProps) {
   const Wrapper = role ? 'div' : 'ul';
   const variant = resolveVariant(requested);
   return (
-    <SegmentedControlContext.Provider value={{ listless: !!role, variant }}>
+    <SegmentedControlContext.Provider
+      value={{ listless: !!role, variant, size }}
+    >
       <Wrapper
         role={role}
-        className={cn(WRAPPER_CLASSES[variant], className)}
+        className={cn(
+          WRAPPER_CLASSES[variant],
+          size === 'sm' && SM_WRAPPER_CLASSES,
+          className,
+        )}
         {...props}
       >
         {children}
@@ -180,12 +220,13 @@ export function SegmentedControlItem({
   className,
 }: SegmentedControlItemProps) {
   const reduced = useReducedMotion();
-  const { listless, variant } = useContext(SegmentedControlContext);
+  const { listless, variant, size } = useContext(SegmentedControlContext);
   const Item = listless ? 'div' : 'li';
   return (
     <Item
       className={cn(
         'relative min-w-max flex-1',
+        size === 'sm' && 'flex',
         active && 'text-accent-ink',
         className,
       )}
@@ -193,7 +234,11 @@ export function SegmentedControlItem({
       {active ? (
         <motion.span
           layoutId={layoutId}
-          className={CAPSULE_CLASSES[variant]}
+          className={
+            size === 'sm'
+              ? SM_CAPSULE_CLASSES[variant]
+              : CAPSULE_CLASSES[variant]
+          }
           transition={
             reduced
               ? { duration: 0 }

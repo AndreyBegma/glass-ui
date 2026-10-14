@@ -236,6 +236,77 @@ describe('SegmentedControl', () => {
     expect(container.querySelectorAll('li > span').length).toBe(1);
   });
 
+  // #130 — `sm` sits flush with a `Select` in a desk toolbar: the shell is
+  // pinned to `--size-control` with a 2px inset, and each item is a flex box
+  // so the caller's button stretches to that height.
+  test('`size="sm"` pins the shell to the control height and stretches the items', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View" size="sm">
+        <SegmentedControlItem active layoutId="view-sm">
+          Day
+        </SegmentedControlItem>
+        <SegmentedControlItem active={false} layoutId="view-sm">
+          Week
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const classes = Array.from(container.querySelector('ul')?.classList ?? []);
+    expect(classes).toContain('h-(--size-control)');
+    expect(classes).toContain('p-0.5');
+    expect(classes).not.toContain('p-1');
+    expect(classes).toContain('glass');
+    const items = Array.from(container.querySelectorAll('li'));
+    expect(items.every((li) => li.classList.contains('flex'))).toBe(true);
+    expect(container.querySelector('li > span')?.className).toBe(
+      'absolute inset-0 rounded-full bg-accent-soft',
+    );
+  });
+
+  test('`size="sm"` steps the on-glass capsule radius in with the 2px inset', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View" size="sm" variant="on-glass">
+        <SegmentedControlItem active layoutId="view-sm-on-glass">
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    expect(container.querySelector('ul')?.className).toBe(
+      'flex gap-1 rounded-control border border-line h-(--size-control) p-0.5',
+    );
+    expect(container.querySelector('li > span')?.className).toBe(
+      'absolute inset-0 rounded-[calc(var(--radius-control)-2px)] bg-accent-soft',
+    );
+  });
+
+  test('`size="md"` renders exactly what no size renders', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="View" size="md">
+        <SegmentedControlItem active layoutId="view-md">
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    expect(container.querySelector('ul')?.className).toBe(
+      'flex min-w-max gap-1 rounded-full glass p-1',
+    );
+    expect(container.querySelector('li')?.className).toBe(
+      'relative min-w-max flex-1 text-accent-ink',
+    );
+    expect(container.querySelector('ul')?.hasAttribute('size')).toBe(false);
+  });
+
+  test('the size follows the items down the `role` passthrough', () => {
+    const { container } = render(
+      <SegmentedControl role="group" aria-label="View" size="sm">
+        <SegmentedControlItem active={false} layoutId="view-sm-div">
+          Day
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    const item = container.querySelector('[role="group"] > div');
+    expect(item?.classList.contains('flex')).toBe(true);
+  });
+
   test('the className follows the item down the `role` passthrough onto the div', () => {
     const { container } = render(
       <SegmentedControl role="presentation">

@@ -104,7 +104,16 @@ export {
  * were built in parallel worktrees, and keeping additions at the end is what
  * lets a merge conflict resolve as "keep both" rather than a judgment call.
  */
-export { Tabs, TabsItem } from './primitives/tabs';
+export {
+  NavTab,
+  NavTabs,
+  Tab,
+  TabGroup,
+  TabList,
+  TabPanel,
+  Tabs,
+  TabsItem,
+} from './primitives/tabs';
 export { Badge } from './primitives/badge';
 export { Progress } from './primitives/progress';
 export { Table, TableCell, TableHead, TableRow } from './primitives/table';

@@ -836,6 +836,56 @@ the material's utilities is on its wrapper. The field family's `surface`
 tone is unchanged by FEAT-624 — a field's opaque fill on the flat ground is
 still the honest one.
 
+`SegmentedControl` takes `size: 'sm' | 'md'` (#130), and `md` is the default
+and renders what it always did. `sm` is for a toolbar: the shell is pinned to
+`--size-control` with a 2px inset, and each item is a flex box so the caller's
+button stretches to that height rather than choosing one. Under the desk
+profile `--size-control` and `--size-field` are both 28px, so `sm` is flush
+with a `Select`; under sofa it is 40px, `Button md`'s height. A child under
+`sm` must not set its own `min-h` — a tap-sized `min-h-(--size-tap)` stays on
+`md`.
+
+**Tabs (#130).** `@andrewbehma/glass-ui/tabs` has two shapes, and which one is
+a question about what a click does:
+
+- **Panels on the same page** — `TabGroup` / `TabList` / `Tab` / `TabPanel`,
+  the WAI-ARIA Tabs pattern. `TabGroup` holds the controlled `value` /
+  `onValueChange` and an id base (`useId()` unless `id` is given) and renders
+  nothing; the tab and panel ids, `aria-controls` and `aria-labelledby` are
+  derived, so the caller writes none of them. One Tab stop (a roving
+  tabindex on the selected tab); Left/Right move focus and wrap, Home/End go
+  to the ends, a `disabled` tab (`aria-disabled`) is passed over. Activation
+  is **manual** — Enter, Space or a click selects, the arrows only move
+  focus — because a consumer that writes `?tab=` to the URL would otherwise
+  push a history entry for every tab the arrow passes. A hidden `TabPanel`
+  keeps its element, so `aria-controls` never dangles, but not its children
+  unless `keepMounted`.
+- **Destinations** — `NavTabs` / `NavTab`: a `<nav>` landmark of links, and
+  the component sets `aria-current="page"` on the `current` one. The anchor
+  is the consumer's, through the same `link: NavLinkRender` function
+  `NavRail` and `BottomCapsule` take; without one it is a plain `<a>`.
+
+```tsx
+<TabGroup value={tab} onValueChange={setTab}>
+  <TabList aria-label="Project settings">
+    <Tab value="general">General</Tab>
+    <Tab value="members">Members</Tab>
+  </TabList>
+  <TabPanel value="general">…</TabPanel>
+  <TabPanel value="members">…</TabPanel>
+</TabGroup>
+
+<NavTabs aria-label="Project" link={(p) => <Link {...p} />}>
+  <NavTab href="/queue" current={path === '/queue'}>Queue</NavTab>
+  <NavTab href="/fleet" current={path === '/fleet'}>Fleet</NavTab>
+</NavTabs>
+```
+
+Both draw `Tabs`' well and capsule, so moving a screen over changes its
+semantics, not its pixels. `Tabs` / `TabsItem` keep rendering exactly what
+they did and are `@deprecated`: filled with `aria-pressed` buttons, as every
+AgentDock screen did, they read as a row of toggles.
+
 `SheetContent` and `DialogContent` take `container` (FEAT-20260919-621), the
 `MenuContent` shape: the element the Radix portal renders into, `document.body`
 unless given. It exists for one place — a player in element fullscreen draws

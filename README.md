@@ -1201,6 +1201,36 @@ A `Chart` tooltip is its own readout in the popover material (`glass-strong`). A
 about 5 000 points per series render as SVG; above that the chart down-samples
 and says so in the table caption.
 
+## Controls (0.24.0)
+
+### Select
+
+`Select` is a native `<select>` drawn by the package: `appearance-none`, a caret in `ink-3`, the field's border, radius and focus ring. The keyboard, the option list and the screen reader are the browser's. Import it from `@andrewbehma/glass-ui/select` (or `/field`, or the root); `className` lands on the `<select>` itself, and `tone="on-glass"` works as it does for `Input`. Under forced colours the platform control comes back.
+
+### DateInput
+
+`DateInput` is `Input` with `type="date" | "time" | "datetime-local"`. Digits are `tabular-nums`; in Chromium the picker glyph is toned down to the caret's weight and the inner padding removed. It keeps its intrinsic width — give it a track wide enough for its value.
+
+### SegmentedControl — sizing and selection
+
+A segment is never narrower than its label (`min-w-max flex-1`): it grows to fit and still shares spare width. The glass pill encloses its segments; if it is wider than its column it overflows the column — wrap it in a horizontally scrolling container if that can happen. The selected segment is `bg-accent-soft` with `text-accent-ink`, which a child that sets no colour of its own inherits. `className="flex-none"` still opts a segment out of sharing spare width.
+
+### CodeBlock — chrome only when it holds something
+
+A one-line `code` (a trailing newline does not count) has no wrap toggle. With no `language` and no toggle there is no header bar; the copy button floats in the top-right corner.
+
+### TabBar
+
+`TabBar` is the bottom tab bar for phones: a glass strip pinned to the bottom edge, full width, up to five `items` plus an optional `more` that opens a bottom sheet. The active item (`active: true`, rendered with `aria-current="page"`) is the accent: an `accent-soft` pill behind its icon and `accent-ink` text. The home-indicator inset is inside the bar and in the spacer it renders above itself. Items with `href` render through `link` (see `NavLinkRender`); items without render a `button` and call `onSelect`. It holds no state. It sets no breakpoint — hide it at the call site (`className="lg:hidden"`). Choose `BottomCapsule` for a floating capsule with an action button; choose `TabBar` for an application shell.
+
+### Chart — sparse buckets
+
+Send every bucket. The chart cannot know your bucket size: a missing day is not a gap, it is interpolated across by an area or a line. Send `0` for an empty day, or `null` to break the line. Bars are capped at 40 px per x, and a time axis with bars spans at least seven steps, so one or two buckets render as bars on a readable axis rather than as a block.
+
+### Sparkline
+
+The default `tone` is `accent`. `tone="neutral"` is the old `ink-2`.
+
 ## File input
 
 `#110`. A drop zone, an upload hook and an upload row, built neutral so the

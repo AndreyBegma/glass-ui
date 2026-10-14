@@ -200,6 +200,11 @@ export {
  */
 export { Combobox, type ComboboxOption, type ComboboxProps } from './primitives/combobox';
 export { InlineEdit } from './primitives/inline-edit';
+export { PageHeader, type PageHeaderProps } from './patterns/page-header';
+export {
+  SectionHeader,
+  type SectionHeaderProps,
+} from './patterns/section-header';
 export { Toolbar, type ToolbarProps } from './patterns/toolbar';
 
 /**

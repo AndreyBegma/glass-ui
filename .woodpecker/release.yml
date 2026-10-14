@@ -115,9 +115,11 @@ steps:
           npm publish --dry-run --ignore-scripts --tag "$${npm_tag}"
           exit 0
         fi
+      # publish.sh treats the registry's 409 ("cannot publish over") as
+      # published: `npm view` above can lag a publish by seconds (pipeline 75).
       - |
         if [ "$${publish}" = yes ]; then
-          npm publish --ignore-scripts --tag "$${npm_tag}"
+          sh scripts/release/publish.sh "$${npm_tag}"
         else
           echo "$${name}@$${version} is already published"
         fi
@@ -131,8 +133,9 @@ steps:
   # already published) and that has no tag yet. It decides from .release/decision,
   # never from `npm view` (#121). Needs github_token: a token with contents:write on this repository, in a
   # secret restricted to the push event. Without it the step says so and passes.
-  # The tag it pushes starts the tag pipeline, which finds the version on npm
-  # and publishes nothing.
+  # The tag it pushes starts the tag pipeline. That one usually finds the
+  # version on npm and publishes nothing; when the registry still lags it tries
+  # to publish, gets a 409, and publish.sh passes it.
   - name: tag
     image: *node_image
     when:

@@ -1279,6 +1279,8 @@ The tag push still works and is idempotent. Pushing `vX.Y.Z` yourself checks the
 tag against `package.json` (a mismatch fails before anything is built) and
 publishes that version; a version that is already on npm passes without
 publishing again, which is also what the tag the pipeline pushes itself does.
+When the registry has not caught up with a publish yet, the tag pipeline tries
+again and gets a 409; `scripts/release/publish.sh` treats that as published.
 
 **Maint lines never take `latest`.** A push to a `maint/*` branch (for example
 `maint/v0.8`), or any version below the current `latest`, is published with

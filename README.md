@@ -697,7 +697,8 @@ with the same capsule, the same rail and the same palette.
 | Import | What it is |
 |---|---|
 | `@andrewbehma/glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
-| `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. |
+| `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. Its first scroll to the active item moves the rail's own `scrollTop` and never focus, so the first Tab after a load still reaches the page's skip link (#130). |
+| `@andrewbehma/glass-ui/tab-bar` | `TabBar` — the edge-to-edge bottom bar for a phone shell: up to five places and a `More` sheet. Items take the rail's `badge` (a count or a dot on the glyph, spoken after the label; #130). |
 | `@andrewbehma/glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
 | `@andrewbehma/glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
 | `@andrewbehma/glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
@@ -992,7 +993,7 @@ the controls a list of records needs and the package did not have.
 | `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
 | `@andrewbehma/glass-ui/page-header` | `PageHeader` — the page's one header: eyebrow, 28 px h1, a `status` beside it, description, a `meta` counter row and `actions` on the right (wrapping below the title at full width under `sm`). Put `<MetaBar counters={…} />` (no `title`) in `meta`; `MetaBar`'s own 20 px h1 is deprecated. No back link — that is the breadcrumb's job. |
 | `@andrewbehma/glass-ui/section-header` | `SectionHeader` — the heading of one section: a 16/600 `h2`, an optional description and an actions slot on the right. |
-| `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
+| `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. Optionally (#130): `activeFilters` + `onClearAll` draw removable chips under the bar, and `collapseBelow` folds `filters` into one "Filters (n)" button and a bottom `Sheet`. |
 | `@andrewbehma/glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
 | `@andrewbehma/glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
 
@@ -1028,7 +1029,22 @@ Three more, one per remaining component.
 **`Toolbar` holds no state about the collection either.** What a view *means*,
 which filters are active, what the trailing action does are all the
 application's — `Toolbar` is layout and slots, the same contract `BottomCapsule`
-and `NavRail` keep for the shell.
+and `NavRail` keep for the shell. Its `activeFilters` (#130) follow the same
+rule: the bar draws the label it is handed and calls `onRemove`; what removing
+a filter means is still the application's.
+
+**`EmptyState`'s action can be data** (#130): `{ label, onClick }` renders a
+glass `Button`, and `{ label, href }` renders a link styled with
+`buttonClassName()`, through the `link` render prop when one is given. A
+`ReactNode` action still renders as given.
+
+```tsx
+<EmptyState
+  title="No budgets yet"
+  action={{ label: 'New budget', onClick: () => setEditing('new') }}
+/>
+<EmptyState title="Nothing queued" link={renderLink} action={{ label: 'Open sessions', href: '/sessions' }} />
+```
 
 **`Combobox`'s keyboard model is `CommandPalette`'s, not `MenuContent`'s.**
 Inside a listbox the keyboard stays on the field and moves the highlight

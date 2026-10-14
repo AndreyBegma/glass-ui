@@ -132,3 +132,35 @@ describe('TabBar', () => {
     );
   });
 });
+
+describe('item badge (issue 130)', () => {
+  const withBadge = (badge: TabBarItem['badge']): TabBarItem[] =>
+    items('inbox').map((item) => (item.id === 'tasks' ? { ...item, badge } : item));
+
+  test('a count rides the glyph and is spoken after the label', () => {
+    render(
+      <TabBar
+        aria-label="Main"
+        link={link}
+        items={withBadge({ count: 3, tone: 'warn', label: '3 waiting approvals' })}
+      />,
+    );
+    const tasks = screen.getByRole('link', { name: 'Tasks 3 waiting approvals' });
+    const hidden = Array.from(tasks.querySelectorAll('[aria-hidden="true"]'));
+    expect(hidden.map((el) => el.textContent)).toContain('3');
+  });
+
+  test('without a label the count itself is spoken', () => {
+    render(<TabBar aria-label="Main" link={link} items={withBadge({ count: 120 })} />);
+    expect(screen.getByRole('link', { name: 'Tasks 120' })).toBeDefined();
+  });
+
+  test('a zero count draws nothing', () => {
+    const { container } = render(
+      <TabBar aria-label="Main" link={link} items={withBadge({ count: 0 })} />,
+    );
+    const plain = render(<TabBar aria-label="Main" link={link} items={items('inbox')} />);
+    expect(screen.getAllByRole('link', { name: 'Tasks' })).toHaveLength(2);
+    expect(container.innerHTML).toBe(plain.container.innerHTML);
+  });
+});

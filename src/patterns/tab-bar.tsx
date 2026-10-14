@@ -7,6 +7,7 @@ import { cn } from '../lib/cn';
 import { SheetContent, SheetRoot } from '../primitives/sheet';
 import { SPRINGS } from '../primitives/springs';
 import type { NavLinkRender } from './nav-link';
+import { hasBadge, type RailBadge, RailBadgeMark, RailBadgeSpeech } from './nav-rail-parts';
 
 /**
  * #93 — the bottom tab bar: a glass strip pinned to the bottom edge of a
@@ -46,6 +47,12 @@ export interface TabBarItem {
   href?: string;
   active?: boolean;
   onSelect?: () => void;
+  /**
+   * #130 — a count or a dot on the glyph: waiting approvals, unread mail. The
+   * rail's own `RailBadge`, so a place that carries a badge in `NavRail` on a
+   * laptop carries the same one here on a phone. A zero count draws nothing.
+   */
+  badge?: RailBadge;
 }
 
 export interface TabBarMore {
@@ -96,7 +103,7 @@ export function TabBar({
   const reduced = useReducedMotion();
   const moreSelected = Boolean(more?.open);
 
-  const glyph = (Icon: LucideIcon, selected: boolean) => (
+  const glyph = (Icon: LucideIcon, selected: boolean, badge?: RailBadge) => (
     <span className="relative flex h-7 w-12 items-center justify-center">
       {selected ? (
         <motion.span
@@ -107,7 +114,15 @@ export function TabBar({
           transition={reduced ? SPRINGS.reduced : SPRINGS.capsule}
         />
       ) : null}
-      <Icon size={20} aria-hidden="true" className="relative" />
+      {hasBadge(badge) ? (
+        // The mark pins to the glyph's own corner, not the 48 px pill's.
+        <span className="relative flex">
+          <Icon size={20} aria-hidden="true" />
+          <RailBadgeMark badge={badge} placement="corner" />
+        </span>
+      ) : (
+        <Icon size={20} aria-hidden="true" className="relative" />
+      )}
     </span>
   );
 
@@ -136,8 +151,9 @@ export function TabBar({
           const itemClass = cn(ITEM, tone(selected));
           const inner = (
             <>
-              {glyph(item.icon, selected)}
+              {glyph(item.icon, selected, item.badge)}
               <span className="max-w-full truncate">{item.label}</span>
+              {hasBadge(item.badge) ? <RailBadgeSpeech badge={item.badge} /> : null}
             </>
           );
 

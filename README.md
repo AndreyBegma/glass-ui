@@ -698,7 +698,7 @@ with the same capsule, the same rail and the same palette.
 |---|---|
 | `@andrewbehma/glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
 | `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. Its first scroll to the active item moves the rail's own `scrollTop` and never focus, so the first Tab after a load still reaches the page's skip link (#130). |
-| `@andrewbehma/glass-ui/tab-bar` | `TabBar` — the edge-to-edge bottom bar for a phone shell: up to five places and a `More` sheet. Items take the rail's `badge` (a count or a dot on the glyph, spoken after the label; #130). |
+| `@andrewbehma/glass-ui/tab-bar` | `TabBar` — the edge-to-edge bottom bar for a phone shell: up to five places and a `More` sheet. Items take the rail's `badge` (a count or a dot on the glyph, spoken after the label; #130). From six slots (five places plus `More`) the label steps down to 10 px and wraps to a second line rather than truncating, so 9-character labels such as "Approvals" fit at 375 px; the accessible name is always the full label (#137). |
 | `@andrewbehma/glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
 | `@andrewbehma/glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
 | `@andrewbehma/glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |

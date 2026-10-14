@@ -454,6 +454,10 @@ a node. Each hue has five tokens:
   badge it is the tint and its ink.
   - On `NodeCard` the hue beats the status for the card's edge, and the status
     is then shown by the pill alone.
+  - The `NodeCard` progress fill takes the pill's status colour
+    (`running` … `error`), in both themes, at 3:1 or better against its track.
+    An `idle` or status-less card fills in `ink-2`, never `ink`. Cover per-status
+    behaviour in `node-card.test.tsx`; there is no story system here.
   - `FlowNode` and `SankeyNode` take `hue` too.
 - **Edges.** A FlowGraph edge takes, in this order: `edge.tone`, the target's
   status, the source's hue, then neutral. A Sankey link takes its source's hue,

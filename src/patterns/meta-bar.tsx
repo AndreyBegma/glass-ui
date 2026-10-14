@@ -24,6 +24,17 @@ import { NODE_TILE, type NodeCardColor } from './node-card-tile';
  * it down when the bar heads a panel instead. The actions slot is the
  * caller's: a primary `Button`, icon buttons, a view `Menu`. On a narrow
  * screen the actions wrap under the title rather than squeezing it.
+ *
+ * **In `PageHeader`'s `meta` slot, leave `title` out (#130).** Without a
+ * `title` the bar is just its counters — a plain `div`, no header landmark and
+ * no second h1 — so `<PageHeader title="Agent Fleet" meta={<MetaBar
+ * counters={…} />} />` gives one page header with the counters under it.
+ * `icon`, `color`, `status`, `description`, `actions` and `headingLevel` belong
+ * to the titled bar and are ignored in this mode.
+ *
+ * **Deprecated: the titled bar's own 20 px h1** (#130). Use `PageHeader` — 28
+ * px, the app's one page-header shape — and put the counters in its `meta`
+ * slot. The titled bar keeps working unchanged; nothing is removed.
  */
 export interface MetaBarCounter {
   id?: string;
@@ -37,7 +48,11 @@ export interface MetaBarCounter {
 
 export interface MetaBarProps
   extends Omit<ComponentProps<'header'>, 'title' | 'className' | 'children'> {
-  title: ReactNode;
+  /**
+   * The bar's heading. Omit it to render only the counters, for
+   * `PageHeader`'s `meta` slot (#130).
+   */
+  title?: ReactNode;
   icon?: LucideIcon;
   /** The tile's colour, as `NodeCard`'s. Default `neutral`. */
   color?: NodeCardColor;
@@ -67,6 +82,44 @@ export function MetaBar({
   ...props
 }: MetaBarProps) {
   const Heading = `h${headingLevel}` as const;
+  const counterLine = counters?.length ? (
+    <p
+      data-meta-counters
+      className="flex flex-wrap items-center gap-x-2 text-xs text-ink-2"
+    >
+      {counters.map((counter, index) => (
+        <Fragment key={counter.id ?? counter.label}>
+          {index > 0 ? (
+            <span aria-hidden="true" data-meta-separator className="text-ink-3">
+              /
+            </span>
+          ) : null}
+          <span data-meta-counter className="whitespace-nowrap">
+            <span
+              className={cn(
+                'font-semibold tabular-nums',
+                counter.tone ? statusTone(counter.tone).text : 'text-ink',
+              )}
+            >
+              {counter.value}
+            </span>{' '}
+            {counter.label}
+          </span>
+        </Fragment>
+      ))}
+    </p>
+  ) : null;
+  if (title === undefined || title === null) {
+    return (
+      <div
+        data-meta-bar
+        className={cn('min-w-0', className)}
+        {...(props as ComponentProps<'div'>)}
+      >
+        {counterLine}
+      </div>
+    );
+  }
   return (
     <header
       data-meta-bar
@@ -101,39 +154,7 @@ export function MetaBar({
           {description ? (
             <p className="text-[13px] leading-5 text-ink-2">{description}</p>
           ) : null}
-          {counters?.length ? (
-            <p
-              data-meta-counters
-              className="flex flex-wrap items-center gap-x-2 text-xs text-ink-2"
-            >
-              {counters.map((counter, index) => (
-                <Fragment key={counter.id ?? counter.label}>
-                  {index > 0 ? (
-                    <span
-                      aria-hidden="true"
-                      data-meta-separator
-                      className="text-ink-3"
-                    >
-                      /
-                    </span>
-                  ) : null}
-                  <span data-meta-counter className="whitespace-nowrap">
-                    <span
-                      className={cn(
-                        'font-semibold tabular-nums',
-                        counter.tone
-                          ? statusTone(counter.tone).text
-                          : 'text-ink',
-                      )}
-                    >
-                      {counter.value}
-                    </span>{' '}
-                    {counter.label}
-                  </span>
-                </Fragment>
-              ))}
-            </p>
-          ) : null}
+          {counterLine}
         </div>
       </div>
       {actions ? (

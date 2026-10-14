@@ -537,3 +537,32 @@
     --glass-refract: transparent;
   }
 }
+
+/* Under navy a control is not chrome.
+ *
+ * `Button`'s `glass` variant wears the full material: a scrim, a sheen, the
+ * rim, the meniscus, the refraction and a 32px drop shadow. On Luna Watch it
+ * sits over artwork and that is the point. Under `data-palette="navy"` it sits
+ * on a glass rail or a flat navy ground — glass on glass, which the note over
+ * `glass` calls mud — and the stack reads as a grey bevelled pill against the
+ * blue around it.
+ *
+ * So the control rung re-values the material's tokens on the control itself,
+ * for navy only: the opaque `--color-raised` fill a `Card raised` or a
+ * `StatTile` has, the palette's own `--color-line-strong` hairline, a faint top
+ * highlight, and no rim, meniscus, refraction, blur or shadow. `glass-hover`
+ * still lays `--color-hover` over it. The fill is opaque, so the three flat
+ * routes above have nothing left to flatten here. Without navy the class
+ * changes nothing, and Denitsa and Luna Watch stay as they are. */
+:root[data-palette="navy"] .glass-control {
+  --glass-scrim: var(--color-raised);
+  --glass-sheen: transparent;
+  --glass-edge: var(--color-line-strong);
+  --glass-spec: color-mix(in oklab, white 5%, transparent);
+  --glass-rim: transparent;
+  --glass-rim-shade: transparent;
+  --glass-meniscus: transparent;
+  --glass-refract: transparent;
+  --glass-shadow: transparent;
+  --glass-filter: none;
+}

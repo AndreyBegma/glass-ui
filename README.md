@@ -314,6 +314,13 @@ token layer without either being able to move the other.
 | `data-accent` | the indigo accent | a preset name: `amber` | the four accent tokens and the focus ring, and nothing else |
 | `data-palette` | the neutral near-black / white surfaces | a palette name: `navy` | the surface family, the hairlines' colour, the scrim and the canvas aurora, and nothing else |
 
+Under `navy` the `glass` button is a control, not chrome: `Button`'s `glass`
+variant carries `glass-control`, which re-values the material on the button
+to the opaque `--color-raised` fill, the `--color-line-strong` hairline and a
+faint top highlight — no rim, meniscus, blur or shadow. On a navy rail or
+ground the full material read as a grey bevelled pill. Without `navy` the
+class changes nothing.
+
 `data-scale="desk"` is Denitsa's. Luna Watch never sets it and is therefore
 untouched by everything under it — structurally, not by agreement.
 `tokens.spec.ts` holds every token in the base set to `tokens.baseline.json`

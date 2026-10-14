@@ -72,3 +72,56 @@ describe('Button reads the density scale', () => {
     expect(tokenValue(DESK, '--size-control')).toBe('28px');
   });
 });
+
+/**
+ * Under navy a control is not chrome. The `glass` variant carries
+ * `glass-control`, and `material.css` re-values the material on it for navy
+ * only: an opaque raised fill, the palette's hairline, and no blur, rim,
+ * meniscus, refraction or shadow. The other variants never wear it.
+ */
+const MATERIAL_CSS = readFileSync(
+  join(new URL('.', import.meta.url).pathname, '..', 'material.css'),
+  'utf8',
+).replace(/\/\*[\s\S]*?\*\//g, ' ');
+
+function materialBlock(marker: string): string {
+  const at = MATERIAL_CSS.indexOf(marker);
+  if (at < 0) throw new Error(`material.css no longer contains \`${marker}\``);
+  const open = MATERIAL_CSS.indexOf('{', at);
+  const close = MATERIAL_CSS.indexOf('}', open);
+  return MATERIAL_CSS.slice(open + 1, close);
+}
+
+describe('the glass button under navy', () => {
+  test('the glass variant, and only it, carries the control rung', () => {
+    render(
+      <>
+        <Button>Default</Button>
+        <Button variant="solid">Solid</Button>
+        <Button variant="ghost">Ghost</Button>
+        <Button variant="danger">Danger</Button>
+      </>,
+    );
+    expect(screen.getByRole('button', { name: 'Default' }).className).toContain('glass-control');
+    for (const name of ['Solid', 'Ghost', 'Danger']) {
+      expect(screen.getByRole('button', { name }).className).not.toContain('glass-control');
+    }
+  });
+
+  test('navy flattens it to a raised fill with the palette hairline', () => {
+    const body = materialBlock(':root[data-palette="navy"] .glass-control');
+    expect(tokenValue(body, '--glass-scrim')).toBe('var(--color-raised)');
+    expect(tokenValue(body, '--glass-edge')).toBe('var(--color-line-strong)');
+    expect(tokenValue(body, '--glass-filter')).toBe('none');
+    for (const layer of ['sheen', 'rim', 'rim-shade', 'meniscus', 'refract', 'shadow']) {
+      expect(tokenValue(body, `--glass-${layer}`)).toBe('transparent');
+    }
+  });
+
+  test('outside navy the class re-values nothing', () => {
+    const selectors = [...MATERIAL_CSS.matchAll(/([^{}]*)\.glass-control[^{]*\{/g)].map((m) =>
+      m[1].trim(),
+    );
+    expect(selectors).toEqual([':root[data-palette="navy"]']);
+  });
+});

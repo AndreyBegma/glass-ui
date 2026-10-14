@@ -52,7 +52,7 @@ const button = tv({
       solid:
         'bg-accent text-on-accent hover:bg-[color-mix(in_oklab,var(--color-accent)_88%,var(--color-on-accent))]',
       /** Everything alongside the primary. Needs content behind it to read. */
-      glass: 'glass text-ink glass-hover',
+      glass: 'glass glass-control text-ink glass-hover',
       /** Tertiary: toolbars, close buttons, anything that should recede. */
       ghost: 'text-ink-2 hover:text-ink hover:bg-hover',
       /** Destructive. Tinted rather than filled, so it warns without shouting. */

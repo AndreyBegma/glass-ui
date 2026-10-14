@@ -454,6 +454,10 @@ a node. Each hue has five tokens:
   badge it is the tint and its ink.
   - On `NodeCard` the hue beats the status for the card's edge, and the status
     is then shown by the pill alone.
+  - The `NodeCard` progress fill takes the pill's status colour
+    (`running` … `error`), in both themes, at 3:1 or better against its track.
+    An `idle` or status-less card fills in `ink-2`, never `ink`. Cover per-status
+    behaviour in `node-card.test.tsx`; there is no story system here.
   - `FlowNode` and `SankeyNode` take `hue` too.
 - **Edges.** A FlowGraph edge takes, in this order: `edge.tone`, the target's
   status, the source's hue, then neutral. A Sankey link takes its source's hue,
@@ -698,7 +702,7 @@ with the same capsule, the same rail and the same palette.
 |---|---|
 | `@andrewbehma/glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
 | `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. Its first scroll to the active item moves the rail's own `scrollTop` and never focus, so the first Tab after a load still reaches the page's skip link (#130). |
-| `@andrewbehma/glass-ui/tab-bar` | `TabBar` — the edge-to-edge bottom bar for a phone shell: up to five places and a `More` sheet. Items take the rail's `badge` (a count or a dot on the glyph, spoken after the label; #130). |
+| `@andrewbehma/glass-ui/tab-bar` | `TabBar` — the edge-to-edge bottom bar for a phone shell: up to five places and a `More` sheet. Items take the rail's `badge` (a count or a dot on the glyph, spoken after the label; #130). From six slots (five places plus `More`) the label steps down to 10 px and wraps to a second line rather than truncating, so 9-character labels such as "Approvals" fit at 375 px; the accessible name is always the full label (#137). |
 | `@andrewbehma/glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
 | `@andrewbehma/glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
 | `@andrewbehma/glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
@@ -1197,7 +1201,7 @@ behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
 | Import | What it is |
 |---|---|
 | `@andrewbehma/glass-ui/log-viewer` | `LogViewer` — a `role="log"` line viewer in `font-mono`: SGR-only ANSI colours mapped to tokens, fixed-height windowing, follow-tail with a "N new lines" pill, case-insensitive search and copy. Lines are `LogLine`s; the consumer owns the stream. Every string it renders is overridable through the optional `labels` prop (`LogViewerLabels`), with English defaults. |
-| `@andrewbehma/glass-ui/timeline` | `Timeline` — items grouped by local calendar day ("Today", "Yesterday" or a date), each a link, a button or plain; tone as a dot plus icon; a "N new" pill and a "Load more" button. `dayHeadingLevel` (default 3) sets the day headers' level so the feed slots under the page's headings; `loadMoreLabel` and `newLabel` override the two English strings. |
+| `@andrewbehma/glass-ui/timeline` | `Timeline` — items grouped by local calendar day ("Today", "Yesterday" or a date), each a link, a button or plain; tone as a dot plus icon; a "N new" pill and a "Load more" button. `dayHeadingLevel` (default 3) sets the day headers' level so the feed slots under the page's headings; `loadMoreLabel` and `newLabel` override the two English strings. An item's `actions` slot (e.g. a `#205` link chip) renders beside the row, outside its `<a>`/`<button>`, so an `href` row can carry its own links without nested anchors; tab order is the row, then its actions: `{ id, at, title, href: '/slots/1', actions: <a href={prUrl}>#205</a> }`. |
 | `@andrewbehma/glass-ui/banner` | `Banner` — an inline, full-width tinted notice in `info`, `ok`, `warn` or `danger`. `role="alert"` for `warn` / `danger`, `role="status"` for the others; optional dismiss. |
 | `@andrewbehma/glass-ui/split-pane` | `SplitPane` — two panes and a `role="separator"`, resizable by pointer or keyboard; the size persists under a required `storageKey`. |
 

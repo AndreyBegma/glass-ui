@@ -93,7 +93,42 @@ describe('NodeCard', () => {
     );
     const bar = screen.getByRole('progressbar');
     expect(bar.getAttribute('aria-valuenow')).toBe('32');
-    expect(bar.innerHTML).toContain('bg-warn');
+    expect(bar.innerHTML).toContain('bg-status-paused');
+  });
+
+  test.each([
+    ['running', 'bg-status-running'],
+    ['waiting', 'bg-status-waiting'],
+    ['paused', 'bg-status-paused'],
+    ['blocked', 'bg-status-blocked'],
+    ['done', 'bg-status-done'],
+    ['error', 'bg-status-error'],
+    ['idle', 'bg-ink-2'],
+  ] as const)('the %s progress fill is %s, never bg-ink', (status, cls) => {
+    const { container } = render(
+      <NodeCard
+        title="Ui"
+        status={status}
+        progress={{ value: 40, label: 'Progress' }}
+      />,
+    );
+    const fill = container.querySelector('[data-node-progress-fill]');
+    const classes = fill?.className.split(' ') ?? [];
+    expect(classes).toContain(cls);
+    expect(classes).not.toContain('bg-ink');
+  });
+
+  test('a card without a status draws the fill in ink-2, not ink', () => {
+    const { container } = render(
+      <NodeCard title="Ui" progress={{ value: 40, label: 'Progress' }} />,
+    );
+    const classes =
+      container.querySelector('[data-node-progress-fill]')?.className ?? '';
+    expect(classes.split(' ')).toContain('bg-ink-2');
+    expect(
+      (container.querySelector('[data-node-progress-fill]') as HTMLElement)
+        .style.width,
+    ).toBe('40%');
   });
 
   test('the footer renders above the stretched hit area', () => {

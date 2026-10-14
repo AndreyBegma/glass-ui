@@ -13,7 +13,6 @@ import {
   MenuRoot,
   MenuTrigger,
 } from '../primitives/menu';
-import { Progress } from '../primitives/progress';
 import { type Status, StatusPill, statusTone } from '../primitives/status-pill';
 import { NODE_TILE, type NodeCardColor } from './node-card-tile';
 
@@ -54,15 +53,6 @@ import { NODE_TILE, type NodeCardColor } from './node-card-tile';
  * types into it rather than selecting the card.
  */
 export type { NodeCardColor } from './node-card-tile';
-
-/** `Progress` speaks `Badge`'s four tones; a status maps onto them. */
-const PROGRESS_TONE = {
-  ok: 'ok',
-  warn: 'warn',
-  danger: 'danger',
-  info: 'neutral',
-  neutral: 'neutral',
-} as const;
 
 export interface NodeCardMeta {
   id?: string;
@@ -184,6 +174,11 @@ export function NodeCard({
   const compact = size === 'compact';
   const Heading = `h${headingLevel}` as const;
   const TagIcon = tag?.icon;
+  const progressMax = progress?.max ?? 100;
+  const progressPct =
+    progress && progressMax > 0
+      ? Math.min(100, Math.max(0, (progress.value / progressMax) * 100))
+      : 0;
 
   return (
     <article
@@ -319,13 +314,33 @@ export function NodeCard({
       ) : null}
 
       {progress ? (
-        <Progress
-          value={progress.value}
-          max={progress.max}
-          label={progress.label}
-          hint={progress.hint}
-          tone={tone ? PROGRESS_TONE[tone.tone] : 'neutral'}
-        />
+        <div data-node-progress className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="text-ink-2">{progress.label}</span>
+            {progress.hint ? (
+              <span className="text-ink-3">{progress.hint}</span>
+            ) : null}
+          </div>
+          <div
+            role="progressbar"
+            aria-valuenow={progress.value}
+            aria-valuemin={0}
+            aria-valuemax={progressMax}
+            aria-label={progress.label}
+            className="h-1.5 w-full overflow-hidden rounded-full bg-hover"
+          >
+            <div
+              data-node-progress-fill
+              className={cn(
+                'h-full rounded-full transition-[width] duration-(--dur-base)',
+                // The pill's own dot colour. An idle or status-less card gets
+                // `ink-2`, never `ink`: a solid black bar in the light theme.
+                tone && tone.tone !== 'neutral' ? tone.dot : 'bg-ink-2',
+              )}
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
       ) : null}
 
       {footer ? <div className={cn(ABOVE, 'min-w-0')}>{footer}</div> : null}

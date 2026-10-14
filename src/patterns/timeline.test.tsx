@@ -52,6 +52,60 @@ describe('Timeline', () => {
     expect(screen.queryByRole('button', { name: /Plain/ })).toBeNull();
   });
 
+  test('actions on an href row sit outside the row link and follow it in tab order', () => {
+    const onClick = mock(() => {});
+    render(
+      <Timeline
+        items={[
+          {
+            id: '1',
+            at: at(0),
+            title: 'Slot finished',
+            href: '/slots/1',
+            actions: (
+              <>
+                <a href="https://example.test/pull/205">PR 205</a>
+                <button type="button" onClick={onClick}>
+                  Retry
+                </button>
+              </>
+            ),
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByRole('link', { name: /Slot finished/ });
+    const pr = screen.getByRole('link', { name: 'PR 205' });
+    const retry = screen.getByRole('button', { name: 'Retry' });
+    expect(row.contains(pr)).toBe(false);
+    expect(row.contains(retry)).toBe(false);
+    expect(row.querySelector('a')).toBeNull();
+    const order = [...document.querySelectorAll('a, button')];
+    expect(order).toEqual([row, pr, retry]);
+    fireEvent.click(retry);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  test('actions also sit beside an onSelect row and a plain row, not inside them', () => {
+    render(
+      <Timeline
+        items={[
+          { id: '1', at: at(0), title: 'Pressed', onSelect: () => {}, actions: <a href="/a">A</a> },
+          { id: '2', at: at(0), title: 'Plain', actions: <a href="/b">B</a> },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('button', { name: /Pressed/ }).contains(screen.getByText('A'))).toBe(
+      false,
+    );
+    expect(screen.getByText('B').closest('[data-timeline-actions]')).not.toBeNull();
+  });
+
+  test('no actions container without actions', () => {
+    const { container } = render(<Timeline items={items()} />);
+    expect(container.querySelector('[data-timeline-actions]')).toBeNull();
+  });
+
   test('"Load more" calls onLoadMore and is disabled while loadingMore', () => {
     const onLoadMore = mock(() => {});
     const { rerender } = render(<Timeline items={items()} hasMore onLoadMore={onLoadMore} />);

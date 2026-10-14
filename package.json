@@ -1,6 +1,6 @@
 {
   "name": "@andrewbehma/glass-ui",
-  "version": "0.28.1",
+  "version": "0.29.0",
   "description": "The Liquid Glass design system: tokens, the glass material, and the primitives built out of them.",
   "license": "MIT",
   "repository": {
@@ -54,6 +54,10 @@
     "./dialog": {
       "types": "./dist/primitives/dialog.d.ts",
       "import": "./dist/primitives/dialog.js"
+    },
+    "./confirm-dialog": {
+      "types": "./dist/primitives/confirm-dialog.d.ts",
+      "import": "./dist/primitives/confirm-dialog.js"
     },
     "./field": {
       "types": "./dist/primitives/field.d.ts",
@@ -346,6 +350,14 @@
     "./meta-bar": {
       "types": "./dist/patterns/meta-bar.d.ts",
       "import": "./dist/patterns/meta-bar.js"
+    },
+    "./page-header": {
+      "types": "./dist/patterns/page-header.d.ts",
+      "import": "./dist/patterns/page-header.js"
+    },
+    "./section-header": {
+      "types": "./dist/patterns/section-header.d.ts",
+      "import": "./dist/patterns/section-header.js"
     },
     "./dock-tabs": {
       "types": "./dist/patterns/dock-tabs.d.ts",

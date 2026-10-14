@@ -25,6 +25,8 @@ export { Button, buttonClassName } from './primitives/button';
 export { Card } from './primitives/card';
 export { Chip, ChipButton } from './primitives/chip';
 export { DialogContent, DialogRoot } from './primitives/dialog';
+export { ConfirmDialog } from './primitives/confirm-dialog';
+export type { ConfirmDialogProps } from './primitives/confirm-dialog';
 export { EmptyState } from './patterns/empty-state';
 export { SectionUnavailable } from './patterns/section-unavailable';
 export {
@@ -102,7 +104,16 @@ export {
  * were built in parallel worktrees, and keeping additions at the end is what
  * lets a merge conflict resolve as "keep both" rather than a judgment call.
  */
-export { Tabs, TabsItem } from './primitives/tabs';
+export {
+  NavTab,
+  NavTabs,
+  Tab,
+  TabGroup,
+  TabList,
+  TabPanel,
+  Tabs,
+  TabsItem,
+} from './primitives/tabs';
 export { Badge } from './primitives/badge';
 export { Progress } from './primitives/progress';
 export { Table, TableCell, TableHead, TableRow } from './primitives/table';
@@ -200,6 +211,11 @@ export {
  */
 export { Combobox, type ComboboxOption, type ComboboxProps } from './primitives/combobox';
 export { InlineEdit } from './primitives/inline-edit';
+export { PageHeader, type PageHeaderProps } from './patterns/page-header';
+export {
+  SectionHeader,
+  type SectionHeaderProps,
+} from './patterns/section-header';
 export { Toolbar, type ToolbarProps } from './patterns/toolbar';
 
 /**

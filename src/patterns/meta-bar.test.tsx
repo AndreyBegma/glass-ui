@@ -68,6 +68,13 @@ describe('MetaBar', () => {
     expect(values[3]).toContain(statusTone('blocked').text);
   });
 
+  test('without a title it is only its counters: no header, no heading', () => {
+    const { container } = render(<MetaBar counters={counters} />);
+    expect(container.querySelector('header')).toBeNull();
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(container.querySelectorAll('[data-meta-counter]').length).toBe(4);
+  });
+
   test('the actions slot is drawn on the right, and absent when not given', () => {
     const { container, rerender } = render(
       <MetaBar

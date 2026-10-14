@@ -697,7 +697,8 @@ with the same capsule, the same rail and the same palette.
 | Import | What it is |
 |---|---|
 | `@andrewbehma/glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
-| `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. |
+| `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. Its first scroll to the active item moves the rail's own `scrollTop` and never focus, so the first Tab after a load still reaches the page's skip link (#130). |
+| `@andrewbehma/glass-ui/tab-bar` | `TabBar` — the edge-to-edge bottom bar for a phone shell: up to five places and a `More` sheet. Items take the rail's `badge` (a count or a dot on the glyph, spoken after the label; #130). |
 | `@andrewbehma/glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
 | `@andrewbehma/glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
 | `@andrewbehma/glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
@@ -836,6 +837,56 @@ the material's utilities is on its wrapper. The field family's `surface`
 tone is unchanged by FEAT-624 — a field's opaque fill on the flat ground is
 still the honest one.
 
+`SegmentedControl` takes `size: 'sm' | 'md'` (#130), and `md` is the default
+and renders what it always did. `sm` is for a toolbar: the shell is pinned to
+`--size-control` with a 2px inset, and each item is a flex box so the caller's
+button stretches to that height rather than choosing one. Under the desk
+profile `--size-control` and `--size-field` are both 28px, so `sm` is flush
+with a `Select`; under sofa it is 40px, `Button md`'s height. A child under
+`sm` must not set its own `min-h` — a tap-sized `min-h-(--size-tap)` stays on
+`md`.
+
+**Tabs (#130).** `@andrewbehma/glass-ui/tabs` has two shapes, and which one is
+a question about what a click does:
+
+- **Panels on the same page** — `TabGroup` / `TabList` / `Tab` / `TabPanel`,
+  the WAI-ARIA Tabs pattern. `TabGroup` holds the controlled `value` /
+  `onValueChange` and an id base (`useId()` unless `id` is given) and renders
+  nothing; the tab and panel ids, `aria-controls` and `aria-labelledby` are
+  derived, so the caller writes none of them. One Tab stop (a roving
+  tabindex on the selected tab); Left/Right move focus and wrap, Home/End go
+  to the ends, a `disabled` tab (`aria-disabled`) is passed over. Activation
+  is **manual** — Enter, Space or a click selects, the arrows only move
+  focus — because a consumer that writes `?tab=` to the URL would otherwise
+  push a history entry for every tab the arrow passes. A hidden `TabPanel`
+  keeps its element, so `aria-controls` never dangles, but not its children
+  unless `keepMounted`.
+- **Destinations** — `NavTabs` / `NavTab`: a `<nav>` landmark of links, and
+  the component sets `aria-current="page"` on the `current` one. The anchor
+  is the consumer's, through the same `link: NavLinkRender` function
+  `NavRail` and `BottomCapsule` take; without one it is a plain `<a>`.
+
+```tsx
+<TabGroup value={tab} onValueChange={setTab}>
+  <TabList aria-label="Project settings">
+    <Tab value="general">General</Tab>
+    <Tab value="members">Members</Tab>
+  </TabList>
+  <TabPanel value="general">…</TabPanel>
+  <TabPanel value="members">…</TabPanel>
+</TabGroup>
+
+<NavTabs aria-label="Project" link={(p) => <Link {...p} />}>
+  <NavTab href="/queue" current={path === '/queue'}>Queue</NavTab>
+  <NavTab href="/fleet" current={path === '/fleet'}>Fleet</NavTab>
+</NavTabs>
+```
+
+Both draw `Tabs`' well and capsule, so moving a screen over changes its
+semantics, not its pixels. `Tabs` / `TabsItem` keep rendering exactly what
+they did and are `@deprecated`: filled with `aria-pressed` buttons, as every
+AgentDock screen did, they read as a row of toggles.
+
 `SheetContent` and `DialogContent` take `container` (FEAT-20260919-621), the
 `MenuContent` shape: the element the Radix portal renders into, `document.body`
 unless given. It exists for one place — a player in element fullscreen draws
@@ -940,7 +991,9 @@ the controls a list of records needs and the package did not have.
 | Import | What it is |
 |---|---|
 | `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
-| `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. |
+| `@andrewbehma/glass-ui/page-header` | `PageHeader` — the page's one header: eyebrow, 28 px h1, a `status` beside it, description, a `meta` counter row and `actions` on the right (wrapping below the title at full width under `sm`). Put `<MetaBar counters={…} />` (no `title`) in `meta`; `MetaBar`'s own 20 px h1 is deprecated. No back link — that is the breadcrumb's job. |
+| `@andrewbehma/glass-ui/section-header` | `SectionHeader` — the heading of one section: a 16/600 `h2`, an optional description and an actions slot on the right. |
+| `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. Optionally (#130): `activeFilters` + `onClearAll` draw removable chips under the bar, and `collapseBelow` folds `filters` into one "Filters (n)" button and a bottom `Sheet`. |
 | `@andrewbehma/glass-ui/combobox` | `Combobox` — a typeahead over options, single and multiple. Controlled value, an async option source debounced with its pending state announced, a "no matches" sentence, and full keyboard operation: type to filter, arrows to move, Enter to select, Escape to close, Backspace to remove the last chip in multiple mode. `Select` stays — this does not replace it. |
 | `@andrewbehma/glass-ui/inline-edit` | `InlineEdit` — text that becomes an input on click or on Enter, commits on Enter and on blur, reverts on Escape. The row's height is identical in both states, asserted in a test — the one difficulty this component exists to solve once. |
 
@@ -976,7 +1029,22 @@ Three more, one per remaining component.
 **`Toolbar` holds no state about the collection either.** What a view *means*,
 which filters are active, what the trailing action does are all the
 application's — `Toolbar` is layout and slots, the same contract `BottomCapsule`
-and `NavRail` keep for the shell.
+and `NavRail` keep for the shell. Its `activeFilters` (#130) follow the same
+rule: the bar draws the label it is handed and calls `onRemove`; what removing
+a filter means is still the application's.
+
+**`EmptyState`'s action can be data** (#130): `{ label, onClick }` renders a
+glass `Button`, and `{ label, href }` renders a link styled with
+`buttonClassName()`, through the `link` render prop when one is given. A
+`ReactNode` action still renders as given.
+
+```tsx
+<EmptyState
+  title="No budgets yet"
+  action={{ label: 'New budget', onClick: () => setEditing('new') }}
+/>
+<EmptyState title="Nothing queued" link={renderLink} action={{ label: 'Open sessions', href: '/sessions' }} />
+```
 
 **`Combobox`'s keyboard model is `CommandPalette`'s, not `MenuContent`'s.**
 Inside a listbox the keyboard stays on the field and moves the highlight
@@ -1080,6 +1148,8 @@ behaviour under `data-scale="desk"`, light, dark and `data-material="flat"`.
 | Import | What it is |
 |---|---|
 | `@andrewbehma/glass-ui/spinner` | `Spinner` — a rotating arc in `currentColor`, three sizes (12 / 16 / 24 px) and four tones. `role="status"` with a `label` (default "Loading"); `label={null}` hides it inside a control that already announces state. Under reduced motion it is a static three-dot indicator with the same name. |
+| `@andrewbehma/glass-ui/confirm-dialog` | `ConfirmDialog { open, onOpenChange, title, consequence?, verb, tone?, onConfirm, busy? }` (#130) — the confirmation, on `Dialog`. The title is a question; Cancel is ghost on the left, the verb is `danger` (default) or `solid` on the right. Initial focus is Cancel for `danger`, the verb for `default`. `onConfirm` does not close it; `busy` disables both buttons, spins the verb and ignores Escape. |
+| `@andrewbehma/glass-ui/badge` | `Badge` gained `size: 'sm' \| 'md'` (`md` is 12 px sentence case) and, with `hue`, `shape: 'dot' \| 'square'` (`square` is the identity swatch; dots stay for status). The `ok` / `warn` / `danger` count is now a solid fill with ground ink (4.5:1 in both themes; it was 3.86:1 on the tint). Defaults are unchanged. |
 | `@andrewbehma/glass-ui/sparkline` | `Sparkline` — an inline SVG polyline in `currentColor`, optional area fill. With `label` it is `role="img"`; without, `aria-hidden`. An empty or one-value series draws a flat baseline, never a `NaN` path. |
 | `@andrewbehma/glass-ui/stat-tile` | `StatTile` — label, value, optional delta, hint and a trend slot. Pressable only when given `href` or `onClick`. `loading` renders `Skeleton`s of the same height. |
 | `@andrewbehma/glass-ui/key-value-list` | `KeyValueList` — a `dl` of `dt`/`dd`, one or two columns, optional per-item copy button; long values truncate with the full text in a `Tooltip`. |
@@ -1309,6 +1379,8 @@ The tag push still works and is idempotent. Pushing `vX.Y.Z` yourself checks the
 tag against `package.json` (a mismatch fails before anything is built) and
 publishes that version; a version that is already on npm passes without
 publishing again, which is also what the tag the pipeline pushes itself does.
+When the registry has not caught up with a publish yet, the tag pipeline tries
+again and gets a 409; `scripts/release/publish.sh` treats that as published.
 
 **Maint lines never take `latest`.** A push to a `maint/*` branch (for example
 `maint/v0.8`), or any version below the current `latest`, is published with

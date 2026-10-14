@@ -1,0 +1,96 @@
+import type { ComponentProps, ReactNode } from 'react';
+import { cn } from '../lib/cn';
+
+/**
+ * #130 (G1) — PageHeader: the top of every page, one shape.
+ *
+ * A review of AgentDock found two page-header shapes (a hand-written h1 row and
+ * `MetaBar`'s own 20 px h1) across the app. This is the one canonical shape:
+ * an optional `eyebrow`, an h1 at the desk text scale's 28 px, a `status` beside
+ * the title, a `description`, a `meta` row and `actions` on the right.
+ *
+ * **`status` is a node, not a `Status`.** It is drawn beside the title, outside
+ * the h1, so the heading's accessible name stays the page's name and not
+ * "Agent Fleet Running". Pass a `StatusPill`.
+ *
+ * **`meta` is a counter row.** `MetaBar` without a `title` renders exactly that
+ * — its counters, no header landmark, no second h1 — so
+ * `<PageHeader meta={<MetaBar counters={…} />} />` is how Fleet and Workflows
+ * keep their counters under the shared title.
+ *
+ * **`actions` are the caller's** — a primary `Button`, icon buttons, a menu.
+ * They sit on the right and, below `sm`, wrap under the title at full width
+ * rather than squeezing it.
+ *
+ * **No back link.** Going up is a breadcrumb's job, not the header's.
+ */
+export interface PageHeaderProps
+  extends Omit<ComponentProps<'header'>, 'title' | 'className' | 'children'> {
+  /** The page's h1. */
+  title: ReactNode;
+  /** One or two sentences under the title: what this page is for. */
+  description?: ReactNode;
+  /** A small line above the title: the parent entity, a kind ("Run"). */
+  eyebrow?: ReactNode;
+  /** Beside the title — a `StatusPill`. Outside the h1, so the name stays clean. */
+  status?: ReactNode;
+  /** A counter row under the description: `<MetaBar counters={…} />`. */
+  meta?: ReactNode;
+  /** Right-hand side; wraps below the title at full width under `sm`. */
+  actions?: ReactNode;
+  /** The h1's id, for `aria-labelledby` on the page's main region. */
+  headingId?: string;
+  className?: string;
+}
+
+export function PageHeader({
+  title,
+  description,
+  eyebrow,
+  status,
+  meta,
+  actions,
+  headingId,
+  className,
+  ...props
+}: PageHeaderProps) {
+  return (
+    <header
+      data-page-header
+      className={cn(
+        'flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6',
+        className,
+      )}
+      {...props}
+    >
+      <div className="flex min-w-0 flex-col gap-1">
+        {eyebrow ? (
+          <div data-page-header-eyebrow className="text-xs font-medium text-ink-3">
+            {eyebrow}
+          </div>
+        ) : null}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <h1
+            id={headingId}
+            className="min-w-0 text-display text-ink"
+          >
+            {title}
+          </h1>
+          {status ? <div data-page-header-status>{status}</div> : null}
+        </div>
+        {description ? (
+          <p className="max-w-prose text-sm text-ink-2">{description}</p>
+        ) : null}
+        {meta ? <div data-page-header-meta>{meta}</div> : null}
+      </div>
+      {actions ? (
+        <div
+          data-page-header-actions
+          className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto"
+        >
+          {actions}
+        </div>
+      ) : null}
+    </header>
+  );
+}

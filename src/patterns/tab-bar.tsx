@@ -88,9 +88,17 @@ export interface TabBarProps {
 
 const ITEM = [
   'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5',
-  'min-h-12 px-1 pt-1.5 pb-1 text-[11px] font-medium leading-tight',
+  'min-h-12 pt-1.5 pb-1 font-medium leading-tight',
   'motion-safe:transition-[color,transform] duration-100 motion-safe:active:scale-[0.97]',
 ].join(' ');
+
+/**
+ * #137 — six slots share 375 px, about 57 px of label each. From six slots up
+ * the label steps down one size and the slot gives up a pixel of padding; a
+ * label that still does not fit wraps to a second line (and breaks inside a
+ * word as a last resort) instead of being cut off with an ellipsis.
+ */
+const DENSE_SLOTS = 6;
 
 export function TabBar({
   items,
@@ -102,6 +110,10 @@ export function TabBar({
 }: TabBarProps) {
   const reduced = useReducedMotion();
   const moreSelected = Boolean(more?.open);
+  const dense = items.length + (more ? 1 : 0) >= DENSE_SLOTS;
+  const slot = cn(ITEM, dense ? 'px-0.5 text-[10px]' : 'px-1 text-[11px]');
+  const labelClass =
+    'line-clamp-2 max-w-full text-center [overflow-wrap:anywhere]';
 
   const glyph = (Icon: LucideIcon, selected: boolean, badge?: RailBadge) => (
     <span className="relative flex h-7 w-12 items-center justify-center">
@@ -148,11 +160,11 @@ export function TabBar({
       >
         {items.map((item) => {
           const selected = Boolean(item.active) && !moreSelected;
-          const itemClass = cn(ITEM, tone(selected));
+          const itemClass = cn(slot, tone(selected));
           const inner = (
             <>
               {glyph(item.icon, selected, item.badge)}
-              <span className="max-w-full truncate">{item.label}</span>
+              <span className={labelClass}>{item.label}</span>
               {hasBadge(item.badge) ? <RailBadgeSpeech badge={item.badge} /> : null}
             </>
           );
@@ -189,10 +201,10 @@ export function TabBar({
             aria-haspopup="dialog"
             aria-expanded={more.open}
             onClick={() => more.onOpenChange(true)}
-            className={cn(ITEM, tone(moreSelected))}
+            className={cn(slot, tone(moreSelected))}
           >
             {glyph(MoreIcon, moreSelected)}
-            <span className="max-w-full truncate">{more.label}</span>
+            <span className={labelClass}>{more.label}</span>
           </button>
         ) : null}
       </nav>

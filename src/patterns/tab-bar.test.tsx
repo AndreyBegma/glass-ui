@@ -133,6 +133,53 @@ describe('TabBar', () => {
   });
 });
 
+describe('narrow phone (issue 137)', () => {
+  const SIX = [
+    { id: 'fleet', label: 'Fleet', icon: Bot },
+    { id: 'planner', label: 'Planner', icon: ListChecks },
+    { id: 'queue', label: 'Queue', icon: Inbox },
+    { id: 'approvals', label: 'Approvals', icon: Gauge },
+    { id: 'history', label: 'History', icon: Wrench },
+  ];
+  const renderSix = () =>
+    render(
+      <TabBar
+        aria-label="Project"
+        items={SIX.map((i) => ({ ...i, onSelect: () => {} }))}
+        more={{
+          label: 'More',
+          title: 'More places',
+          open: false,
+          onOpenChange: () => {},
+          children: null,
+        }}
+      />,
+    );
+
+  test('five items plus More: 9-character labels are not truncated and wrap instead', () => {
+    renderSix();
+    const label = screen.getByText('Approvals');
+    expect(label.className).not.toContain('truncate');
+    expect(label.className).toContain('line-clamp-2');
+    expect(label.className).toContain('[overflow-wrap:anywhere]');
+  });
+
+  test('six slots step the label down one size; five keep the full size', () => {
+    renderSix();
+    expect(screen.getByRole('button', { name: 'Approvals' }).className).toContain('text-[10px]');
+    document.body.innerHTML = '';
+    render(<TabBar aria-label="Main" items={items('inbox')} link={link} />);
+    expect(screen.getByRole('link', { name: 'Inbox' }).className).toContain('text-[11px]');
+  });
+
+  test('the accessible name is the full label', () => {
+    renderSix();
+    for (const name of ['Fleet', 'Planner', 'Queue', 'Approvals', 'History', 'More']) {
+      expect(screen.getByRole('button', { name })).toBeTruthy();
+    }
+  });
+});
+
 describe('item badge (issue 130)', () => {
   const withBadge = (badge: TabBarItem['badge']): TabBarItem[] =>
     items('inbox').map((item) => (item.id === 'tasks' ? { ...item, badge } : item));

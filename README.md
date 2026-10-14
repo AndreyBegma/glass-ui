@@ -5,6 +5,7 @@
 [![npm](https://img.shields.io/npm/v/@andrewbehma/glass-ui)](https://www.npmjs.com/package/@andrewbehma/glass-ui)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-glass.luna--realm.com-5b5bf6)](https://glass.luna-realm.com)
+[![Discord](https://img.shields.io/badge/Discord-join%20the%20community-5865F2?logo=discord&logoColor=white)](https://discord.gg/mkQARkBs4C)
 
 Two applications that want the same frosted-glass look usually end up with two
 copies of it: drifting colours, hand-tuned blurs, and buttons that are almost the

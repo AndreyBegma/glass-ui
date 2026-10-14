@@ -25,6 +25,8 @@ export { Button, buttonClassName } from './primitives/button';
 export { Card } from './primitives/card';
 export { Chip, ChipButton } from './primitives/chip';
 export { DialogContent, DialogRoot } from './primitives/dialog';
+export { ConfirmDialog } from './primitives/confirm-dialog';
+export type { ConfirmDialogProps } from './primitives/confirm-dialog';
 export { EmptyState } from './patterns/empty-state';
 export { SectionUnavailable } from './patterns/section-unavailable';
 export {

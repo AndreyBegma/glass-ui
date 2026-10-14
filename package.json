@@ -55,6 +55,10 @@
       "types": "./dist/primitives/dialog.d.ts",
       "import": "./dist/primitives/dialog.js"
     },
+    "./confirm-dialog": {
+      "types": "./dist/primitives/confirm-dialog.d.ts",
+      "import": "./dist/primitives/confirm-dialog.js"
+    },
     "./field": {
       "types": "./dist/primitives/field.d.ts",
       "import": "./dist/primitives/field.js"

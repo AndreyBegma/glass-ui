@@ -208,21 +208,31 @@ describe('item badge', () => {
 });
 
 describe('scroll', () => {
-  test('the active item is scrolled into view on mount', () => {
+  // #130 — through the rail's own `scrollTop`, never `scrollIntoView`, which
+  // moved the browser's sequential-focus starting point to the active item.
+  test('the active item is scrolled into view on mount, by the rail alone', () => {
     const calls: unknown[] = [];
-    const original = HTMLElement.prototype.scrollIntoView;
-    HTMLElement.prototype.scrollIntoView = function (
-      arg?: boolean | ScrollIntoViewOptions,
-    ) {
-      calls.push([this.textContent, arg]);
+    const originalIntoView = Element.prototype.scrollIntoView;
+    const originalRect = HTMLElement.prototype.getBoundingClientRect;
+    Element.prototype.scrollIntoView = function () {
+      calls.push(this);
+    };
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      const rect = (top: number, bottom: number) => ({ top, bottom }) as DOMRect;
+      if (this.classList.contains('overflow-y-auto')) return rect(0, 200);
+      if (this.getAttribute('aria-current') === 'page') return rect(300, 340);
+      return rect(0, 0);
     };
     try {
       render(<NavRail aria-label="Nav" groups={makeGroups('approvals')} />);
-      expect(calls).toHaveLength(1);
-      expect((calls[0] as [string, unknown])[0]).toStartWith('Approvals');
-      expect((calls[0] as [string, unknown])[1]).toEqual({ block: 'nearest' });
+      const scroller = screen
+        .getByRole('navigation')
+        .querySelector('.overflow-y-auto') as HTMLElement;
+      expect(calls).toEqual([]);
+      expect(scroller.scrollTop).toBe(140);
     } finally {
-      HTMLElement.prototype.scrollIntoView = original;
+      Element.prototype.scrollIntoView = originalIntoView;
+      HTMLElement.prototype.getBoundingClientRect = originalRect;
     }
   });
 

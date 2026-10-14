@@ -375,6 +375,10 @@
       "types": "./dist/patterns/flow-graph/index.d.ts",
       "import": "./dist/patterns/flow-graph/index.js"
     },
+    "./resizable-frame": {
+      "types": "./dist/patterns/resizable-frame.d.ts",
+      "import": "./dist/patterns/resizable-frame.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

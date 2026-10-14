@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { cn } from '../lib/cn';
 import type { NavLinkRender } from '../patterns/nav-link';
+import { SPRINGS } from './springs';
 
 /**
  * FEAT-20260902-004 — navigation, not selection.
@@ -137,13 +138,6 @@ const tabId = (group: TabGroupShape, value: string) =>
 const panelId = (group: TabGroupShape, value: string) =>
   `${group.idBase}-panel-${idPart(value)}`;
 
-const CAPSULE_SPRING = {
-  type: 'spring',
-  stiffness: 420,
-  damping: 34,
-  mass: 0.9,
-} as const;
-
 interface TabGroupProps {
   /** The selected tab's `value`. Controlled: sync it to `?tab=` if you like. */
   value: string;
@@ -254,7 +248,7 @@ export function Tab({ value, disabled = false, children, className }: TabProps) 
         <motion.span
           layoutId={`${group.idBase}-capsule`}
           className="absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised"
-          transition={reduced ? { duration: 0 } : CAPSULE_SPRING}
+          transition={reduced ? SPRINGS.reduced : SPRINGS.capsule}
         />
       ) : null}
       <span className="relative">{children}</span>
@@ -269,6 +263,10 @@ interface TabPanelProps {
    * By default a hidden panel keeps its element (so `aria-controls` always
    * points at something) but not its children. `keepMounted` keeps the
    * children too, for a panel whose unsaved state must survive a switch.
+   *
+   * The panel itself is not a Tab stop. The APG adds `tabIndex=0` only to a
+   * panel with nothing focusable inside, and every panel in AgentDock holds
+   * a field or a button; Biome's `noNoninteractiveTabindex` holds the line.
    */
   keepMounted?: boolean;
   children: ReactNode;
@@ -288,7 +286,6 @@ export function TabPanel({
       role="tabpanel"
       id={panelId(group, value)}
       aria-labelledby={tabId(group, value)}
-      tabIndex={0}
       hidden={!selected}
       className={className}
     >
@@ -370,7 +367,7 @@ export function NavTab({ href, current, children, className }: NavTabProps) {
         <motion.span
           layoutId={nav.layoutId}
           className="absolute inset-0 rounded-[calc(var(--radius-control)-4px)] bg-raised"
-          transition={reduced ? { duration: 0 } : CAPSULE_SPRING}
+          transition={reduced ? SPRINGS.reduced : SPRINGS.capsule}
         />
       ) : null}
       {nav.link ? nav.link(anchor) : <a {...anchor} />}

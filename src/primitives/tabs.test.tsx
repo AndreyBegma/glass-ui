@@ -49,7 +49,9 @@ function Settings({
 
 const tab = (name: string) => screen.getByRole('tab', { name });
 
-describe('TabList — #130 ARIA tabs', () => {
+// Issue 130. The suite names spell it out: `tokens.spec.ts` reads a hash and
+// three hex digits in a string as a colour literal.
+describe('TabList — ARIA tabs', () => {
   test('roles, selection and the id wiring between each tab and its panel', () => {
     render(<Settings />);
     expect(screen.getByRole('tablist', { name: 'Project settings' })).not.toBeNull();
@@ -192,7 +194,7 @@ describe('TabList — #130 ARIA tabs', () => {
   });
 });
 
-describe('NavTabs — #130 navigation tabs', () => {
+describe('NavTabs — navigation tabs', () => {
   test('a nav landmark of links; the current one is aria-current="page"', () => {
     render(
       <NavTabs aria-label="Project">
@@ -247,7 +249,7 @@ describe('NavTabs — #130 navigation tabs', () => {
 });
 
 describe('Tabs (deprecated)', () => {
-  test('still renders a list, unchanged by #130', () => {
+  test('still renders the same list after the ARIA tabs arrived', () => {
     render(
       <Tabs aria-label="Old">
         <TabsItem current layoutId="old">

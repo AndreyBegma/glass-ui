@@ -1,5 +1,47 @@
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
+import { Button, buttonClassName } from '../primitives/button';
+import type { NavLinkRender } from './nav-link';
+
+/**
+ * #130 — the action as data, so the pattern draws the control. Callers were
+ * passing bare text links, which read as body copy and lost the one action
+ * the empty state exists to offer. `onClick` renders a glass `Button`; `href`
+ * renders a link with the same class, through `link` when one is given (see
+ * `nav-link.ts`), so a Next application keeps client-side navigation.
+ */
+export type EmptyStateAction =
+  | { label: string; onClick: () => void; href?: never }
+  | { label: string; href: string; onClick?: never };
+
+function isActionData(action: unknown): action is EmptyStateAction {
+  return (
+    typeof action === 'object' &&
+    action !== null &&
+    !Array.isArray(action) &&
+    !isValidElement(action) &&
+    'label' in action
+  );
+}
+
+function ActionControl({
+  action,
+  link,
+}: {
+  action: EmptyStateAction;
+  link?: NavLinkRender;
+}) {
+  if (action.href === undefined) {
+    return <Button onClick={action.onClick}>{action.label}</Button>;
+  }
+  const className = buttonClassName();
+  if (link) return <>{link({ href: action.href, className, children: action.label })}</>;
+  return (
+    <a href={action.href} className={className}>
+      {action.label}
+    </a>
+  );
+}
 
 /**
  * "You have nothing here yet."
@@ -27,14 +69,21 @@ export function EmptyState({
   description,
   action,
   icon,
+  link,
 }: {
   /** What this section is for. Not "No tasks" — "Tasks you have not done yet". */
   title: string;
   /** One sentence. What appears here, and how it gets here. */
   description?: string;
-  /** The single action that fills it. One, or none. */
-  action?: ReactNode;
+  /**
+   * The single action that fills it. One, or none. Prefer the data shape
+   * (`{ label, onClick }` or `{ label, href }`, #130); a `ReactNode` still
+   * renders as given.
+   */
+  action?: ReactNode | EmptyStateAction;
   icon?: ReactNode;
+  /** Renders an `href` action's anchor. See `nav-link.ts`. Plain `<a>` without it. */
+  link?: NavLinkRender;
 }) {
   return (
     <div
@@ -48,7 +97,11 @@ export function EmptyState({
       {description && (
         <p className="text-ink-2 max-w-sm text-sm">{description}</p>
       )}
-      {action && <div className="mt-1">{action}</div>}
+      {action && (
+        <div className="mt-1">
+          {isActionData(action) ? <ActionControl action={action} link={link} /> : action}
+        </div>
+      )}
     </div>
   );
 }

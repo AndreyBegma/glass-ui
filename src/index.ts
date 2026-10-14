@@ -369,3 +369,12 @@ export {
   type FileItemStatus,
   formatBytes,
 } from './patterns/file-item';
+
+/**
+ * #139 — a controlled-width frame for a mockup iframe. Appended, as every block
+ * above is.
+ */
+export {
+  ResizableFrame,
+  type ResizableFrameProps,
+} from './patterns/resizable-frame';

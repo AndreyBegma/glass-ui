@@ -1339,6 +1339,55 @@ opacity, both `motion-safe`, so they are off under `prefers-reduced-motion`.
 `dragging` is counted across `dragenter`/`dragleave`, so moving onto the art
 inside the zone does not flicker it, and any `drop` or `dragend` resets it.
 
+## Resizable frame
+
+`#139`. A controlled-width box for a mockup in a sandboxed `<iframe>`, whose
+width the application drives from viewport presets, a typed number and a drag.
+`SplitPane` and `SidePanel` own and persist their size, so they cannot do this.
+
+| Import | What it is |
+|---|---|
+| `@andrewbehma/glass-ui/resizable-frame` | `ResizableFrame` — a frame centred in its container, `width` px wide, with a drag handle on each side edge. Controlled only: `onWidthChange` fires during a drag (once per animation frame) and on each key step, `onWidthCommit` once when the gesture ends (pointer-up, or the key-up after a run of key presses); both get a width already clamped to `min` / `max`. `height` fixes the height in px; omitted, the frame fills its container. `showSizeHint` (default `true`) shows `width × height` by the handle while dragging. `labels.resize` is each handle's accessible name. |
+
+```tsx
+const [width, setWidth] = useState(1440);
+
+// Default: fills the container's height, commits to the URL on release.
+<ResizableFrame
+  width={width}
+  onWidthChange={setWidth}
+  onWidthCommit={(w) => router.replace(`?w=${w}`)}
+  min={320}
+  max={3840}
+  labels={{ resize: 'Resize the frame' }}
+>
+  <iframe title="Mockup" sandbox="allow-scripts" srcDoc={html} className="size-full" />
+</ResizableFrame>;
+
+// A phone preset: 390 × 844. In a container narrower than 390 px the frame
+// scrolls sideways inside its own box; the page does not.
+<ResizableFrame width={390} height={844} onWidthChange={setWidth} min={320} max={3840} labels={labels}>
+  <iframe title="Mockup" srcDoc={html} className="size-full" />
+</ResizableFrame>;
+```
+
+**Both handles are the WAI-ARIA window splitter**, as `SplitPane`'s is:
+`role="separator"`, `aria-orientation="vertical"`, `aria-valuenow` / `min` /
+`max`, `aria-valuetext="1440 pixels"`, focusable. Arrows step 16 px (Shift
+1 px), Page Up / Page Down 160 px, Home / End go to `min` / `max`. On the left
+handle the arrows mirror: ArrowLeft moves that edge out, so it widens.
+
+**An iframe swallows the pointer, so the frame takes it back.** The handle holds
+pointer capture, and while a drag is on the child is `pointer-events: none`. The
+frame is centred, so an edge moved by `dx` changes the width by `2 × dx`; a
+frame wider than its box is left-aligned and scrolls, and its right edge moves
+by `dx`.
+
+**It draws a hairline and nothing else.** The hairline is a ring, so the child
+gets exactly `width` px. `max` is not capped by the container: a wider frame
+scrolls inside its own box. Each handle's hit area is 24 px. The width animates
+between presets only under `motion-safe`, and never while dragging.
+
 ## Developing
 
 ```sh

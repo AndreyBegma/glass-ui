@@ -144,7 +144,7 @@ describe('item badge', () => {
     render(<NavRail aria-label="Nav" groups={makeGroups('inbox')} />);
     const item = screen.getByRole('button', { name: 'Approvals 3 pending' });
     expect(item.textContent).toContain('3');
-    expect(item.querySelector('.bg-warn\\/14')).not.toBeNull();
+    expect(item.querySelector('.bg-warn')).not.toBeNull();
   });
 
   test('a zero count draws nothing', () => {

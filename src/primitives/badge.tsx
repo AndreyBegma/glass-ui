@@ -28,6 +28,23 @@ import { type Hue, hueClasses } from '../lib/hue';
  * pair (`bg-ink text-ground`). It is for a badge that sits on glass over a
  * picture, where the 10 % `neutral` wash has nothing solid behind it to be
  * seen against.
+ *
+ * #130 — three additive axes, none of which moves a badge that does not ask.
+ *
+ * `size="md"` is a 12 px sentence-case label, for a badge that carries a word
+ * (a process state) rather than a count; `normal-case` so a parent's
+ * `uppercase` does not reach in. `sm`, the default, is today's 18 px badge.
+ *
+ * `shape="square"` (with `hue`) is the identity swatch. A project's hue dot
+ * was the same circle as a status dot, so a red project read as an error; the
+ * round dot stays the mark for status and identity is square.
+ *
+ * And the count badge on `ok` / `warn` / `danger` is a solid fill with
+ * `text-ground` on it. The 10 px count on a 14 % tint measured 3.86:1 in
+ * light, and a tint cannot be darkened without it stopping being a tint.
+ * Solid fill and ground ink clear 4.5:1 in both themes (pinned in
+ * `badge.test.tsx`). `neutral` and `ink` counts already passed and keep their
+ * look, and a `label` keeps the tint — it is not the notification-sized case.
  */
 const badge = tv({
   base: 'inline-flex items-center justify-center whitespace-nowrap font-semibold leading-none tabular-nums',
@@ -41,22 +58,38 @@ const badge = tv({
     },
     dot: {
       true: 'size-2.5 rounded-full p-0',
-      false: 'h-[18px] min-w-[18px] rounded-full px-1 text-[10px]',
+      false: 'rounded-full',
+    },
+    size: {
+      sm: '',
+      md: '',
+    },
+    /** A count on a solid fill; see the note above. Set from `count`, not by callers. */
+    solid: {
+      true: '',
+      false: '',
     },
   },
   compoundVariants: [
     { tone: 'ok', dot: true, class: 'bg-ok' },
     { tone: 'warn', dot: true, class: 'bg-warn' },
     { tone: 'danger', dot: true, class: 'bg-danger' },
+    { dot: false, size: 'sm', class: 'h-[18px] min-w-[18px] px-1 text-[10px]' },
+    { dot: false, size: 'md', class: 'h-5 min-w-5 px-1.5 text-xs normal-case' },
+    { tone: 'ok', dot: false, solid: true, class: 'bg-ok text-ground' },
+    { tone: 'warn', dot: false, solid: true, class: 'bg-warn text-ground' },
+    { tone: 'danger', dot: false, solid: true, class: 'bg-danger text-ground' },
   ],
   defaultVariants: {
     tone: 'neutral',
     dot: false,
+    size: 'sm',
+    solid: false,
   },
 });
 
 type BadgeProps = Omit<ComponentProps<'span'>, 'className' | 'children'> &
-  VariantProps<typeof badge> & {
+  Pick<VariantProps<typeof badge>, 'tone' | 'dot' | 'size'> & {
     className?: string;
     /** Capped at "99+" — a count bubble is a glance, not a precise readout. */
     count?: number;
@@ -67,19 +100,43 @@ type BadgeProps = Omit<ComponentProps<'span'>, 'className' | 'children'> &
      * or its solid mark as a dot. Wins over `tone`.
      */
     hue?: Hue;
+    /**
+     * #130 — with `hue`: `'square'` is the identity swatch, drawn solid and
+     * without text whether or not `dot` is set. Unset (or `'dot'`), `hue`
+     * behaves exactly as it did.
+     */
+    shape?: 'dot' | 'square';
   };
 
-export function Badge({ tone, dot = false, count, label, hue, className, ...props }: BadgeProps) {
+export function Badge({
+  tone,
+  dot = false,
+  size,
+  count,
+  label,
+  hue,
+  shape,
+  className,
+  ...props
+}: BadgeProps) {
   const display =
     typeof count === 'number' ? (count > 99 ? '99+' : String(count)) : (label ?? null);
   const hued = hue ? hueClasses(hue) : null;
+  const square = hued !== null && shape === 'square';
+  const swatch = dot || square;
   return (
     <span
       data-hue={hue}
-      className={cn(badge({ tone, dot }), hued && (dot ? hued.dot : hued.soft), className)}
+      data-shape={square ? 'square' : undefined}
+      className={cn(
+        badge({ tone, dot: swatch, size, solid: typeof count === 'number' }),
+        hued && (swatch ? hued.dot : hued.soft),
+        square && 'rounded-[3px]',
+        className,
+      )}
       {...props}
     >
-      {dot ? null : display}
+      {swatch ? null : display}
     </span>
   );
 }

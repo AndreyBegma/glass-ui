@@ -4,6 +4,7 @@ import { Calendar, Inbox, Sparkles, Sun, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import type { NavLinkRender } from './nav-link';
 import { NavRail, type NavRailGroup } from './nav-rail';
+import { scrollToNearest } from './nav-rail-parts';
 
 const link: NavLinkRender = ({ href, className, children, ...rest }) => (
   <a href={href} className={className} {...rest}>
@@ -258,5 +259,55 @@ describe('NavRail', () => {
     const rail = screen.getByRole('navigation', { name: 'Sections' });
     expect(rail.firstElementChild?.textContent).toBe('Denitsa');
     expect(rail.lastElementChild?.textContent).toBe('v0.2.0');
+  });
+});
+
+/**
+ * #130 — the rail's first scroll must not touch focus. `scrollIntoView` moved
+ * Chromium's sequential-focus starting point to the active item, so the first
+ * Tab after a load skipped the skip link and landed on the next rail item.
+ */
+describe('initial scroll and focus (issue 130)', () => {
+  test('mounting scrolls without scrollIntoView and leaves focus where it was', () => {
+    const calls: unknown[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function () {
+      calls.push(this);
+    };
+    try {
+      render(
+        <>
+          <a href="#main">Skip to content</a>
+          <NavRail aria-label="Sections" link={link} groups={groups('finance')} />
+        </>,
+      );
+      expect(calls).toEqual([]);
+      expect(document.activeElement).toBe(document.body);
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  const box = (top: number, bottom: number) =>
+    ({ getBoundingClientRect: () => ({ top, bottom }) }) as unknown as HTMLElement;
+  const scroller = (top: number, bottom: number, scrollTop: number) =>
+    Object.assign(box(top, bottom), { scrollTop }) as HTMLElement;
+
+  test('an item below the fold scrolls the rail down just far enough', () => {
+    const rail = scroller(0, 200, 0);
+    scrollToNearest(rail, box(300, 340));
+    expect(rail.scrollTop).toBe(140);
+  });
+
+  test('an item above the fold scrolls the rail up just far enough', () => {
+    const rail = scroller(0, 200, 500);
+    scrollToNearest(rail, box(-60, -20));
+    expect(rail.scrollTop).toBe(440);
+  });
+
+  test('an item already in view does not move the rail', () => {
+    const rail = scroller(0, 200, 80);
+    scrollToNearest(rail, box(40, 80));
+    expect(rail.scrollTop).toBe(80);
   });
 });

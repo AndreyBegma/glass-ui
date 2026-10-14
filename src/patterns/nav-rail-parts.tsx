@@ -91,6 +91,20 @@ export function RailBadgeSpeech({ badge }: { badge: RailBadge }) {
 const FADE = 20;
 
 /**
+ * `block: 'nearest'` by hand, on `scroller` alone: the smallest change to its
+ * `scrollTop` that brings `item` fully into view, or none when it already is.
+ */
+export function scrollToNearest(scroller: HTMLElement, item: HTMLElement) {
+  const box = scroller.getBoundingClientRect();
+  const target = item.getBoundingClientRect();
+  if (target.top < box.top) {
+    scroller.scrollTop += target.top - box.top;
+  } else if (target.bottom > box.bottom) {
+    scroller.scrollTop += target.bottom - box.bottom;
+  }
+}
+
+/**
  * Edge fades for a scroller: a mask that dissolves the top and the bottom edge
  * only while there is something past them. A mask rather than an overlay, so
  * it works on glass and on the opaque rung alike and paints nothing the
@@ -98,6 +112,14 @@ const FADE = 20;
  *
  * Also scrolls the active item into view on mount (`nearest`, so a rail whose
  * active item is already visible does not move).
+ *
+ * #130 — and it does that by writing the rail's own `scrollTop`, never with
+ * `scrollIntoView`. Chromium moves the sequential-focus starting point to
+ * the element `scrollIntoView` targets, so on a fresh load the first Tab
+ * skipped the application's skip link and landed on the rail item *after* the
+ * active one, and the main content was some eighteen Tabs away. Scrolling the
+ * container moves pixels and nothing else. It also stops the page itself from
+ * scrolling to reveal the rail, which `scrollIntoView` did as a side effect.
  */
 export function useScrollFade(
   ref: RefObject<HTMLElement | null>,
@@ -119,9 +141,9 @@ export function useScrollFade(
   useLayoutEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
-    ref.current
-      ?.querySelector<HTMLElement>(activeSelector)
-      ?.scrollIntoView?.({ block: 'nearest' });
+    const el = ref.current;
+    const active = el?.querySelector<HTMLElement>(activeSelector);
+    if (el && active) scrollToNearest(el, active);
     measure();
   }, [ref, activeSelector, measure]);
 

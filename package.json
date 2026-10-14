@@ -351,6 +351,14 @@
       "types": "./dist/patterns/meta-bar.d.ts",
       "import": "./dist/patterns/meta-bar.js"
     },
+    "./page-header": {
+      "types": "./dist/patterns/page-header.d.ts",
+      "import": "./dist/patterns/page-header.js"
+    },
+    "./section-header": {
+      "types": "./dist/patterns/section-header.d.ts",
+      "import": "./dist/patterns/section-header.js"
+    },
     "./dock-tabs": {
       "types": "./dist/patterns/dock-tabs.d.ts",
       "import": "./dist/patterns/dock-tabs.js"

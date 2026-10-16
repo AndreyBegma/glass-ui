@@ -195,6 +195,46 @@ describe('ResizableFrame', () => {
     fireEvent.pointerUp(right(), { clientX: 950, pointerId: 1 });
   });
 
+  test('a centred frame dragged past the room keeps the right edge under the pointer', async () => {
+    const { container } = render(<Frame calls={fresh()} initial={600} />);
+    room(container, 1000); // 976 of room: the right edge starts at 788
+    fireEvent.pointerDown(right(), { button: 0, clientX: 788, pointerId: 1 });
+    fireEvent.pointerMove(right(), { clientX: 1088, pointerId: 1 });
+    await nextFrame();
+    expect(now()).toBe(1088);
+    fireEvent.pointerUp(right(), { clientX: 1088, pointerId: 1 });
+  });
+
+  test('a left-aligned frame dragged below the room keeps the right edge under the pointer', async () => {
+    const { container } = render(<Frame calls={fresh()} initial={1200} />);
+    room(container, 1000);
+    fireEvent.pointerDown(right(), { button: 0, clientX: 1200, pointerId: 1 });
+    fireEvent.pointerMove(right(), { clientX: 900, pointerId: 1 });
+    await nextFrame();
+    expect(now()).toBe(824); // centred again: edge at (976 + 824) / 2 = 900
+    fireEvent.pointerUp(right(), { clientX: 900, pointerId: 1 });
+  });
+
+  test('the left handle of a centred frame dragged past the room grows by dx beyond it', async () => {
+    const { container } = render(<Frame calls={fresh()} initial={600} />);
+    room(container, 1000); // the left edge starts at 188
+    fireEvent.pointerDown(left(), { button: 0, clientX: 188, pointerId: 1 });
+    fireEvent.pointerMove(left(), { clientX: -112, pointerId: 1 });
+    await nextFrame();
+    expect(now()).toBe(1088);
+    fireEvent.pointerUp(left(), { clientX: -112, pointerId: 1 });
+  });
+
+  test('the left handle of a left-aligned frame dragged inward re-centres it', async () => {
+    const { container } = render(<Frame calls={fresh()} initial={1200} />);
+    room(container, 1000);
+    fireEvent.pointerDown(left(), { button: 0, clientX: 0, pointerId: 1 });
+    fireEvent.pointerMove(left(), { clientX: 100, pointerId: 1 });
+    await nextFrame();
+    expect(now()).toBe(776); // centred: left edge at (976 - 776) / 2 = 100
+    fireEvent.pointerUp(left(), { clientX: 100, pointerId: 1 });
+  });
+
   test('a drag clamps to min / max', async () => {
     const calls = fresh();
     const { container } = render(<Frame calls={calls} />);

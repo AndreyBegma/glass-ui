@@ -995,7 +995,7 @@ the controls a list of records needs and the package did not have.
 
 | Import | What it is |
 |---|---|
-| `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
+| `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. A card with `movable: false` (#146) cannot be dragged or moved from its menu, but still renders and opens. |
 | `@andrewbehma/glass-ui/page-header` | `PageHeader` — the page's one header: eyebrow, 28 px h1, a `status` beside it, description, a `meta` counter row and `actions` on the right (wrapping below the title at full width under `sm`). Put `<MetaBar counters={…} />` (no `title`) in `meta`; `MetaBar`'s own 20 px h1 is deprecated. No back link — that is the breadcrumb's job. |
 | `@andrewbehma/glass-ui/section-header` | `SectionHeader` — the heading of one section: a 16/600 `h2`, an optional description and an actions slot on the right. |
 | `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. Optionally (#130): `activeFilters` + `onClearAll` draw removable chips under the bar, and `collapseBelow` folds `filters` into one "Filters (n)" button and a bottom `Sheet`. |
@@ -1014,6 +1014,13 @@ normalised there and both reach `onMove` through the same exit, so the two
 paths cannot produce different moves, and the test file asserts they do not.
 The result is read by an `aria-live` region after every move, whichever input
 produced it, and focus follows the card into its new column.
+
+A card whose column is decided elsewhere carries `movable: false` (#146), and
+both inputs drop it at once. It is not `draggable`, and its menu shows no move
+entries but keeps the consumer's `renderCardMenu` items; with none of those,
+the menu has no trigger at all. `resolveBoardMove` refuses any intent that
+names the card, so `onMove` never hears about it. It still renders and opens,
+and other cards still land beside it. Leaving the flag out means `true`.
 
 **Cards are not glass.** The card is `Card raised`'s surface and the variant
 is not a prop. The rule above — new chrome is glass; cards, grid items and

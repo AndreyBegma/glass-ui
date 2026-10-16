@@ -567,6 +567,111 @@ describe('Board', () => {
     });
   });
 
+  /**
+   * #146 — a card whose column is derived somewhere else. It renders and
+   * opens like any other, and neither input can move it: not a drag source,
+   * no move entries in its menu, and the reducer refuses it if asked anyway.
+   */
+  describe('a card that is not movable', () => {
+    const FIXED: BoardColumn<Task>[] = COLUMNS.map((col) => ({
+      ...col,
+      cards: col.cards.map((c) => (c.id === 'quote' ? { ...c, movable: false } : c)),
+    }));
+    const itemOf = (title: string, text: string) =>
+      cardsOf(title).find((li) => li.textContent?.startsWith(text)) as HTMLLIElement;
+
+    const dragEvent = (type: string, clientY: number) =>
+      new MouseEvent(type, { bubbles: true, cancelable: true, clientY });
+    const drag = (from: Element, to: Element, clientY: number) => {
+      fireEvent(from, dragEvent('dragstart', 0));
+      fireEvent(to, dragEvent('dragover', clientY));
+      fireEvent(to, dragEvent('drop', clientY));
+      fireEvent(from, dragEvent('dragend', 0));
+    };
+
+    test('it still renders, and is not a drag source; the others still are', () => {
+      render(<Harness columns={FIXED} />);
+      const fixed = itemOf('To do', 'Send the quote');
+      expect(fixed.textContent).toBe('Send the quote · A');
+      expect(fixed.getAttribute('draggable')).toBe('false');
+      expect(fixed.className).not.toContain('cursor-grab');
+      expect(itemOf('To do', 'Write the brief').getAttribute('draggable')).toBe('true');
+    });
+
+    test('dragging it reports nothing, onto a card or a column', () => {
+      const moves: BoardMove[] = [];
+      render(<Harness columns={FIXED} moves={moves} />);
+
+      drag(itemOf('To do', 'Send the quote'), itemOf('Review', 'Check the invoice'), 0);
+      drag(itemOf('To do', 'Send the quote'), listOf('Done'), 0);
+
+      expect(moves).toEqual([]);
+      expect(cardsOf('To do')).toHaveLength(3);
+      expect(within(column('Done')).queryAllByRole('listitem')).toHaveLength(0);
+    });
+
+    test('other cards may still land beside it', () => {
+      const moves: BoardMove[] = [];
+      render(<Harness columns={FIXED} moves={moves} />);
+
+      drag(itemOf('Review', 'Check the invoice'), itemOf('To do', 'Send the quote'), 0);
+
+      expect(moves).toEqual([
+        { id: 'invoice', fromColumnId: 'review', toColumnId: 'todo', index: 2 },
+      ]);
+    });
+
+    test('its menu, opened from the keyboard, has no move entries and keeps the consumer’s', async () => {
+      render(<Harness columns={FIXED} withMenu />);
+
+      const opener = trigger('Send the quote');
+      opener.focus();
+      fireEvent.keyDown(opener, { key: 'Enter' });
+      const menu = await screen.findByRole('menu');
+      expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+        'Archive Send the quote',
+      ]);
+      expect(within(menu).queryByText('Move to')).toBeNull();
+      expect(within(menu).queryByRole('separator')).toBeNull();
+    });
+
+    test('with nothing of the consumer’s to offer, it has no menu trigger at all', () => {
+      render(<Harness columns={FIXED} />);
+      expect(screen.queryByRole('button', { name: 'Send the quote actions' })).toBeNull();
+      expect(trigger('Write the brief')).toBeTruthy();
+    });
+
+    test('a movable neighbour’s menu is unchanged and can move past it', async () => {
+      const moves: BoardMove[] = [];
+      render(<Harness columns={FIXED} moves={moves} />);
+
+      await choose('Write the brief', 'Move down');
+
+      expect(moves).toEqual([
+        { id: 'brief', fromColumnId: 'todo', toColumnId: 'todo', index: 1 },
+      ]);
+    });
+
+    test('resolveBoardMove refuses it from either input', () => {
+      expect(
+        resolveBoardMove(FIXED, { kind: 'command', id: 'quote', command: 'up' }),
+      ).toBeNull();
+      expect(
+        resolveBoardMove(FIXED, {
+          kind: 'command',
+          id: 'quote',
+          command: { toColumnId: 'done' },
+        }),
+      ).toBeNull();
+      expect(
+        resolveBoardMove(FIXED, { kind: 'drop', id: 'quote', columnId: 'review', index: 0 }),
+      ).toBeNull();
+      expect(
+        resolveBoardMove(FIXED, { kind: 'command', id: 'brief', command: 'down' }),
+      ).toEqual({ id: 'brief', fromColumnId: 'todo', toColumnId: 'todo', index: 1 });
+    });
+  });
+
   describe('applyBoardMove', () => {
     test('remove-then-insert, touching only the two columns', () => {
       const next = applyBoardMove(COLUMNS, {

@@ -48,6 +48,11 @@ import { RowActions, rowActionsHost } from './row-actions';
  * up, down, top, bottom and one item per other column. Nothing in it reads
  * the drag state, and a board with no pointer at all is fully operable.
  *
+ * **A card may be fixed.** `movable: false` on an item (#146) takes it out of
+ * both inputs at once: it is not `draggable`, its menu drops the move entries
+ * and keeps the consumer's own (no trigger at all when there are none), and
+ * the reducer refuses any intent naming it. Other cards still land beside it.
+ *
  * **The result is announced, and focus follows the card.** An
  * `aria-live="polite"` region reads `labels.moved` after every committed move,
  * whichever input produced it. A card that changes column is a remounted
@@ -81,6 +86,15 @@ export interface BoardCardItem {
    * draws the card; this is what the menu trigger and the live region say.
    */
   label: string;
+  /**
+   * Whether a person may move this card. Default `true`. A card whose place
+   * is derived — a column computed from somewhere else — is `false`: it is
+   * not a drag source, its menu offers no moves (the consumer's own items
+   * stay), and `resolveBoardMove` refuses any intent naming it, so neither
+   * input can report a move for it. It still renders, opens and is a slot
+   * other cards may land beside.
+   */
+  movable?: boolean;
 }
 
 export interface BoardColumn<T extends BoardCardItem = BoardCardItem> {
@@ -208,15 +222,15 @@ function locate<T extends BoardCardItem>(
  * dragged card still in place; a card moving down its own column vacates a
  * slot above the target, so the index it lands on is one less. A command is
  * already relative to the column as it is. Either way the answer is `null`
- * when the card would end where it began, and the consumer never hears
- * about it.
+ * when the card would end where it began, or when the card is not
+ * `movable`, and the consumer never hears about it.
  */
 export function resolveBoardMove<T extends BoardCardItem>(
   columns: readonly BoardColumn<T>[],
   intent: BoardMoveIntent,
 ): BoardMove | null {
   const source = locate(columns, intent.id);
-  if (!source) return null;
+  if (!source || source.card.movable === false) return null;
   const from = source.column;
 
   let to: BoardColumn<T> | undefined;
@@ -510,12 +524,16 @@ export function Board<T extends BoardCardItem>({
               {column.cards.map((card, index) => {
                 const last = column.cards.length - 1;
                 const other = columns.filter((c) => c.id !== column.id);
+                const movable = card.movable !== false;
+                const consumerMenu = renderCardMenu?.(card, column);
+                // A fixed card with nothing of the consumer's has no menu at all.
+                const hasMenu = movable || Boolean(consumerMenu);
                 return (
                   <li
                     key={card.id}
                     data-board-card=""
-                    draggable
-                    onDragStart={(e) => onDragStart(card.id, e)}
+                    draggable={movable}
+                    onDragStart={movable ? (e) => onDragStart(card.id, e) : undefined}
                     onDragOver={(e) => onCardDragOver(column.id, card.id, index, e)}
                     onDragEnd={onDragEnd}
                     onDrop={(e) => onCardDrop(column.id, card.id, index, e)}
@@ -524,7 +542,8 @@ export function Board<T extends BoardCardItem>({
                       // variant is not offered, see the header.
                       'rounded-surface border border-line bg-raised p-3',
                       rowActionsHost,
-                      'relative flex min-h-(--size-row) cursor-grab items-start gap-2 active:cursor-grabbing',
+                      'relative flex min-h-(--size-row) items-start gap-2',
+                      movable && 'cursor-grab active:cursor-grabbing',
                       dragging === card.id && 'opacity-50',
                     )}
                   >
@@ -537,87 +556,93 @@ export function Board<T extends BoardCardItem>({
 
                     <div className="min-w-0 flex-1">{renderCard(card, column)}</div>
 
-                    <RowActions className="-me-1 -mt-1">
-                      <MenuRoot>
-                        <MenuTrigger asChild>
-                          <Button
-                            ref={(el) => {
-                              if (el) triggerEls.current.set(card.id, el);
-                              else triggerEls.current.delete(card.id);
-                            }}
-                            variant="ghost"
-                            size="sm"
-                            icon
-                            aria-label={labels.actions(card)}
-                          >
-                            <Ellipsis size={16} aria-hidden="true" />
-                          </Button>
-                        </MenuTrigger>
-                        <MenuContent align="end">
-                          <MenuItem
-                            disabled={index === 0}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'up' }, true)
-                            }
-                          >
-                            {labels.moveUp}
-                          </MenuItem>
-                          <MenuItem
-                            disabled={index === last}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'down' }, true)
-                            }
-                          >
-                            {labels.moveDown}
-                          </MenuItem>
-                          <MenuItem
-                            disabled={index === 0}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'top' }, true)
-                            }
-                          >
-                            {labels.moveToTop}
-                          </MenuItem>
-                          <MenuItem
-                            disabled={index === last}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'bottom' }, true)
-                            }
-                          >
-                            {labels.moveToBottom}
-                          </MenuItem>
-                          {other.length > 0 ? (
-                            <>
-                              <MenuSeparator />
-                              <MenuLabel>{labels.moveTo}</MenuLabel>
-                              {other.map((target) => (
+                    {hasMenu ? (
+                      <RowActions className="-me-1 -mt-1">
+                        <MenuRoot>
+                          <MenuTrigger asChild>
+                            <Button
+                              ref={(el) => {
+                                if (el) triggerEls.current.set(card.id, el);
+                                else triggerEls.current.delete(card.id);
+                              }}
+                              variant="ghost"
+                              size="sm"
+                              icon
+                              aria-label={labels.actions(card)}
+                            >
+                              <Ellipsis size={16} aria-hidden="true" />
+                            </Button>
+                          </MenuTrigger>
+                          <MenuContent align="end">
+                            {movable ? (
+                              <>
                                 <MenuItem
-                                  key={target.id}
+                                  disabled={index === 0}
                                   onSelect={() =>
-                                    commit(
-                                      {
-                                        kind: 'command',
-                                        id: card.id,
-                                        command: { toColumnId: target.id },
-                                      },
-                                      true,
-                                    )
+                                    commit({ kind: 'command', id: card.id, command: 'up' }, true)
                                   }
                                 >
-                                  {labels.moveToColumn(target)}
+                                  {labels.moveUp}
                                 </MenuItem>
-                              ))}
-                            </>
-                          ) : null}
-                          {renderCardMenu ? (
-                            <>
-                              <MenuSeparator />
-                              {renderCardMenu(card, column)}
-                            </>
-                          ) : null}
-                        </MenuContent>
-                      </MenuRoot>
-                    </RowActions>
+                                <MenuItem
+                                  disabled={index === last}
+                                  onSelect={() =>
+                                    commit({ kind: 'command', id: card.id, command: 'down' }, true)
+                                  }
+                                >
+                                  {labels.moveDown}
+                                </MenuItem>
+                                <MenuItem
+                                  disabled={index === 0}
+                                  onSelect={() =>
+                                    commit({ kind: 'command', id: card.id, command: 'top' }, true)
+                                  }
+                                >
+                                  {labels.moveToTop}
+                                </MenuItem>
+                                <MenuItem
+                                  disabled={index === last}
+                                  onSelect={() =>
+                                    commit({ kind: 'command', id: card.id, command: 'bottom' }, true)
+                                  }
+                                >
+                                  {labels.moveToBottom}
+                                </MenuItem>
+                                {other.length > 0 ? (
+                                  <>
+                                    <MenuSeparator />
+                                    <MenuLabel>{labels.moveTo}</MenuLabel>
+                                    {other.map((target) => (
+                                      <MenuItem
+                                        key={target.id}
+                                        onSelect={() =>
+                                          commit(
+                                            {
+                                              kind: 'command',
+                                              id: card.id,
+                                              command: { toColumnId: target.id },
+                                            },
+                                            true,
+                                          )
+                                        }
+                                      >
+                                        {labels.moveToColumn(target)}
+                                      </MenuItem>
+                                    ))}
+                                  </>
+                                ) : null}
+                              </>
+                            ) : null}
+                            {consumerMenu ? (
+                              <>
+                                {movable ? <MenuSeparator /> : null}
+                                {consumerMenu}
+                              </>
+                            ) : null}
+                          </MenuContent>
+                        </MenuRoot>
+                      </RowActions>
+                    ) : null}
                   </li>
                 );
               })}

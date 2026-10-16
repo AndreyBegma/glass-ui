@@ -567,6 +567,369 @@ describe('Board', () => {
     });
   });
 
+  /**
+   * #146 — a card whose column is derived somewhere else. It renders and
+   * opens like any other, and neither input can move it: not a drag source,
+   * no move entries in its menu, and the reducer refuses it if asked anyway.
+   */
+  describe('a card that is not movable', () => {
+    const FIXED: BoardColumn<Task>[] = COLUMNS.map((col) => ({
+      ...col,
+      cards: col.cards.map((c) => (c.id === 'quote' ? { ...c, movable: false } : c)),
+    }));
+    const itemOf = (title: string, text: string) =>
+      cardsOf(title).find((li) => li.textContent?.startsWith(text)) as HTMLLIElement;
+
+    const dragEvent = (type: string, clientY: number) =>
+      new MouseEvent(type, { bubbles: true, cancelable: true, clientY });
+    const drag = (from: Element, to: Element, clientY: number) => {
+      fireEvent(from, dragEvent('dragstart', 0));
+      fireEvent(to, dragEvent('dragover', clientY));
+      fireEvent(to, dragEvent('drop', clientY));
+      fireEvent(from, dragEvent('dragend', 0));
+    };
+
+    test('it still renders, and is not a drag source; the others still are', () => {
+      render(<Harness columns={FIXED} />);
+      const fixed = itemOf('To do', 'Send the quote');
+      expect(fixed.textContent).toBe('Send the quote · A');
+      expect(fixed.getAttribute('draggable')).toBe('false');
+      expect(fixed.className).not.toContain('cursor-grab');
+      expect(itemOf('To do', 'Write the brief').getAttribute('draggable')).toBe('true');
+    });
+
+    test('dragging it reports nothing, onto a card or a column', () => {
+      const moves: BoardMove[] = [];
+      render(<Harness columns={FIXED} moves={moves} />);
+
+      drag(itemOf('To do', 'Send the quote'), itemOf('Review', 'Check the invoice'), 0);
+      drag(itemOf('To do', 'Send the quote'), listOf('Done'), 0);
+
+      expect(moves).toEqual([]);
+      expect(cardsOf('To do')).toHaveLength(3);
+      expect(within(column('Done')).queryAllByRole('listitem')).toHaveLength(0);
+    });
+
+    test('other cards may still land beside it', () => {
+      const moves: BoardMove[] = [];
+      render(<Harness columns={FIXED} moves={moves} />);
+
+      drag(itemOf('Review', 'Check the invoice'), itemOf('To do', 'Send the quote'), 0);
+
+      expect(moves).toEqual([
+        { id: 'invoice', fromColumnId: 'review', toColumnId: 'todo', index: 2 },
+      ]);
+    });
+
+    test('its menu, opened from the keyboard, has no move entries and keeps the consumer’s', async () => {
+      render(<Harness columns={FIXED} withMenu />);
+
+      const opener = trigger('Send the quote');
+      opener.focus();
+      fireEvent.keyDown(opener, { key: 'Enter' });
+      const menu = await screen.findByRole('menu');
+      expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+        'Archive Send the quote',
+      ]);
+      expect(within(menu).queryByText('Move to')).toBeNull();
+      expect(within(menu).queryByRole('separator')).toBeNull();
+    });
+
+    test('with nothing of the consumer’s to offer, it has no menu trigger at all', () => {
+      render(<Harness columns={FIXED} />);
+      expect(screen.queryByRole('button', { name: 'Send the quote actions' })).toBeNull();
+      expect(trigger('Write the brief')).toBeTruthy();
+    });
+
+    test('a movable neighbour’s menu is unchanged and can move past it', async () => {
+      const moves: BoardMove[] = [];
+      render(<Harness columns={FIXED} moves={moves} />);
+
+      await choose('Write the brief', 'Move down');
+
+      expect(moves).toEqual([
+        { id: 'brief', fromColumnId: 'todo', toColumnId: 'todo', index: 1 },
+      ]);
+    });
+
+    test('resolveBoardMove refuses it from either input', () => {
+      expect(
+        resolveBoardMove(FIXED, { kind: 'command', id: 'quote', command: 'up' }),
+      ).toBeNull();
+      expect(
+        resolveBoardMove(FIXED, {
+          kind: 'command',
+          id: 'quote',
+          command: { toColumnId: 'done' },
+        }),
+      ).toBeNull();
+      expect(
+        resolveBoardMove(FIXED, { kind: 'drop', id: 'quote', columnId: 'review', index: 0 }),
+      ).toBeNull();
+      expect(
+        resolveBoardMove(FIXED, { kind: 'command', id: 'brief', command: 'down' }),
+      ).toEqual({ id: 'brief', fromColumnId: 'todo', toColumnId: 'todo', index: 1 });
+    });
+  });
+
+  describe('column parts (issue 149)', () => {
+    /** The board with the issue-149 props, applying moves the way an application would. */
+    function PartsHarness({
+      columns: initial = COLUMNS,
+      moves,
+      ...props
+    }: {
+      columns?: BoardColumn<Task>[];
+      moves?: BoardMove[];
+      collapsible?: boolean;
+      collapsed?: readonly string[];
+      defaultCollapsed?: readonly string[];
+      onCollapsedChange?: (collapsed: string[]) => void;
+    }) {
+      const [columns, setColumns] = useState<readonly BoardColumn<Task>[]>(initial);
+      return (
+        <Board
+          aria-label="Tasks"
+          columns={columns}
+          renderCard={(card) => <span>{card.label}</span>}
+          onMove={(move) => {
+            moves?.push(move);
+            setColumns((current) => applyBoardMove(current, move));
+          }}
+          {...props}
+        />
+      );
+    }
+
+    const toggle = (name: string) => screen.getByRole('button', { name });
+
+    test('without the new props nothing new renders: no toggle, the count is the length', () => {
+      render(<Harness />);
+      expect(screen.queryByRole('button', { name: /^(Collapse|Expand) / })).toBeNull();
+      expect(column('To do').getAttribute('data-collapsed')).toBeNull();
+      expect(within(column('To do')).getByText('3')).toBeTruthy();
+      expect(listOf('To do').hidden).toBe(false);
+    });
+
+    test('the count slot replaces the number, and can say filtered of total', () => {
+      render(
+        <PartsHarness
+          columns={[{ ...COLUMNS[0], count: '1/3' }, COLUMNS[1], COLUMNS[2]]}
+        />,
+      );
+      expect(within(column('To do')).getByText('1/3')).toBeTruthy();
+      expect(within(column('To do')).queryByText('3')).toBeNull();
+      // The others keep the default.
+      expect(within(column('Review')).getByText('1')).toBeTruthy();
+    });
+
+    test('the footer sits outside the scroll region, after it', () => {
+      render(
+        <PartsHarness
+          columns={[
+            { ...COLUMNS[0], footer: <button type="button">Show older</button> },
+            COLUMNS[1],
+            COLUMNS[2],
+          ]}
+        />,
+      );
+      const footer = within(column('To do'))
+        .getByRole('button', { name: 'Show older' })
+        .closest('footer') as HTMLElement;
+      const list = listOf('To do');
+      expect(list.contains(footer)).toBe(false);
+      expect(list.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(footer.className).toContain('shrink-0');
+      expect(list.className).toContain('overflow-y-auto');
+      expect(list.className).toContain('min-h-0');
+    });
+
+    test('the board stops at its container and each column may shrink to it', () => {
+      render(<PartsHarness />);
+      const board = screen.getByRole('region', { name: 'Tasks' });
+      expect(board.className).toContain('max-h-full');
+      expect(column('To do').className).toContain('min-h-0');
+    });
+
+    test('the header takes its shadow only while its list is scrolled', () => {
+      render(<PartsHarness />);
+      const header = column('To do').querySelector('header') as HTMLElement;
+      const list = listOf('To do');
+      expect(column('To do').getAttribute('data-scrolled')).toBeNull();
+      expect(header.className).not.toContain('shadow-');
+
+      list.scrollTop = 24;
+      fireEvent.scroll(list);
+      expect(column('To do').getAttribute('data-scrolled')).toBe('true');
+      expect(header.className).toContain('shadow-');
+      // Only the scrolled column.
+      expect(column('Review').getAttribute('data-scrolled')).toBeNull();
+
+      list.scrollTop = 0;
+      fireEvent.scroll(list);
+      expect(column('To do').getAttribute('data-scrolled')).toBeNull();
+      expect(header.className).not.toContain('shadow-');
+    });
+
+    test('uncontrolled: the toggle folds and opens a column, with aria-expanded', () => {
+      const changes: string[][] = [];
+      render(<PartsHarness collapsible onCollapsedChange={(ids) => changes.push(ids)} />);
+
+      const button = toggle('Collapse To do');
+      expect(button.getAttribute('aria-expanded')).toBe('true');
+      expect(button.getAttribute('aria-controls')).toBe(listOf('To do').id);
+
+      fireEvent.click(button);
+      expect(column('To do').getAttribute('data-collapsed')).toBe('true');
+      expect(column('To do').className).toContain('w-(--board-column-collapsed');
+      expect(toggle('Expand To do').getAttribute('aria-expanded')).toBe('false');
+      // The strip keeps the title and the count; the cards are hidden.
+      expect(within(column('To do')).getByText('To do')).toBeTruthy();
+      expect(within(column('To do')).getByText('3')).toBeTruthy();
+      expect(within(column('To do')).queryAllByRole('listitem')).toHaveLength(0);
+      expect(changes).toEqual([['todo']]);
+
+      fireEvent.click(toggle('Expand To do'));
+      expect(column('To do').getAttribute('data-collapsed')).toBeNull();
+      expect(cardsOf('To do')).toHaveLength(3);
+      expect(changes).toEqual([['todo'], []]);
+    });
+
+    test('the toggle is the same element in both states, so focus stays on it', () => {
+      render(<PartsHarness collapsible />);
+      const button = toggle('Collapse To do');
+      button.focus();
+      fireEvent.click(button);
+      expect(toggle('Expand To do')).toBe(button);
+      expect(document.activeElement).toBe(button);
+    });
+
+    test('a click anywhere on the strip opens it', () => {
+      render(<PartsHarness collapsible defaultCollapsed={['review']} />);
+      expect(column('Review').getAttribute('data-collapsed')).toBe('true');
+
+      fireEvent.click(within(column('Review')).getByText('Review'));
+      expect(column('Review').getAttribute('data-collapsed')).toBeNull();
+      expect(cardsOf('Review')).toHaveLength(1);
+    });
+
+    test('a folded column hides its header slot and footer', () => {
+      render(
+        <PartsHarness
+          collapsible
+          defaultCollapsed={['todo']}
+          columns={[
+            {
+              ...COLUMNS[0],
+              header: <button type="button">Filter</button>,
+              footer: <button type="button">Show older</button>,
+            },
+            COLUMNS[1],
+            COLUMNS[2],
+          ]}
+        />,
+      );
+      expect(within(column('To do')).queryByRole('button', { name: 'Filter' })).toBeNull();
+      expect(within(column('To do')).queryByRole('button', { name: 'Show older' })).toBeNull();
+
+      fireEvent.click(toggle('Expand To do'));
+      expect(within(column('To do')).getByRole('button', { name: 'Filter' })).toBeTruthy();
+      expect(within(column('To do')).getByRole('button', { name: 'Show older' })).toBeTruthy();
+    });
+
+    test('controlled: the board shows what it is handed and only reports', () => {
+      const changes: string[][] = [];
+      const { rerender } = render(
+        <PartsHarness
+          collapsible
+          collapsed={['done']}
+          onCollapsedChange={(ids) => changes.push(ids)}
+        />,
+      );
+      expect(column('Done').getAttribute('data-collapsed')).toBe('true');
+
+      // Reported, not applied: the parent did not pass the new list.
+      fireEvent.click(toggle('Collapse To do'));
+      expect(changes).toEqual([['done', 'todo']]);
+      expect(column('To do').getAttribute('data-collapsed')).toBeNull();
+
+      rerender(
+        <PartsHarness
+          collapsible
+          collapsed={['done', 'todo']}
+          onCollapsedChange={(ids) => changes.push(ids)}
+        />,
+      );
+      expect(column('To do').getAttribute('data-collapsed')).toBe('true');
+
+      fireEvent.click(toggle('Expand Done'));
+      expect(changes[1]).toEqual(['todo']);
+    });
+
+    test('without collapsible, collapsed ids are ignored', () => {
+      render(<PartsHarness collapsed={['todo']} />);
+      expect(column('To do').getAttribute('data-collapsed')).toBeNull();
+      expect(cardsOf('To do')).toHaveLength(3);
+    });
+
+    test('the toggle is reached and pressed from the keyboard', async () => {
+      render(<PartsHarness collapsible />);
+      const button = toggle('Collapse Review');
+      button.focus();
+      expect(document.activeElement).toBe(button);
+      // A native button in the tab order: Enter and Space are the browser's
+      // click, which happy-dom does not synthesise — so the click stands in.
+      expect(button.tagName).toBe('BUTTON');
+      expect(button.tabIndex).toBe(0);
+      fireEvent.click(button);
+      expect(column('Review').getAttribute('data-collapsed')).toBe('true');
+    });
+
+    test('drag onto an open column still works beside a folded one', () => {
+      const moves: BoardMove[] = [];
+      render(<PartsHarness collapsible defaultCollapsed={['review']} moves={moves} />);
+
+      const dragEvent = (type: string) =>
+        new MouseEvent(type, { bubbles: true, cancelable: true, clientY: 0 });
+      const source = card('Send the quote');
+      fireEvent(source, dragEvent('dragstart'));
+      fireEvent(listOf('Done'), dragEvent('dragover'));
+      fireEvent(listOf('Done'), dragEvent('drop'));
+      fireEvent(source, dragEvent('dragend'));
+
+      expect(moves).toEqual([{ id: 'quote', fromColumnId: 'todo', toColumnId: 'done', index: 0 }]);
+      expect(cardsOf('Done')).toHaveLength(1);
+    });
+
+    test('a fixed card stays fixed in a collapsible board', () => {
+      const moves: BoardMove[] = [];
+      const fixed = COLUMNS.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === 'quote' ? { ...c, movable: false } : c)),
+      }));
+      render(<PartsHarness collapsible columns={fixed} moves={moves} />);
+
+      const item = within(column('To do'))
+        .getAllByRole('listitem')
+        .find((li) => li.textContent === 'Send the quote') as HTMLLIElement;
+      expect(item.getAttribute('draggable')).toBe('false');
+      fireEvent(item, new MouseEvent('dragstart', { bubbles: true, cancelable: true }));
+      fireEvent(listOf('Done'), new MouseEvent('drop', { bubbles: true, cancelable: true }));
+      expect(moves).toEqual([]);
+    });
+
+    test('a card moved into a folded column from its menu hands focus to that column’s toggle', async () => {
+      const moves: BoardMove[] = [];
+      render(<PartsHarness collapsible defaultCollapsed={['done']} moves={moves} />);
+
+      await choose('Send the quote', 'Move to Done');
+
+      expect(moves).toEqual([{ id: 'quote', fromColumnId: 'todo', toColumnId: 'done', index: 0 }]);
+      expect(within(column('Done')).getByText('1')).toBeTruthy();
+      expect(document.activeElement).toBe(toggle('Expand Done'));
+    });
+  });
+
   describe('applyBoardMove', () => {
     test('remove-then-insert, touching only the two columns', () => {
       const next = applyBoardMove(COLUMNS, {

@@ -995,7 +995,7 @@ the controls a list of records needs and the package did not have.
 
 | Import | What it is |
 |---|---|
-| `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. |
+| `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. A card with `movable: false` (#146) cannot be dragged or moved from its menu, but still renders and opens. Each column scrolls on its own inside a height-bounded board, and with `collapsible` (#149) folds to a narrow strip; `count` on a column replaces the card count (`'1/3'`). |
 | `@andrewbehma/glass-ui/page-header` | `PageHeader` — the page's one header: eyebrow, 28 px h1, a `status` beside it, description, a `meta` counter row and `actions` on the right (wrapping below the title at full width under `sm`). Put `<MetaBar counters={…} />` (no `title`) in `meta`; `MetaBar`'s own 20 px h1 is deprecated. No back link — that is the breadcrumb's job. |
 | `@andrewbehma/glass-ui/section-header` | `SectionHeader` — the heading of one section: a 16/600 `h2`, an optional description and an actions slot on the right. |
 | `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. Optionally (#130): `activeFilters` + `onClearAll` draw removable chips under the bar, and `collapseBelow` folds `filters` into one "Filters (n)" button and a bottom `Sheet`. |
@@ -1014,6 +1014,48 @@ normalised there and both reach `onMove` through the same exit, so the two
 paths cannot produce different moves, and the test file asserts they do not.
 The result is read by an `aria-live` region after every move, whichever input
 produced it, and focus follows the card into its new column.
+
+A card whose column is decided elsewhere carries `movable: false` (#146), and
+both inputs drop it at once. It is not `draggable`, and its menu shows no move
+entries but keeps the consumer's `renderCardMenu` items; with none of those,
+the menu has no trigger at all. `resolveBoardMove` refuses any intent that
+names the card, so `onMove` never hears about it. It still renders and opens,
+and other cards still land beside it. Leaving the flag out means `true`.
+
+**A column is a header, a scroll region and a footer** (#149). The board is
+`max-h-full`, so under a parent with a height it stops there and never grows
+past it; under one without, nothing changes. Inside, each column's card list
+scrolls on its own while the header (title, count, `header` slot) and the
+`footer` slot — a "Show older" button, an "Add" row — stay put. The header
+takes a hairline and a shadow only while its list is scrolled off the top
+(`data-scrolled="true"` on the column). `count` on a column replaces the
+default `cards.length`, so a filtered board can show `1/3`.
+
+`collapsible` gives every header a toggle (`aria-expanded`, named by
+`labels.collapse(column)` / `labels.expand(column)`) that folds the column to
+a narrow strip: the toggle, the title set vertically, and the count. A click
+anywhere on the strip opens it; the keyboard path is the toggle. Leave it
+uncontrolled with `defaultCollapsed={['done']}`, or control it with
+`collapsed` + `onCollapsedChange(ids)`. A folded column's list is `hidden`, so
+it is not a drop target; the card menu's "Move to" still reaches it, and focus
+then lands on that column's toggle. The strip's width is
+`--board-column-collapsed` (default `2.75rem`), as an open column's is
+`--board-column` (default `18rem`). Without `collapsible` there is no toggle
+and `collapsed` / `defaultCollapsed` are ignored.
+
+```tsx
+<div className="h-[calc(100dvh-8rem)]">
+  <Board
+    aria-label="Board"
+    columns={columns.map((c) => ({ ...c, count: `${c.cards.length}/${totals[c.id]}` }))}
+    collapsible
+    defaultCollapsed={['completed']}
+    renderCard={(card) => <TaskCard task={card} />}
+    onMove={(move) => setColumns((cs) => applyBoardMove(cs, move))}
+    className="h-full"
+  />
+</div>
+```
 
 **Cards are not glass.** The card is `Card raised`'s surface and the variant
 is not a prop. The rule above — new chrome is glass; cards, grid items and

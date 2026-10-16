@@ -33,7 +33,8 @@ import { cn } from '../lib/cn';
  * while a drag is on the child is `pointer-events: none`, so a pointer that
  * crosses into the iframe keeps driving the drag. The frame is centred, so an
  * edge moved by `dx` changes the width by `2·dx`; a frame wider than its box is
- * left-aligned and scrolls, and there the factor is 1.
+ * left-aligned and scrolls, and there the factor is 1. A drag that crosses
+ * between the two keeps the dragged edge under the pointer.
  *
  * **The page never scrolls sideways.** The frame's own box does. `max` is not
  * capped by the container.
@@ -67,6 +68,12 @@ const PAGE_STEP = 160;
 /** The box's side gutter, in px — half a handle's 24 px hit area, so neither is clipped. */
 const GUTTER = 12;
 
+/** Where the dragged edge sits in the box's content, for a frame `w` wide. */
+const edgeAt = (w: number, side: Side, room: number) => {
+  if (side === 'right') return w <= room ? (room + w) / 2 : w;
+  return w <= room ? (room - w) / 2 : 0;
+};
+
 export function ResizableFrame({
   width,
   onWidthChange,
@@ -96,9 +103,13 @@ export function ResizableFrame({
    * rule `SplitPane` follows), so a pointer that leaves the handle still lands
    * where it is.
    */
-  const drag = useRef<{ start: number; startWidth: number; factor: number; last: number } | null>(
-    null,
-  );
+  const drag = useRef<{
+    start: number;
+    startWidth: number;
+    side: Side;
+    room: number;
+    last: number;
+  } | null>(null);
   const frameRequest = useRef<number | null>(null);
   const pending = useRef<number | null>(null);
   /** The last width a run of key presses reached, waiting for its key-up. */
@@ -126,16 +137,10 @@ export function ResizableFrame({
   const onPointerDown = (side: Side) => (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
-    // Centred while the box has room for the frame; otherwise the frame is
-    // left-aligned and only its right edge moves.
+    // The room is kept, not a factor: a drag may cross from centred to
+    // left-aligned (or back) and the dragged edge has to follow the pointer.
     const room = (box.current?.clientWidth ?? 0) - GUTTER * 2;
-    const factor = room >= width ? 2 : 1;
-    drag.current = {
-      start: event.clientX,
-      startWidth: width,
-      factor: side === 'right' ? factor : -factor,
-      last: width,
-    };
+    drag.current = { start: event.clientX, startWidth: width, side, room, last: width };
     event.currentTarget.setPointerCapture(event.pointerId);
     setHintHeight(height ?? frame.current?.offsetHeight);
     setDragging(side);
@@ -144,7 +149,17 @@ export function ResizableFrame({
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const current = drag.current;
     if (!current) return;
-    const next = clamp(current.startWidth + (event.clientX - current.start) * current.factor);
+    const { start, startWidth, side, room } = current;
+    const target = edgeAt(startWidth, side, room) + (event.clientX - start);
+    const next = clamp(
+      side === 'right'
+        ? target <= room
+          ? 2 * target - room // centred
+          : target // left-aligned
+        : target >= 0
+          ? room - 2 * target
+          : room - target, // left edge out past the box: grows by dx
+    );
     if (next === current.last) return;
     current.last = next;
     pending.current = next;

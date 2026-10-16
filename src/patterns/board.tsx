@@ -1,9 +1,10 @@
 'use client';
 
-import { Ellipsis } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Ellipsis } from 'lucide-react';
 import {
   type DragEvent,
   type ReactNode,
+  type UIEvent,
   useId,
   useLayoutEffect,
   useRef,
@@ -48,6 +49,11 @@ import { RowActions, rowActionsHost } from './row-actions';
  * up, down, top, bottom and one item per other column. Nothing in it reads
  * the drag state, and a board with no pointer at all is fully operable.
  *
+ * **A card may be fixed.** `movable: false` on an item (#146) takes it out of
+ * both inputs at once: it is not `draggable`, its menu drops the move entries
+ * and keeps the consumer's own (no trigger at all when there are none), and
+ * the reducer refuses any intent naming it. Other cards still land beside it.
+ *
  * **The result is announced, and focus follows the card.** An
  * `aria-live="polite"` region reads `labels.moved` after every committed move,
  * whichever input produced it. A card that changes column is a remounted
@@ -73,6 +79,21 @@ import { RowActions, rowActionsHost } from './row-actions';
  * tall and a card is at least that; nothing writes a height, so the desk
  * profile moves the whole board from 40 to 32 without this file knowing
  * (`V1` decision 5).
+ *
+ * **A column scrolls on its own, and the board stops at its container**
+ * (#149). The board is `max-h-full` and each column `min-h-0`, which changes
+ * nothing under a parent with no height of its own; under one that has a
+ * height, the board stops there and only the card list scrolls. The header
+ * and the footer sit outside the list and stay put, and the header takes a
+ * hairline and a shadow only while its list is scrolled off the top.
+ *
+ * **A column can fold to a strip** (#149). `collapsible` gives each header a
+ * toggle with `aria-expanded`; a folded column is a narrow strip of the
+ * toggle, the title set vertically and the count, and a click anywhere on it
+ * opens it again. Which columns are folded is held here (`defaultCollapsed`)
+ * or by the consumer (`collapsed` + `onCollapsedChange`). A folded column's
+ * list and footer are `hidden`, so it is not a drop target; the card menu's
+ * "Move to" still reaches it, and focus then lands on its toggle.
  */
 export interface BoardCardItem {
   id: string;
@@ -81,12 +102,26 @@ export interface BoardCardItem {
    * draws the card; this is what the menu trigger and the live region say.
    */
   label: string;
+  /**
+   * Whether a person may move this card. Default `true`. A card whose place
+   * is derived — a column computed from somewhere else — is `false`: it is
+   * not a drag source, its menu offers no moves (the consumer's own items
+   * stay), and `resolveBoardMove` refuses any intent naming it, so neither
+   * input can report a move for it. It still renders, opens and is a slot
+   * other cards may land beside.
+   */
+  movable?: boolean;
 }
 
 export interface BoardColumn<T extends BoardCardItem = BoardCardItem> {
   id: string;
   title: string;
   cards: readonly T[];
+  /**
+   * What the header's count shows. Default `cards.length`. A consumer that
+   * filters passes its own — `'1/3'` for one shown of three.
+   */
+  count?: ReactNode;
   /** The per-column header slot, drawn after the title and the count. */
   header?: ReactNode;
   /** The per-column footer slot, drawn under the stack — an "Add" row, a total. */
@@ -146,6 +181,10 @@ export interface BoardLabels {
     position: number,
     count: number,
   ) => string;
+  /** The toggle's accessible name on an open column, under `collapsible`. */
+  collapse: (column: BoardColumn) => string;
+  /** The toggle's accessible name on a folded column. */
+  expand: (column: BoardColumn) => string;
 }
 
 /**
@@ -165,6 +204,8 @@ const DEFAULT_LABELS: BoardLabels = {
   moveToColumn: (column) => `Move to ${column.title}`,
   moved: (card, column, position, count) =>
     `${card.label} moved to ${column.title}, ${position} of ${count}`,
+  collapse: (column) => `Collapse ${column.title}`,
+  expand: (column) => `Expand ${column.title}`,
 };
 
 export interface BoardProps<T extends BoardCardItem> {
@@ -179,6 +220,18 @@ export interface BoardProps<T extends BoardCardItem> {
    */
   renderCardMenu?: (card: T, column: BoardColumn<T>) => ReactNode;
   labels?: Partial<BoardLabels>;
+  /**
+   * Give every column header a toggle that folds the column to a strip.
+   * Default `false`: no toggle, and `collapsed` / `defaultCollapsed` are
+   * ignored.
+   */
+  collapsible?: boolean;
+  /** Controlled: the ids of the folded columns. Pair with `onCollapsedChange`. */
+  collapsed?: readonly string[];
+  /** Uncontrolled: the ids folded on the first render. */
+  defaultCollapsed?: readonly string[];
+  /** Every fold and unfold, with the full list of folded ids after it. */
+  onCollapsedChange?: (collapsed: string[]) => void;
   'aria-label': string;
   className?: string;
 }
@@ -208,15 +261,15 @@ function locate<T extends BoardCardItem>(
  * dragged card still in place; a card moving down its own column vacates a
  * slot above the target, so the index it lands on is one less. A command is
  * already relative to the column as it is. Either way the answer is `null`
- * when the card would end where it began, and the consumer never hears
- * about it.
+ * when the card would end where it began, or when the card is not
+ * `movable`, and the consumer never hears about it.
  */
 export function resolveBoardMove<T extends BoardCardItem>(
   columns: readonly BoardColumn<T>[],
   intent: BoardMoveIntent,
 ): BoardMove | null {
   const source = locate(columns, intent.id);
-  if (!source) return null;
+  if (!source || source.card.movable === false) return null;
   const from = source.column;
 
   let to: BoardColumn<T> | undefined;
@@ -296,6 +349,10 @@ export function Board<T extends BoardCardItem>({
   onMove,
   renderCardMenu,
   labels: givenLabels,
+  collapsible = false,
+  collapsed: givenCollapsed,
+  defaultCollapsed,
+  onCollapsedChange,
   'aria-label': ariaLabel,
   className,
 }: BoardProps<T>) {
@@ -304,17 +361,63 @@ export function Board<T extends BoardCardItem>({
 
   const [announcement, setAnnouncement] = useState('');
   const triggerEls = useRef(new Map<string, HTMLButtonElement>());
-  /** The card whose trigger takes focus once the consumer's new columns render. */
-  const pendingFocus = useRef<string | null>(null);
+  /** Each column's fold toggle, under `collapsible`. */
+  const toggleEls = useRef(new Map<string, HTMLButtonElement>());
+  /**
+   * What takes focus once the consumer's new columns render: the moved
+   * card's trigger, or — when it went into a folded column, where its
+   * trigger is hidden — that column's toggle.
+   */
+  const pendingFocus = useRef<{ card: string } | { column: string } | null>(null);
 
   useLayoutEffect(() => {
-    const id = pendingFocus.current;
-    if (id === null) return;
-    const trigger = triggerEls.current.get(id);
-    if (!trigger || document.activeElement === trigger) return;
+    const pending = pendingFocus.current;
+    if (pending === null) return;
+    const target =
+      'card' in pending
+        ? triggerEls.current.get(pending.card)
+        : toggleEls.current.get(pending.column);
+    if (!target || document.activeElement === target) return;
     pendingFocus.current = null;
-    trigger.focus();
+    target.focus();
   });
+
+  /*
+   * Folding. Controlled when `collapsed` is given, otherwise held here from
+   * `defaultCollapsed`; either way every change is reported.
+   */
+  const [ownCollapsed, setOwnCollapsed] = useState<readonly string[]>(
+    defaultCollapsed ?? [],
+  );
+  const collapsedIds = givenCollapsed ?? ownCollapsed;
+  const isCollapsed = (columnId: string) =>
+    collapsible && collapsedIds.includes(columnId);
+
+  /** Which column lists are scrolled off the top — the header's shadow. */
+  const [scrolled, setScrolled] = useState<ReadonlySet<string>>(() => new Set());
+
+  const markScrolled = (columnId: string, on: boolean) =>
+    setScrolled((current) => {
+      if (current.has(columnId) === on) return current;
+      const next = new Set(current);
+      if (on) next.add(columnId);
+      else next.delete(columnId);
+      return next;
+    });
+
+  const setColumnCollapsed = (columnId: string, fold: boolean) => {
+    if (collapsedIds.includes(columnId) === fold) return;
+    const next = fold
+      ? [...collapsedIds, columnId]
+      : collapsedIds.filter((id) => id !== columnId);
+    if (givenCollapsed === undefined) setOwnCollapsed(next);
+    // A hidden list loses its scroll position and comes back at the top.
+    if (fold) markScrolled(columnId, false);
+    onCollapsedChange?.(next);
+  };
+
+  const onBodyScroll = (columnId: string, event: UIEvent<HTMLUListElement>) =>
+    markScrolled(columnId, event.currentTarget.scrollTop > 0);
 
   /**
    * The one exit. `columns` is what the consumer has today, so the
@@ -332,7 +435,11 @@ export function Board<T extends BoardCardItem>({
         ? target.cards.length
         : target.cards.length + 1;
     setAnnouncement(labels.moved(source.card, target, move.index + 1, count));
-    if (focus) pendingFocus.current = move.id;
+    if (focus) {
+      pendingFocus.current = isCollapsed(target.id)
+        ? { column: target.id }
+        : { card: move.id };
+    }
     onMove(move);
   };
 
@@ -466,56 +573,119 @@ export function Board<T extends BoardCardItem>({
     <section
       aria-label={ariaLabel}
       className={cn(
-        'flex min-h-0 items-stretch gap-3 overflow-x-auto',
+        'flex max-h-full min-h-0 items-stretch gap-3 overflow-x-auto',
         dragging !== null && 'select-none',
         className,
       )}
     >
       {columns.map((column) => {
         const headingId = `${uid}-${domSafe(column.id)}-title`;
+        const bodyId = `${uid}-${domSafe(column.id)}-body`;
         /** The slot under the pointer, if it is in this column. */
         const slot = drop?.columnId === column.id ? drop : null;
+        const folded = isCollapsed(column.id);
+        const isScrolled = !folded && scrolled.has(column.id);
         return (
+          // biome-ignore lint/a11y/useKeyWithClickEvents: the keyboard path is the toggle inside, in the tab order; the strip-wide click is a larger target for the same action.
           <section
             key={column.id}
             aria-labelledby={headingId}
+            data-collapsed={folded ? 'true' : undefined}
+            data-scrolled={isScrolled ? 'true' : undefined}
+            onClick={folded ? () => setColumnCollapsed(column.id, false) : undefined}
             className={cn(
-              'flex w-(--board-column,18rem) shrink-0 flex-col rounded-surface border border-line bg-surface',
+              'flex min-h-0 shrink-0 flex-col rounded-surface border border-line bg-surface',
               'motion-safe:transition-colors duration-(--dur-fast)',
+              folded
+                ? 'w-(--board-column-collapsed,2.75rem) cursor-pointer hover:bg-hover'
+                : 'w-(--board-column,18rem)',
               slot !== null && 'bg-hover',
             )}
           >
-            <header className="flex h-(--size-row) shrink-0 items-center gap-2 px-3">
+            <header
+              className={cn(
+                'flex shrink-0 gap-2 border-b border-transparent',
+                'motion-safe:transition-[border-color,box-shadow] duration-(--dur-fast)',
+                folded
+                  ? 'h-full min-h-0 flex-col items-center py-2'
+                  : 'h-(--size-row) items-center px-3',
+                isScrolled && 'border-line shadow-[0_6px_10px_-8px_var(--glass-shadow)]',
+              )}
+            >
               <h3
                 id={headingId}
-                className="min-w-0 truncate text-sm font-semibold text-ink"
+                className={cn(
+                  'min-w-0 truncate text-sm font-semibold text-ink',
+                  folded && 'min-h-0 rotate-180 [writing-mode:vertical-rl]',
+                )}
               >
                 {column.title}
               </h3>
               <span className="text-xs text-ink-3 tabular-nums">
-                {column.cards.length}
+                {column.count ?? column.cards.length}
               </span>
-              {column.header ? (
-                <div className="ms-auto flex shrink-0 items-center gap-1">
-                  {column.header}
+              {collapsible || (column.header && !folded) ? (
+                <div
+                  className={cn(
+                    'flex shrink-0 items-center gap-1',
+                    folded ? 'order-first' : 'ms-auto',
+                  )}
+                >
+                  {folded ? null : column.header}
+                  {collapsible ? (
+                    <Button
+                      ref={(el) => {
+                        if (el) toggleEls.current.set(column.id, el);
+                        else toggleEls.current.delete(column.id);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      icon
+                      aria-expanded={!folded}
+                      aria-controls={bodyId}
+                      aria-label={folded ? labels.expand(column) : labels.collapse(column)}
+                      onClick={(event) => {
+                        // The strip's own click would read this one again.
+                        event.stopPropagation();
+                        setColumnCollapsed(column.id, !folded);
+                      }}
+                    >
+                      {folded ? (
+                        <ChevronsRight size={16} aria-hidden="true" />
+                      ) : (
+                        <ChevronsLeft size={16} aria-hidden="true" />
+                      )}
+                    </Button>
+                  ) : null}
                 </div>
               ) : null}
             </header>
 
+            {/* Hidden, not unmounted, while folded: the cards keep their state. */}
             <ul
-              className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
+              id={bodyId}
+              hidden={folded}
+              className={cn(
+                'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-2',
+                folded && 'hidden',
+              )}
+              onScroll={(e) => onBodyScroll(column.id, e)}
               onDragOver={(e) => onColumnDragOver(column.id, e)}
               onDrop={(e) => finishDrop(columnSlot(column.id, e), e)}
             >
               {column.cards.map((card, index) => {
                 const last = column.cards.length - 1;
                 const other = columns.filter((c) => c.id !== column.id);
+                const movable = card.movable !== false;
+                const consumerMenu = renderCardMenu?.(card, column);
+                // A fixed card with nothing of the consumer's has no menu at all.
+                const hasMenu = movable || Boolean(consumerMenu);
                 return (
                   <li
                     key={card.id}
                     data-board-card=""
-                    draggable
-                    onDragStart={(e) => onDragStart(card.id, e)}
+                    draggable={movable}
+                    onDragStart={movable ? (e) => onDragStart(card.id, e) : undefined}
                     onDragOver={(e) => onCardDragOver(column.id, card.id, index, e)}
                     onDragEnd={onDragEnd}
                     onDrop={(e) => onCardDrop(column.id, card.id, index, e)}
@@ -524,7 +694,8 @@ export function Board<T extends BoardCardItem>({
                       // variant is not offered, see the header.
                       'rounded-surface border border-line bg-raised p-3',
                       rowActionsHost,
-                      'relative flex min-h-(--size-row) cursor-grab items-start gap-2 active:cursor-grabbing',
+                      'relative flex min-h-(--size-row) items-start gap-2',
+                      movable && 'cursor-grab active:cursor-grabbing',
                       dragging === card.id && 'opacity-50',
                     )}
                   >
@@ -537,87 +708,93 @@ export function Board<T extends BoardCardItem>({
 
                     <div className="min-w-0 flex-1">{renderCard(card, column)}</div>
 
-                    <RowActions className="-me-1 -mt-1">
-                      <MenuRoot>
-                        <MenuTrigger asChild>
-                          <Button
-                            ref={(el) => {
-                              if (el) triggerEls.current.set(card.id, el);
-                              else triggerEls.current.delete(card.id);
-                            }}
-                            variant="ghost"
-                            size="sm"
-                            icon
-                            aria-label={labels.actions(card)}
-                          >
-                            <Ellipsis size={16} aria-hidden="true" />
-                          </Button>
-                        </MenuTrigger>
-                        <MenuContent align="end">
-                          <MenuItem
-                            disabled={index === 0}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'up' }, true)
-                            }
-                          >
-                            {labels.moveUp}
-                          </MenuItem>
-                          <MenuItem
-                            disabled={index === last}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'down' }, true)
-                            }
-                          >
-                            {labels.moveDown}
-                          </MenuItem>
-                          <MenuItem
-                            disabled={index === 0}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'top' }, true)
-                            }
-                          >
-                            {labels.moveToTop}
-                          </MenuItem>
-                          <MenuItem
-                            disabled={index === last}
-                            onSelect={() =>
-                              commit({ kind: 'command', id: card.id, command: 'bottom' }, true)
-                            }
-                          >
-                            {labels.moveToBottom}
-                          </MenuItem>
-                          {other.length > 0 ? (
-                            <>
-                              <MenuSeparator />
-                              <MenuLabel>{labels.moveTo}</MenuLabel>
-                              {other.map((target) => (
+                    {hasMenu ? (
+                      <RowActions className="-me-1 -mt-1">
+                        <MenuRoot>
+                          <MenuTrigger asChild>
+                            <Button
+                              ref={(el) => {
+                                if (el) triggerEls.current.set(card.id, el);
+                                else triggerEls.current.delete(card.id);
+                              }}
+                              variant="ghost"
+                              size="sm"
+                              icon
+                              aria-label={labels.actions(card)}
+                            >
+                              <Ellipsis size={16} aria-hidden="true" />
+                            </Button>
+                          </MenuTrigger>
+                          <MenuContent align="end">
+                            {movable ? (
+                              <>
                                 <MenuItem
-                                  key={target.id}
+                                  disabled={index === 0}
                                   onSelect={() =>
-                                    commit(
-                                      {
-                                        kind: 'command',
-                                        id: card.id,
-                                        command: { toColumnId: target.id },
-                                      },
-                                      true,
-                                    )
+                                    commit({ kind: 'command', id: card.id, command: 'up' }, true)
                                   }
                                 >
-                                  {labels.moveToColumn(target)}
+                                  {labels.moveUp}
                                 </MenuItem>
-                              ))}
-                            </>
-                          ) : null}
-                          {renderCardMenu ? (
-                            <>
-                              <MenuSeparator />
-                              {renderCardMenu(card, column)}
-                            </>
-                          ) : null}
-                        </MenuContent>
-                      </MenuRoot>
-                    </RowActions>
+                                <MenuItem
+                                  disabled={index === last}
+                                  onSelect={() =>
+                                    commit({ kind: 'command', id: card.id, command: 'down' }, true)
+                                  }
+                                >
+                                  {labels.moveDown}
+                                </MenuItem>
+                                <MenuItem
+                                  disabled={index === 0}
+                                  onSelect={() =>
+                                    commit({ kind: 'command', id: card.id, command: 'top' }, true)
+                                  }
+                                >
+                                  {labels.moveToTop}
+                                </MenuItem>
+                                <MenuItem
+                                  disabled={index === last}
+                                  onSelect={() =>
+                                    commit({ kind: 'command', id: card.id, command: 'bottom' }, true)
+                                  }
+                                >
+                                  {labels.moveToBottom}
+                                </MenuItem>
+                                {other.length > 0 ? (
+                                  <>
+                                    <MenuSeparator />
+                                    <MenuLabel>{labels.moveTo}</MenuLabel>
+                                    {other.map((target) => (
+                                      <MenuItem
+                                        key={target.id}
+                                        onSelect={() =>
+                                          commit(
+                                            {
+                                              kind: 'command',
+                                              id: card.id,
+                                              command: { toColumnId: target.id },
+                                            },
+                                            true,
+                                          )
+                                        }
+                                      >
+                                        {labels.moveToColumn(target)}
+                                      </MenuItem>
+                                    ))}
+                                  </>
+                                ) : null}
+                              </>
+                            ) : null}
+                            {consumerMenu ? (
+                              <>
+                                {movable ? <MenuSeparator /> : null}
+                                {consumerMenu}
+                              </>
+                            ) : null}
+                          </MenuContent>
+                        </MenuRoot>
+                      </RowActions>
+                    ) : null}
                   </li>
                 );
               })}
@@ -629,7 +806,7 @@ export function Board<T extends BoardCardItem>({
               ) : null}
             </ul>
 
-            {column.footer ? (
+            {column.footer && !folded ? (
               <footer className="flex min-h-(--size-row) shrink-0 items-center px-3 py-1">
                 {column.footer}
               </footer>

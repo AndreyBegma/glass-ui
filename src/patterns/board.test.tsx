@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { MenuItem } from '../primitives/menu';
 import {
   applyBoardMove,
@@ -51,6 +51,10 @@ interface HarnessProps {
   /** Apply each move, the way an application would. On by default. */
   apply?: boolean;
   withMenu?: boolean;
+  /** Place `slots.menu` at the end of a header row, as a consumer under `'inline'` would. */
+  inline?: boolean;
+  /** Every `slots.menu` the board handed over, by card id. */
+  slots?: Map<string, ReactNode>;
 }
 
 function Harness({
@@ -58,17 +62,30 @@ function Harness({
   moves,
   apply = true,
   withMenu = false,
+  inline = false,
+  slots,
 }: HarnessProps) {
   const [columns, setColumns] = useState<readonly BoardColumn<Task>[]>(initial);
   return (
     <Board
       aria-label="Tasks"
       columns={columns}
-      renderCard={(card) => (
-        <span>
-          {card.label} · {card.owner}
-        </span>
-      )}
+      menuPlacement={inline ? 'inline' : undefined}
+      renderCard={(card, _column, { menu }) => {
+        slots?.set(card.id, menu);
+        return inline ? (
+          <div data-card-head="">
+            <span>
+              {card.label} · {card.owner}
+            </span>
+            {menu}
+          </div>
+        ) : (
+          <span>
+            {card.label} · {card.owner}
+          </span>
+        );
+      }}
       onMove={(move) => {
         moves?.push(move);
         if (apply) setColumns((current) => applyBoardMove(current, move));
@@ -927,6 +944,127 @@ describe('Board', () => {
       expect(moves).toEqual([{ id: 'quote', fromColumnId: 'todo', toColumnId: 'done', index: 0 }]);
       expect(within(column('Done')).getByText('1')).toBeTruthy();
       expect(document.activeElement).toBe(toggle('Expand Done'));
+    });
+  });
+
+  describe('a trigger the consumer places (issue 154)', () => {
+    const head = (label: string) =>
+      trigger(label).closest('[data-card-head]') as HTMLElement | null;
+
+    test('by default the board draws the column and hands the consumer no menu', () => {
+      const slots = new Map<string, ReactNode>();
+      render(<Harness slots={slots} />);
+
+      expect(slots.size).toBe(4);
+      for (const menu of slots.values()) expect(menu).toBeNull();
+      // The cluster is the card's own child, beside the content.
+      const cluster = trigger('Write the brief').closest('[data-row-actions]') as HTMLElement;
+      expect(cluster.parentElement).toBe(card('Write the brief'));
+    });
+
+    test('inline: the trigger sits in the consumer’s row, and there is no menu column', () => {
+      render(<Harness inline />);
+
+      for (const li of screen.getAllByRole('listitem')) {
+        // One child: the content, at the card's full width. No cluster beside it.
+        expect(li.children).toHaveLength(1);
+        expect(li.querySelector(':scope > [data-row-actions]')).toBeNull();
+        expect(li.querySelectorAll('[data-row-actions]')).toHaveLength(1);
+      }
+      const row = head('Write the brief') as HTMLElement;
+      expect(row.textContent).toBe('Write the brief · D');
+      expect(row.lastElementChild?.hasAttribute('data-row-actions')).toBe(true);
+      expect(trigger('Write the brief').getAttribute('aria-haspopup')).toBe('menu');
+    });
+
+    test('inline: the trigger is a text line tall and keeps the reveal rule', () => {
+      render(<Harness inline />);
+
+      const button = trigger('Write the brief');
+      expect(button.className).toContain('h-4');
+      expect(button.className).not.toContain('h-8');
+      const cluster = button.closest('[data-row-actions]') as HTMLElement;
+      for (const rule of [
+        'opacity-0',
+        'group-hover/row-actions:opacity-100',
+        'group-focus-within/row-actions:opacity-100',
+        'pointer-coarse:opacity-100',
+      ]) {
+        expect(cluster.className).toContain(rule);
+      }
+      // Revealed for the eye only: in the tree and the tab order throughout.
+      expect(button.getAttribute('aria-hidden')).toBeNull();
+      expect(button.tabIndex).toBe(0);
+    });
+
+    test('inline: opened from the keyboard, it offers the moves and the consumer’s items', async () => {
+      render(<Harness inline withMenu />);
+
+      const opener = trigger('Send the quote');
+      opener.focus();
+      fireEvent.keyDown(opener, { key: 'Enter' });
+      const menu = await screen.findByRole('menu');
+      expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+        'Move up',
+        'Move down',
+        'Move to top',
+        'Move to bottom',
+        'Move to Review',
+        'Move to Done',
+        'Archive Send the quote',
+      ]);
+    });
+
+    test('inline: a move is reported, announced, and focus follows the card', async () => {
+      const moves: BoardMove[] = [];
+      render(<Harness inline moves={moves} />);
+
+      await choose('Send the quote', 'Move to Review');
+      await tick();
+
+      expect(moves).toEqual([
+        { id: 'quote', fromColumnId: 'todo', toColumnId: 'review', index: 1 },
+      ]);
+      expect(announcement()).toBe('Send the quote moved to Review, 2 of 2');
+      const moved = trigger('Send the quote');
+      expect(column('Review').contains(moved)).toBe(true);
+      expect(document.activeElement).toBe(moved);
+    });
+
+    test('inline: a fixed card offers only the consumer’s items, or no menu at all', async () => {
+      const slots = new Map<string, ReactNode>();
+      const FIXED: BoardColumn<Task>[] = COLUMNS.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => (c.id === 'quote' ? { ...c, movable: false } : c)),
+      }));
+      const { unmount } = render(<Harness inline columns={FIXED} slots={slots} />);
+      expect(slots.get('quote')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Send the quote actions' })).toBeNull();
+      unmount();
+
+      render(<Harness inline columns={FIXED} withMenu />);
+      const opener = trigger('Send the quote');
+      opener.focus();
+      fireEvent.keyDown(opener, { key: 'Enter' });
+      const menu = await screen.findByRole('menu');
+      expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+        'Archive Send the quote',
+      ]);
+    });
+
+    test('inline: drag still moves a card', () => {
+      const moves: BoardMove[] = [];
+      render(<Harness inline moves={moves} />);
+
+      const dragEvent = (type: string) =>
+        new MouseEvent(type, { bubbles: true, cancelable: true, clientY: 0 });
+      const from = card('Write the brief');
+      fireEvent(from, dragEvent('dragstart'));
+      fireEvent(listOf('Done'), dragEvent('dragover'));
+      fireEvent(listOf('Done'), dragEvent('drop'));
+      fireEvent(from, dragEvent('dragend'));
+
+      expect(moves).toEqual([{ id: 'brief', fromColumnId: 'todo', toColumnId: 'done', index: 0 }]);
     });
   });
 

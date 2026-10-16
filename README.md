@@ -995,7 +995,7 @@ the controls a list of records needs and the package did not have.
 
 | Import | What it is |
 |---|---|
-| `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. A card with `movable: false` (#146) cannot be dragged or moved from its menu, but still renders and opens. Each column scrolls on its own inside a height-bounded board, and with `collapsible` (#149) folds to a narrow strip; `count` on a column replaces the card count (`'1/3'`). |
+| `@andrewbehma/glass-ui/board` | `Board` — columns with a scrollable stack of cards in each, a header and a footer slot per column, drag between and within columns, and a card menu that moves the card without a pointer. `resolveBoardMove` is the reducer; `applyBoardMove` is the remove-then-insert a consumer's state needs. A card with `movable: false` (#146) cannot be dragged or moved from its menu, but still renders and opens. Each column scrolls on its own inside a height-bounded board, and with `collapsible` (#149) folds to a narrow strip; `count` on a column replaces the card count (`'1/3'`). With `menuPlacement="inline"` (#154) the card-menu trigger is handed to `renderCard` as `slots.menu` instead of taking a column of its own. |
 | `@andrewbehma/glass-ui/page-header` | `PageHeader` — the page's one header: eyebrow, 28 px h1, a `status` beside it, description, a `meta` counter row and `actions` on the right (wrapping below the title at full width under `sm`). Put `<MetaBar counters={…} />` (no `title`) in `meta`; `MetaBar`'s own 20 px h1 is deprecated. No back link — that is the breadcrumb's job. |
 | `@andrewbehma/glass-ui/section-header` | `SectionHeader` — the heading of one section: a 16/600 `h2`, an optional description and an actions slot on the right. |
 | `@andrewbehma/glass-ui/toolbar` | `Toolbar` — the bar above a collection: a view switcher, a filter area and a trailing action area, three slots and no more. Holds no state about the collection; the view switcher and filters scroll under `ScrollHintRow` at a narrow width while the trailing action stays reachable. Optionally (#130): `activeFilters` + `onClearAll` draw removable chips under the bar, and `collapseBelow` folds `filters` into one "Filters (n)" button and a bottom `Sheet`. |
@@ -1021,6 +1021,40 @@ entries but keeps the consumer's `renderCardMenu` items; with none of those,
 the menu has no trigger at all. `resolveBoardMove` refuses any intent that
 names the card, so `onMove` never hears about it. It still renders and opens,
 and other cards still land beside it. Leaving the flag out means `true`.
+
+By default the trigger is a column beside `renderCard`, and that column's
+width comes out of the card's content. With `menuPlacement="inline"` (#154)
+the board draws no column and hands the trigger to `renderCard` as its third
+argument, `slots.menu`, for the consumer to put at the end of its own header
+row; the content then takes the card's full width. It is the same cluster —
+the same menu (the move items, `movable: false`, `renderCardMenu`), the same
+`RowActions` reveal rule (hover and focus on a fine pointer, always drawn on a
+coarse one), the same focus return after a move — with a 20×16 trigger, as
+tall as a text line, that adds no height. `slots.menu` is `null` under the
+default `'column'`, and for a fixed card with nothing of the consumer's to
+offer. `'inline'` is a promise to place it: a card whose `renderCard` drops
+`slots.menu` has no keyboard path.
+
+```tsx
+<Board
+  aria-label="Board"
+  columns={columns}
+  menuPlacement="inline"
+  renderCard={(card, _column, { menu }) => (
+    <div className="flex flex-col gap-1">
+      <div className="flex h-4 items-center gap-1.5 text-xs">
+        <span className="font-mono">{card.label}</span>
+        <span className="ms-auto flex items-center gap-1">
+          {card.cost}
+          {menu}
+        </span>
+      </div>
+      <p className="text-sm">{card.title}</p>
+    </div>
+  )}
+  onMove={(move) => setColumns((cs) => applyBoardMove(cs, move))}
+/>
+```
 
 **A column is a header, a scroll region and a footer** (#149). The board is
 `max-h-full`, so under a parent with a height it stops there and never grows

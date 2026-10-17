@@ -7,6 +7,7 @@ import {
   screen,
 } from '@testing-library/react';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FloatingWindow, type FloatingWindowProps } from './floating-window';
 
 const labels = {
@@ -69,6 +70,7 @@ function Harness(props: Partial<FloatingWindowProps>) {
         {...props}
       >
         <p>Chat goes here</p>
+        {props.children}
       </FloatingWindow>
     </>
   );
@@ -209,6 +211,21 @@ describe('FloatingWindow on a desktop', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
     expect(win().dataset.minimized).toBeUndefined();
     expect(rectOf().height).toBe(300);
+  });
+
+  test("Escape in something portalled out of the window is not the window's", () => {
+    function Portalled() {
+      return createPortal(<input aria-label="Menu search" />, document.body);
+    }
+    render(
+      <Harness>
+        <Portalled />
+      </Harness>,
+    );
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Menu search' }), {
+      key: 'Escape',
+    });
+    expect(win().dataset.minimized).toBeUndefined();
   });
 
   test('maximize fills the viewport and restores the previous rectangle', () => {

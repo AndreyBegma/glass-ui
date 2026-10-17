@@ -354,6 +354,10 @@ function DesktopWindow({
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key !== 'Escape' || minimized) return;
+    // React bubbles events through portals, so Escape in a menu or select
+    // opened from inside the window arrives here too. That Escape is the
+    // menu's; only one pressed in the window's own DOM minimizes it.
+    if (!event.currentTarget.contains(event.target as Node)) return;
     event.preventDefault();
     setMinimized(true);
     windowRef.current?.focus();

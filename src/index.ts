@@ -117,12 +117,25 @@ export {
   type FileItemStatus,
   formatBytes,
 } from './patterns/file-item';
+/** #161 — the floating window and its geometry; `Launcher` is below, in order. */
+export {
+  FloatingWindow,
+  type FloatingWindowLabels,
+  type FloatingWindowProps,
+} from './patterns/floating-window';
+export {
+  fit as fitFloatingWindow,
+  type Rect as FloatingWindowRect,
+  type ResizeEdge as FloatingWindowResizeEdge,
+  type SizeLimits as FloatingWindowSizeLimits,
+} from './patterns/floating-window-geometry';
 export {
   isApplePlatform,
   KeyHint,
   type KeyHintProps,
   resolveKeys,
 } from './patterns/key-hint';
+export { Launcher, type LauncherProps } from './patterns/launcher';
 export {
   type LogLine,
   LogViewer,

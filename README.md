@@ -1469,6 +1469,60 @@ gets exactly `width` px. `max` is not capped by the container: a wider frame
 scrolls inside its own box. Each handle's hit area is 24 px. The width animates
 between presets only under `motion-safe`, and never while dragging.
 
+## Floating window and launcher
+
+`#161`, for AgentDock's assistant. A window that floats over the page, and
+the round button that opens it.
+
+| Import | What it is |
+|---|---|
+| `@andrewbehma/glass-ui/floating-window` | `FloatingWindow` — a non-modal `role="dialog"` named by `title`, dragged by its title bar and resized from all four edges and corners with pointer capture. `minWidth` / `minHeight` / `maxWidth` / `maxHeight` bound the size; the window is always drawn 8 px inside the viewport and re-clamps when the browser window shrinks (and goes back when it grows, because the person's rectangle is kept). Minimize collapses it to its bar with the content still mounted; Escape minimizes and never closes; maximize fills the viewport; a double-click on the bar toggles maximize. With `storageKey`, `{ x, y, width, height, minimized, maximized }` persist in `localStorage`. `open` / `onOpenChange` are the consumer's, as on `Sheet`; `actions` adds buttons to the bar. Below `md` the same `children` render in a bottom `Sheet`. |
+| `@andrewbehma/glass-ui/launcher` | `Launcher` — a 48 px round `glass-strong` button fixed to the bottom-right corner, with an optional `badge` (a count capped at 99+, or a short label) and `expanded` (`aria-expanded`, drawn with the accent tint). Below `lg` it rises above the `BottomCapsule`'s 6 rem band; `clearCapsule={false}` for a screen without one. |
+
+```tsx
+const [open, setOpen] = useState(false);
+
+<Launcher
+  label="Assistant"
+  icon={<Sparkles size={20} aria-hidden="true" />}
+  badge={unread}
+  badgeLabel={`${unread} unread`}
+  expanded={open}
+  onClick={() => setOpen((value) => !value)}
+/>
+<FloatingWindow
+  open={open}
+  onOpenChange={setOpen}
+  title="Assistant"
+  icon={<Sparkles size={16} aria-hidden="true" />}
+  actions={<Button variant="ghost" size="sm" icon aria-label="Hide conversations">…</Button>}
+  storageKey="agentdock.assistant.window"
+  minWidth={520}
+  minHeight={400}
+  labels={{
+    move: 'Move the window',
+    minimize: 'Minimize',
+    restore: 'Restore',
+    maximize: 'Maximize',
+    unmaximize: 'Restore size',
+    close: 'Close',
+  }}
+>
+  <Chat />
+</FloatingWindow>;
+```
+
+**Keyboard.** The window takes focus when it opens. The grip at the start of
+the bar is a button: arrows move the window by 16 px, Shift+arrows resize it by
+16 px from the bottom-right corner. Minimize / Restore, Maximize / Restore size
+and Close are named buttons. The edge handles are pointer-only and
+`aria-hidden`; the grip is their keyboard alternative.
+
+**Geometry.** `fitFloatingWindow(rect, limits, viewport)` is the clamp the
+window draws through, exported for a consumer that places something beside it.
+With no stored record and no `defaultPosition`, the window opens 24 px in from
+the top-right corner at `defaultWidth` × `defaultHeight` (820 × 680).
+
 ## Developing
 
 ```sh

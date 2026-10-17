@@ -174,6 +174,20 @@ describe('FloatingWindow on a desktop', () => {
     expect(rectOf()).toMatchObject({ width: 310, height: 210 });
   });
 
+  test('the page scrollbar is not part of the viewport it is kept inside', () => {
+    const root = document.documentElement;
+    Object.defineProperty(root, 'clientWidth', {
+      configurable: true,
+      value: 1185,
+    });
+    try {
+      render(<Harness defaultPosition={{ x: 5000, y: 100 }} />);
+      expect(rectOf().x).toBe(1185 - 8 - 400);
+    } finally {
+      delete (root as unknown as { clientWidth?: number }).clientWidth;
+    }
+  });
+
   test('re-clamps when the browser window shrinks, and returns when it grows', () => {
     render(<Harness defaultPosition={{ x: 700, y: 500 }} />);
     act(() => {

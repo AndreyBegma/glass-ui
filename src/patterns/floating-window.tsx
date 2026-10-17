@@ -173,10 +173,18 @@ const isMd = () => window.matchMedia(MD_QUERY).matches;
 // portals nothing on the server while open; the client corrects it on hydration.
 const isMdOnServer = () => false;
 
-const readViewport = (): Size => ({
-  width: window.innerWidth,
-  height: window.innerHeight,
-});
+/**
+ * The layout viewport, without the page's scrollbar: `innerWidth` counts the
+ * scrollbar, and a window clamped to it ends up underneath. `clientWidth` is
+ * 0 where there is no layout (a headless DOM), so `inner*` stays the fallback.
+ */
+const readViewport = (): Size => {
+  const root = document.documentElement;
+  return {
+    width: root.clientWidth || window.innerWidth,
+    height: root.clientHeight || window.innerHeight,
+  };
+};
 
 /** Where each handle sits and which cursor it shows. Edges are 6 px, corners 12 px. */
 const EDGE_CLASS: Record<ResizeEdge, string> = {

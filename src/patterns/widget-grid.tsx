@@ -347,7 +347,7 @@ export function WidgetGrid<T extends WidgetGridItem>({
       <ul
         ref={listRef}
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-        className={cn('grid items-start gap-3', dragging !== null && 'select-none')}
+        className={cn('grid gap-3', dragging !== null && 'select-none')}
       >
         {items.map((item, index) => {
           const shown = resizing?.id === item.id ? { ...item, span: resizing.span } : item;
@@ -362,11 +362,8 @@ export function WidgetGrid<T extends WidgetGridItem>({
               data-placeholder={isPlaceholder ? 'true' : undefined}
               style={style}
               className={cn(
-                'relative min-w-0',
-                arranging && [
-                  'flex flex-col gap-1 rounded-surface border border-line bg-raised p-1.5',
-                  rowActionsHost,
-                ],
+                'relative flex min-w-0 flex-col',
+                arranging && ['gap-1 rounded-surface border border-line bg-raised p-1.5', rowActionsHost],
                 isPlaceholder && 'border-dashed bg-hover',
               )}
             >
@@ -397,7 +394,7 @@ export function WidgetGrid<T extends WidgetGridItem>({
               <div
                 inert={arranging}
                 className={cn(
-                  'min-w-0',
+                  'flex min-w-0 flex-1 flex-col',
                   arranging && 'select-none opacity-60',
                   isPlaceholder && 'invisible',
                   'motion-safe:transition-opacity motion-safe:duration-(--dur-fast)',

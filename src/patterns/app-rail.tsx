@@ -24,7 +24,7 @@ import {
  * only, always visible — and the rail beside it carries only the current
  * one's sections (`V4`). Two levels, where there was one.
  *
- * **Icon-only, always.** There is no expanded state and no labels for the
+ * **Icon-only, by default.** There is no expanded state and no labels for the
  * eye: the label is `sr-only` text for the reader and a `Tooltip` on the
  * right for the pointer and the keyboard, which is `NavRail`'s collapsed
  * contract taken as the only contract. The tooltip opens on focus, so a
@@ -84,6 +84,16 @@ export interface AppRailProps {
   footerApps?: readonly AppRailItem[];
   /** Below it, pinned under the scroll: an account avatar, a settings door. */
   footer?: ReactNode;
+  /**
+   * Where the name is drawn. `'tooltip'` (default) is icon-only: the name is
+   * `sr-only` text and a `Tooltip`. `'below'` prints it under the icon at
+   * `text-xs` (12px, the floor), truncated to the item's width — the
+   * `Tooltip` stays, because it is what reads a truncated name, and the
+   * `sr-only` copy goes, because the visible one is the accessible name.
+   * Pass a short name as `label`; the long one belongs to the consumer's
+   * panel title.
+   */
+  labels?: 'tooltip' | 'below';
   /** One travelling capsule per rail. */
   layoutId?: string;
   className?: string;
@@ -97,6 +107,7 @@ export function AppRail({
   head,
   footerApps,
   footer,
+  labels = 'tooltip',
   layoutId = 'glass-app-rail',
   className,
 }: AppRailProps) {
@@ -130,11 +141,16 @@ export function AppRail({
   const renderItem = (app: AppRailItem) => {
     const Icon = app.icon;
     const active = app.id === activeId;
+    const below = labels === 'below';
     const itemClassName = cn(
       'lit relative flex items-center justify-center rounded-control',
-      // A square of the rail's own row height, so the desk profile
-      // tightens it with everything else and no height is written here.
-      'h-[var(--size-nav)] w-[var(--size-nav)]',
+      below
+        ? // Icon over name: the height is the content's, the width fixed so
+          // the rail is one column wide whatever the names are.
+          'w-16 flex-col gap-1 py-1.5'
+        : // A square of the rail's own row height, so the desk profile
+          // tightens it with everything else and no height is written here.
+          'h-[var(--size-nav)] w-[var(--size-nav)]',
       'motion-safe:transition-colors duration-(--dur-fast)',
       active
         ? 'text-accent-ink'
@@ -162,7 +178,11 @@ export function AppRail({
             <RailBadgeMark badge={app.badge} placement="corner" />
           ) : null}
         </span>
-        <span className="sr-only">{app.label}</span>
+        {below ? (
+          <span className="relative max-w-14 truncate text-xs leading-4">{app.label}</span>
+        ) : (
+          <span className="sr-only">{app.label}</span>
+        )}
         {hasBadge(app.badge) ? <RailBadgeSpeech badge={app.badge} /> : null}
         {app.unavailable ? (
           // The marker's meaning, for a reader: a coloured dot is nothing

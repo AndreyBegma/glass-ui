@@ -24,10 +24,11 @@ dense desktop dashboard, without writing their own primitives.
 ## What is in it
 
 - **Tokens** — palette, radius, motion, density and type scales, a z-index
-  ladder, eight identity hues and six status colours, and five independent
+  ladder, eight identity hues and six status colours, and six independent
   switches (`data-theme`, `data-material`, `data-scale`, `data-accent`,
-  `data-palette`) for light/dark, glass/flat, sofa/desk density, a named
-  accent preset and a named surface palette.
+  `data-palette`, `data-profile`) for light/dark, glass/flat, sofa/desk
+  density, a named accent preset, a named surface palette and the desk's
+  workspace profile.
 - **The material** — `glass`, `glass-strong`, `glass-clear` and `lit` for
   chrome, `surface-content` for content, and the `.canvas` behind them, with
   the fallbacks they need.
@@ -147,7 +148,7 @@ export function Welcome() {
 }
 ```
 
-`Button` has four variants (`solid`, `glass`, `ghost`, `danger`) and three sizes
+`Button` has five variants (`solid`, `glass`, `ghost`, `danger`, `link`) and three sizes
 (`sm`, `md`, `lg`); `Card` has `content` (the default), `raised`, `surface`,
 `glass` and `plain`. Mount `<Canvas />` once behind the app so the glass has
 something to refract; see [The look](#the-look). To
@@ -302,9 +303,10 @@ was white, for an interface laid over other people's artwork; for a workspace
 with no artwork, a black primary button made the system read as a grey
 template. One primary per screen.
 
-**Five axes, each unset by default.** The document carries `data-theme`,
-`data-material`, `data-scale`, `data-accent` and `data-palette`, and every one
-of them does nothing until an application sets it. That is not politeness, it is how two products share one
+**Six axes, each unset by default.** The document carries `data-theme`,
+`data-material`, `data-scale`, `data-accent`, `data-palette` and
+`data-profile`, and every one of them does nothing until an application sets
+it. That is not politeness, it is how two products share one
 token layer without either being able to move the other.
 
 | Attribute | Unset | Set | What it changes |
@@ -314,6 +316,7 @@ token layer without either being able to move the other.
 | `data-scale` | the sofa | `desk` | radii, motion, hairlines and density |
 | `data-accent` | the indigo accent | a preset name: `amber` | the four accent tokens and the focus ring, and nothing else |
 | `data-palette` | the neutral near-black / white surfaces | a palette name: `navy` | the surface family, the hairlines' colour, the scrim and the canvas aurora, and nothing else |
+| `data-profile` | the desk as it is | `workspace`, beside `data-scale="desk"` | the desk's corners, density, ring and card, the ink primary, and eight mark colours — see below |
 
 Under `navy` the `glass` button is a control, not chrome: `Button`'s `glass`
 variant carries `glass-control`, which re-values the material on the button
@@ -335,6 +338,47 @@ silhouette at four metres reads as a toy at arm's length; a 420ms sheet that
 feels considered from a sofa is a wait at a desk. Radii go 6/8/12, durations
 100/150/260, hairlines get heavier and hover gets lighter, and the density
 scale drops a row from 40px to 32.
+
+**The workspace profile (#168).** `<html data-scale="desk"
+data-profile="workspace">` is the desk as Denitsa's `maint/v0.8` line moved it
+on, forward-ported without moving the desk anyone else renders — AgentDock
+sets `data-scale="desk"` too. It refines the desk and does nothing without it.
+Under it:
+
+- radii 8/12/16; a row 36px, a control 32, `Button sm` 28, a field 32, a rail
+  item 32, `Chip md` 24; on a coarse pointer a field, a row and a rail item
+  are 44px (`--size-tap`), because none has an invisible hit area of its own;
+- the focus ring is 2px at a 2px offset (`--focus-width`, `--focus-offset`),
+  in a softened ink (`--color-focus` at 0.72), gated at 3:1 by `desk.spec.ts`;
+  an accent preset still wins the ring;
+- the primary is ink with an `ink/90` hover; the danger label is ink, not
+  `danger`, which reads 3.0–3.4:1 on its own tint in light; the field's focus
+  ring is `ring-ink/22`; at the flat material the `glass` button is an ink
+  tint with a hairline ring (see [From maint/v0.8](#from-maintv08-168));
+- a light `Card raised` is the ground's white with a 17% black edge
+  (`--color-card`, `--color-card-line`), so it does not read as sunken;
+- `EmptyState` draws its icon in a 40px disc and its title at 16/600;
+  `CommandPalette` draws one border and 12/500 headings; `KeyHint` is 12px and
+  hidden under a coarse pointer; a `SegmentedControl` without `full` is as wide
+  as its labels;
+- `--color-mark-1` … `--color-mark-8` exist, below.
+
+The accent is not re-valued: there is one accent (#93). `workspace.spec.ts`
+proves that every page without the attribute — sofa or desk, navy or not,
+any preset, either pointer — resolves every token exactly as it would if the
+profile did not exist, and holds the profile to its list. A component reads
+it through the `workspace:` Tailwind variant, which `tokens.css` declares.
+
+**Eight marks, for categories.** `--color-mark-1` … `--color-mark-8` exist
+under the workspace profile only and are undefined everywhere else. Eight hues
+45° apart, at one lightness per theme, each at least 3:1 on ground, surface and
+raised (WCAG 1.4.11 — a mark is not text). They are for a dot or a swatch that
+tells one category from another, picked by index:
+``style={{ backgroundColor: `var(--color-mark-${n})` }}``. There is no
+`bg-mark-*` utility, because a class built from an index is one Tailwind cannot
+see. They are not `--color-hue-*`, which are #109's identity colours for tinted
+surfaces. Never write text in a mark, and never give one a meaning — they are
+not `ok`/`warn`/`danger`.
 
 **The accent has a short list of places.** Four tokens, in every theme
 (#93), each with one job:
@@ -517,19 +561,26 @@ accent values (`#806ffc` / `#5b4bd1`) are gone: there is one accent.
 `--size-row` (40px, a list row), `--size-control` (40px, a button),
 `--size-field` (44px, an input) and `--size-nav` (40px, a rail item) are the
 values the components produce, named so the desk profile can move them — it
-takes them to 32/28/28/28. `--size-tap` is 44px in both profiles and is not
-one of them; see the next rule.
+takes them to 32/28/28/28. `--size-control-sm` (32px, a small button) and
+`--size-chip` (28px) are named so the workspace profile can move them too.
+`--size-tap` is 44px in every profile and is not one of them; see the next
+rule.
 
-- `Button`'s `md` reads `h-(--size-control)`; `lg` stays one documented step
-  above it, `calc(var(--size-control) + 8px)`, and is not part of the scale.
+- `Button`'s `md` reads `h-(--size-control)` and `sm` reads
+  `h-(--size-control-sm)` — 32px, the `h-8` it was, at the sofa and the desk;
+  28 under a 32 `md` in the workspace. `lg` stays one documented step above
+  `md`, `calc(var(--size-control) + 8px)`, and is not part of the scale.
 - `Field`'s `Input`, `Select` and `SearchField` read `h-(--size-field)`.
+- `Chip`'s `md` reads `h-(--size-chip)`.
 - `Menu`'s rows read `min-h-(--size-row)`, the line box centred rather than
   pinned by padding, so it still centres at the desk rung's 32px. It is a
   minimum: a label that wraps grows its row rather than overlapping the next.
 
 **Do not define a focus ring, and never write `focus-visible:outline-none`.**
-`base.css` puts a 3px `--color-focus` outline on `:focus-visible` (the accent
-since #93), sized to be read across a room from a television. Every hand-written ring that preceded it was thinner
+`base.css` puts a `--color-focus` outline on `:focus-visible` (the accent
+since #93), `--focus-width` wide at `--focus-offset`: 3px at 4px, sized to be
+read across a room from a television, and 2px at 2px in a softened ink under
+the workspace profile. Every hand-written ring that preceded it was thinner
 and dimmer. Form elements and `contenteditable` editors are the only exemption
 — they draw their own focus indicator (a caret, or a consumer's selected-node
 state), and `base.css` already exempts them.
@@ -547,8 +598,9 @@ primitive that roves focus on hover spreads the same hook on its surface;
 nothing is written on the item, and no consumer adds a class.
 
 **Hit area and visual size are separate.** `Button` carries an invisible `after:`
-pseudo-element that extends the touch target to 44px and disappears on a fine
-pointer. Forcing every control to 44px instead makes a dense toolbar look like a
+pseudo-element that extends the touch target to 44px, in height and in width,
+centred on the button, so a 28px icon button at the desk is still 44 by 44
+under a thumb. It disappears on a fine pointer. Forcing every control to 44px instead makes a dense toolbar look like a
 phone keyboard.
 
 **No emoji as iconography.** `lucide-react` is the icon set. Emoji render as
@@ -704,7 +756,7 @@ with the same capsule, the same rail and the same palette.
 | `@andrewbehma/glass-ui/bottom-capsule` | `BottomCapsule` — the floating glass capsule for narrow widths: up to four tabs, an optional round action button, an overflow `More` sheet. |
 | `@andrewbehma/glass-ui/nav-rail` | `NavRail` — the vertical glass rail for wide widths: groups with headings, an optional collapse to icons. Its first scroll to the active item moves the rail's own `scrollTop` and never focus, so the first Tab after a load still reaches the page's skip link (#130). |
 | `@andrewbehma/glass-ui/tab-bar` | `TabBar` — the edge-to-edge bottom bar for a phone shell: up to five places and a `More` sheet. Items take the rail's `badge` (a count or a dot on the glyph, spoken after the label; #130). From six slots (five places plus `More`) the label steps down to 10 px and wraps to a second line rather than truncating, so 9-character labels such as "Approvals" fit at 375 px; the accessible name is always the full label (#137). |
-| `@andrewbehma/glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. |
+| `@andrewbehma/glass-ui/command-palette` | `CommandPalette` — a dialog with a search field, grouped results and arrow-key roving. Pass `hints` (`open`, `navigate`, `close`, in the reader's language) for one row of key hints under the list, which a coarse pointer never draws; `onInputKeyDown` sees the field's keys first, and `preventDefault` takes one; an item's `keys` draws its keycaps after the hint. |
 | `@andrewbehma/glass-ui/use-command-palette-shortcut` | `useCommandPaletteShortcut` — ⌘K / Ctrl-K, bound once by the shell. |
 | `@andrewbehma/glass-ui/popover` | `PopoverRoot` / `PopoverTrigger` / `PopoverContent` — an anchored, non-modal `glass-strong` panel. |
 | `@andrewbehma/glass-ui/nav-link` | The `NavLinkRender` type the two navigation patterns take. |
@@ -915,12 +967,12 @@ which had an ancestor in this package (`V2`). `E-92`'s line holds: these are
 
 | Import | What it is |
 |---|---|
-| `@andrewbehma/glass-ui/app-rail` | `AppRail` — the strip of applications above the rail: icon-only, always visible, the active item carrying the accent. |
-| `@andrewbehma/glass-ui/side-panel` | `SidePanel` — a collapsible, resizable column with its width and collapse state persisted; `useSidePanel()` for a consumer's own control. |
+| `@andrewbehma/glass-ui/app-rail` | `AppRail` — the strip of applications above the rail: icon-only by default (`labels="below"` prints the names), always visible, the active item carrying the accent. |
+| `@andrewbehma/glass-ui/side-panel` | `SidePanel` — a collapsible, resizable column with its width and collapse state persisted; `useSidePanel()` for a consumer's own control. `strip={false}` collapses it to nothing. |
 | `@andrewbehma/glass-ui/breadcrumb` | `Breadcrumb` — the trail, with a measured collapsing middle behind an overflow `Menu` and the last item as the page. |
 | `@andrewbehma/glass-ui/row-actions` | `RowActions` and `rowActionsHost` — a row's affordances, revealed on hover, focus-within, selection, and always on a coarse pointer. |
 | `@andrewbehma/glass-ui/context-menu` | `ContextMenuRoot` / `Trigger` / `Content` / `Item` / `Separator` / `Label` / `RadioGroup` / `RadioItem` — the right-click menu on `Menu`'s exported styling. |
-| `@andrewbehma/glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. |
+| `@andrewbehma/glass-ui/key-hint` | `KeyHint` — a shortcut as key caps; `Mod` is `⌘` on Apple and `Ctrl` elsewhere. Under the workspace profile it is not drawn under `(pointer: coarse)` — no keyboard, no hint — unless passed `always`. |
 
 Five rules, each the answer to something that was already going wrong.
 
@@ -963,7 +1015,7 @@ the shape rather than a promise about it. A consumer composing
 it. Shift+F10 and the Menu key fire the same `contextmenu` event a mouse does,
 so the keyboard opens it with nothing added.
 
-**Collapsing to zero is not possible.** `SidePanel`'s `minWidth` is a prop;
+**Collapsing to zero takes `strip={false}`** (see [From maint/v0.8](#from-maintv08-168)). By default `SidePanel`'s `minWidth` is a prop;
 dragging past half of it produces the strip, which carries the expand button
 and never goes away, and the handle — the WAI-ARIA window splitter: arrows,
 Home, End, Enter — stays with it, so a keyboard has the same way back a
@@ -1362,9 +1414,11 @@ and says so in the table caption.
 
 `DateInput` is `Input` with `type="date" | "time" | "datetime-local"`. Digits are `tabular-nums`; in Chromium the picker glyph is toned down to the caret's weight and the inner padding removed. It keeps its intrinsic width — give it a track wide enough for its value.
 
+`locale` sets the input's `lang` (an explicit `lang` wins). Firefox and Safari order and name the date parts by it. **Chromium does not**: it draws the field and its picker in the browser's own UI language whatever `lang` says. That gap is accepted rather than covered here (`Q503`); for a date or a time in the interface's language in every browser, use `DateField` / `TimeField` (see [From maint/v0.8](#from-maintv08-168)).
+
 ### SegmentedControl — sizing and selection
 
-A segment is never narrower than its label (`min-w-max flex-1`): it grows to fit and still shares spare width. The glass pill encloses its segments; if it is wider than its column it overflows the column — wrap it in a horizontally scrolling container if that can happen. The selected segment is `bg-accent-soft` with `text-accent-ink`, which a child that sets no colour of its own inherits. `className="flex-none"` still opts a segment out of sharing spare width.
+A segment is never narrower than its label (`min-w-max flex-1`): it grows to fit and still shares spare width. The glass pill encloses its segments; if it is wider than its column it overflows the column — pass `overflow="scroll"` (or `wrap`) if that can happen; see [From maint/v0.8](#from-maintv08-168). The selected segment is `bg-accent-soft` with `text-accent-ink`, which a child that sets no colour of its own inherits. `className="flex-none"` still opts a segment out of sharing spare width.
 
 ### CodeBlock — chrome only when it holds something
 
@@ -1522,6 +1576,134 @@ and Close are named buttons. The edge handles are pointer-only and
 window draws through, exported for a consumer that places something beside it.
 With no stored record and no `defaultPosition`, the window opens 24 px in from
 the top-right corner at `defaultWidth` × `defaultHeight` (820 × 680).
+
+## From maint/v0.8 (#168)
+
+Denitsa's `maint/v0.8` line (v0.8.x) and develop diverged at `c59d84e`. What
+maint added since is here, forward-ported so that nothing moves for an
+application that does not ask: every new prop defaults to what shipped
+before, and what maint changed by default lives under the workspace profile
+(see [the rules](#the-rules)).
+
+| Import | What it is |
+|---|---|
+| `@andrewbehma/glass-ui/date-field` | `DateField` — a date drawn from `Intl` in the interface's `locale`, a forgiving parser, and a month grid in a popover. |
+| `@andrewbehma/glass-ui/time-field` | `TimeField` — a time on the locale's hour cycle; ArrowUp / ArrowDown step it. |
+| `@andrewbehma/glass-ui/period-switcher` | `PeriodSwitcher` — `‹ label › Today`, one picker for every week, month and year. |
+| `@andrewbehma/glass-ui/use-scroll-into-row` | `useScrollIntoRow(ref, active)` — the active item of a scrolling row brings itself to the middle, scrolling the row only. |
+
+### Segments, tabs and the period switcher
+
+**`SegmentedControl` takes `overflow`, `wrap` and `full`.** `overflow="scroll"`
+scrolls a control wider than its row inside its own shell — bar hidden, a
+`ScrollHintRow` fade on the side with more, the active item brought into view,
+a label never wrapped. `wrap` breaks the row between items instead; a label
+still never breaks, and there is no scroller and no fade. Both draw the shell
+`rounded-control`, `glass` included: two rows in a pill put corners outside its
+curve. `overflow="spill"`, the default, is the control as it was. `full`
+shares the row in equal parts, never below a label — which is the default
+width already; under the workspace profile a control without `full` is as wide
+as its labels. Use the props — never a `[&>ul]:` selector in `className`,
+which depends on markup this package is free to move.
+
+**`Tabs scroll`** does the same for the deprecated `Tabs`: each item at least
+its content's width and never wrapping its label, the row scrolling with a
+fade, and the current item centred on mount (the row only — never the page).
+With room to spare, items still share it equally. Without `scroll`, nothing
+changes.
+
+**`PeriodSwitcher`** — `‹ label › Today`. No date logic: the caller formats
+`label`, moves the period in `onPrevious` / `onNext`, and supplies every string
+(`previousLabel`, `nextLabel`, `todayLabel`). `onToday` omitted → no Today
+button; `isCurrent` disables it. `headingLevel={2 | 3}` renders the label as a
+heading instead of a `<span>`.
+
+### One empty state
+
+`EmptyState` takes `align` and `secondaryAction`. `align="center"` (the
+default) suits a card or dialog; `align="start"` begins at the left edge, for a
+page whose content does. `secondaryAction` sits on the action's row — a
+`ReactNode`, or `{ label, onClick }` / `{ label, href }` drawn as a `ghost`.
+Under the workspace profile the icon sits in a 40px `bg-hover` disc and the
+title is 16/600; the title says the state ("No starred documents yet", never
+the page name).
+
+### Button: three tiers and a link
+
+| Tier | Variant | Look |
+|---|---|---|
+| primary | `solid` | the accent with its label; ink with a ground label under the workspace profile. Disabled, the same fill at 40% opacity — not a grey fill. One per card. |
+| secondary | `glass` | the material; under the workspace profile at `data-material="flat"`, `bg-ink/[0.06]` with a 1px inset `ring-line-strong`, `bg-ink/[0.10]` on hover — the same on a card and on the page. |
+| ghost | `ghost` | toolbars, icon buttons, the quiet action in a row |
+| destructive | `danger` | tinted; its label is ink under the workspace profile |
+| link | `link` | `text-accent-ink`, the accent's gated text colour; underlines on hover. No height, no padding. For an `<a>` or a Next `<Link>`, use `buttonClassName({ variant: 'link' })`. |
+
+### Dates and times in the interface's language
+
+Chromium draws `<input type="date">` and `type="time"` in the browser's
+language whatever `lang` says. `DateField` and `TimeField` draw everything from
+`Intl` in the `locale` they are given, and speak the native inputs' strings, so
+a call site swaps without logic changes. `DateInput` remains for
+`datetime-local` and until every caller has moved.
+
+**`DateField`** — `value` / `onValueChange` carry `YYYY-MM-DD` or `''`.
+- At rest: `вт, 13 окт.` / `Tue, Oct 13` — the year only when it is not this
+  one. Focused: the locale's numbers, `13.10.2026` / `10/13/2026`. Empty: the
+  locale's pattern as the placeholder (`DD.MM.YYYY`, built from `Intl`, not
+  hard-coded).
+- Typed text is read on blur or Enter, in the locale's order with any
+  separator: `13.10.2026`, `13/10/26`, `13 10`, `13102026`. No year → this
+  year; a two-digit year → 20YY. A day that does not exist, or is outside
+  `min` / `max`, keeps the text, sets `aria-invalid` and calls nothing.
+  Clearing the text calls `onValueChange('')`.
+- The calendar button (`calendarLabel`) opens a month grid in a popover:
+  `PeriodSwitcher` header, `weekStartsOn` (default Monday), `role="grid"`.
+  Arrows move a day, PageUp / PageDown a month (Shift: a year), Home / End the
+  week's ends, Enter or Space picks, Escape closes and returns focus to the
+  button. Today is ringed, the chosen day is ink. Days outside `min` / `max`
+  are `aria-disabled` — reachable by keyboard, not pickable.
+- The month arrows are named `previousMonthLabel` / `nextMonthLabel`; omitted,
+  they are named after the month they go to (`September 2026`).
+
+**`TimeField`** — `value` / `onValueChange` carry `HH:MM` (24-hour) or `''`.
+- Shown on `hourCycle`, by default the locale's: `14:30` in ru and uk,
+  `2:30 PM` in en.
+- Accepts `1430`, `14:30`, `14.30`, `14 30`, `9`, `930`, `9:5` (→ `09:05`);
+  under `h12` also an `a` / `p` / `am` / `pm` suffix or the locale's own.
+  Without a suffix the hour is read on the 24-hour clock. Out of range keeps
+  the text and sets `aria-invalid`.
+- ArrowUp / ArrowDown move by `step` minutes (default 15), wrapping at
+  midnight.
+
+### A rail you can read and a panel that fits
+
+**`AppRail labels`** — `'tooltip'` (default) or `'below'`.
+- `'below'` prints each item's `label` under its icon: the item is `w-16
+  flex-col gap-1 py-1.5`, the name `text-xs leading-4 max-w-14 truncate` (12px,
+  the floor). Pass a short name as `label` — a long one is cut, and the
+  `Tooltip` stays to read it. The `sr-only` copy is dropped, because the
+  visible name is the accessible one; the `unavailable` phrase and a badge's
+  spoken count stay `sr-only`.
+- The capsule, the accent, the `warn` dot and `footerApps` are unchanged. The
+  rail grows from one `--size-nav` square to a 64px item, so a layout that
+  counted on the narrow rail should be looked at.
+
+**`SidePanel strip`** — `true` (default) or `false`.
+- `false` collapses to width 0: no strip, no `rail`, no material. Only the
+  resize handle remains, keyboard-operable as before, sitting on the content's
+  edge. Open, the panel is unchanged.
+- The way back is the consumer's — `useSidePanel().expand` from a control that
+  is on screen while the panel is not (a button in the `AppRail` `head`). A
+  panel with no such control should keep its strip.
+
+### Command palette: keys, hints and the first key
+
+`CommandPaletteItem` takes `keys?: readonly string[]`, drawn after the hint as
+one `kbd` keycap per key (`["G", "T"]`), `aria-hidden` because the label is what
+is announced. Pass none on a coarse pointer. `hints` draws one row of key hints
+under the list, in the consumer's words. `onInputKeyDown` is called with the
+field's key events before the palette's own handling, including when the list
+is empty; a handler that calls `preventDefault()` takes the key.
 
 ## Developing
 

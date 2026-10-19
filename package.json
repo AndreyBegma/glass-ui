@@ -387,6 +387,22 @@
       "types": "./dist/patterns/resizable-frame.d.ts",
       "import": "./dist/patterns/resizable-frame.js"
     },
+    "./date-field": {
+      "types": "./dist/primitives/date-field.d.ts",
+      "import": "./dist/primitives/date-field.js"
+    },
+    "./time-field": {
+      "types": "./dist/primitives/time-field.d.ts",
+      "import": "./dist/primitives/time-field.js"
+    },
+    "./period-switcher": {
+      "types": "./dist/patterns/period-switcher.d.ts",
+      "import": "./dist/patterns/period-switcher.js"
+    },
+    "./use-scroll-into-row": {
+      "types": "./dist/hooks/use-scroll-into-row.d.ts",
+      "import": "./dist/hooks/use-scroll-into-row.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

@@ -72,4 +72,24 @@ describe('KeyHint', () => {
     const hint = document.querySelector('kbd');
     expect(hint?.className.split(' ')).toContain('text-ink-3');
   });
+
+  // FEAT-20260930-004 (SYS-33), #168 — the workspace profile's. happy-dom
+  // evaluates no media query, so this asserts the rule the browser is handed,
+  // not the pixels.
+  test('under a coarse pointer the workspace does not draw it, unless `always`', () => {
+    const { container, rerender } = render(<KeyHint keys="Mod+K" platform="MacIntel" />);
+    const classes = () => container.querySelector('kbd')?.className.split(' ') ?? [];
+    expect(classes()).toContain('workspace:[@media(pointer:coarse)]:hidden');
+    // Outside the profile it is drawn at every pointer, as before.
+    expect(classes()).not.toContain('[@media(pointer:coarse)]:hidden');
+    rerender(<KeyHint keys="Mod+K" platform="MacIntel" always />);
+    expect(classes()).not.toContain('workspace:[@media(pointer:coarse)]:hidden');
+  });
+
+  test('the workspace draws its text at 12px, the floor (`E-127` d3)', () => {
+    render(<KeyHint keys="Mod+K" platform="MacIntel" />);
+    const classes = document.querySelector('kbd')?.className.split(' ') ?? [];
+    expect(classes).toContain('workspace:text-xs');
+    expect(classes).toContain('text-[11px]');
+  });
 });

@@ -40,6 +40,9 @@ function base(tone: FieldTone): string {
     'border border-line-strong rounded-control',
     'transition-[border-color,box-shadow] duration-(--dur-fast)',
     'focus:border-ink/70 focus:ring-2 focus:ring-white/22 focus:outline-none',
+    // W254 (06bc476), #168 — the workspace's ring is ink, the token-built one
+    // `fieldClassName` draws: white at 22% is no ring on a light page.
+    'workspace:focus:ring-ink/22',
     'disabled:opacity-40',
   ].join(' ');
 }

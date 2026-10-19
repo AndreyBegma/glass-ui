@@ -7,9 +7,12 @@ import {
   type ReactNode,
   useContext,
   useId,
+  useRef,
 } from 'react';
+import { useScrollIntoRow } from '../hooks/use-scroll-into-row';
 import { cn } from '../lib/cn';
 import type { NavLinkRender } from '../patterns/nav-link';
+import { ScrollHintRow } from './scroll-hint-row';
 import { SPRINGS } from './springs';
 
 /**
@@ -35,22 +38,57 @@ import { SPRINGS } from './springs';
  * `TabPanel` when the items switch panels on the same page, and `NavTabs` /
  * `NavTab` when each one is a real destination. `Tabs` keeps rendering
  * exactly what it rendered, and goes in the next major.
+ *
+ * FEAT-20260930-004 (SYS-16, TASKS-1), BUG-20261013-001, #168 — `scroll`: a
+ * row that does not fit scrolls, and says so. At 390 the Tasks tabs were
+ * clipped mid-word with nothing to tell a reader there was more. With
+ * `scroll` each item is at least its content's width (`min-w-fit`) and never
+ * wraps its label, so the row overflows instead of squeezing; the row scrolls
+ * inside `ScrollHintRow` with its bar hidden, and the fades show the side that
+ * has more; and the current item scrolls itself into view, so a deep link to
+ * the fifth tab does not open on a row showing the first three. The scroller
+ * is `ScrollHintRow`'s inner div — the element it measures — and the list
+ * inside is `w-max min-w-full`, so the overflow lands on the scroller. Where
+ * there is room, `flex-1` still shares it out equally. Without `scroll` the
+ * row renders exactly what it did.
  */
 interface TabsProps {
   children: ReactNode;
   className?: string;
   'aria-label'?: string;
+  /** #168 — scroll a row that does not fit, rather than squeeze its tabs. */
+  scroll?: boolean;
 }
+
+/** Whether the row scrolls, for the items to size and centre themselves. */
+const TabsScrollContext = createContext(false);
 
 /**
  * @deprecated #130 — use `TabGroup` / `TabList` (panels) or `NavTabs`
  * (links). Rendering is unchanged; see the block above `TabsProps`.
  */
-export function Tabs({ children, className, ...props }: TabsProps) {
+export function Tabs({ children, className, scroll = false, ...props }: TabsProps) {
+  if (!scroll) {
+    return (
+      <ul className={cn('flex gap-1 rounded-control bg-surface p-1', className)} {...props}>
+        {children}
+      </ul>
+    );
+  }
   return (
-    <ul className={cn('flex gap-1 rounded-control bg-surface p-1', className)} {...props}>
-      {children}
-    </ul>
+    <TabsScrollContext.Provider value>
+      <ScrollHintRow
+        edgeClassName="from-surface"
+        className={cn(
+          'scrollbar-hide relative overflow-x-auto rounded-control bg-surface p-1',
+          className,
+        )}
+      >
+        <ul className="flex w-max min-w-full gap-1" {...props}>
+          {children}
+        </ul>
+      </ScrollHintRow>
+    </TabsScrollContext.Provider>
   );
 }
 
@@ -64,8 +102,17 @@ interface TabsItemProps {
 /** @deprecated #130 — use `Tab` inside a `TabList`, or `NavTab`. */
 export function TabsItem({ current, layoutId, children, className }: TabsItemProps) {
   const reduced = useReducedMotion();
+  const scroll = useContext(TabsScrollContext);
+  const ref = useRef<HTMLLIElement>(null);
+  useScrollIntoRow(ref, current && scroll);
   return (
-    <li className={cn('relative min-w-0 flex-1', className)}>
+    <li
+      ref={ref}
+      className={cn(
+        scroll ? 'relative min-w-fit flex-1 [&>*]:whitespace-nowrap' : 'relative min-w-0 flex-1',
+        className,
+      )}
+    >
       {current ? (
         <motion.span
           layoutId={layoutId}

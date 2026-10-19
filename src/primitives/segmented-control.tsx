@@ -1,8 +1,10 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { createContext, type ReactNode, useContext } from 'react';
+import { createContext, type ReactNode, useContext, useRef } from 'react';
+import { useScrollIntoRow } from '../hooks/use-scroll-into-row';
 import { cn } from '../lib/cn';
+import { ScrollHintRow } from './scroll-hint-row';
 
 /**
  * FEAT-20260830-492 — the travelling capsule, as a primitive rather than a
@@ -97,6 +99,28 @@ import { cn } from '../lib/cn';
  * the switch lines up with there. A child under `sm` must not carry its own
  * `min-h` (a tap-sized `min-h-(--size-tap)` would overflow the shell); it
  * stays on `md`. `md` is the default, and its strings are unchanged.
+ *
+ * #168 — maint/v0.8's sizing, scrolling and wrapping (FEAT-20261013-005,
+ * BUG-20261013-001, FEAT-20261013-709), in develop's look:
+ *
+ * - `overflow="scroll"`: a control wider than its row scrolls inside
+ *   `ScrollHintRow` instead of spilling into the parent. The scroller is
+ *   `ScrollHintRow`'s inner div — what it measures — and carries the shell;
+ *   the list inside is `w-max min-w-full`, so it is as wide as its items and
+ *   the overflow lands on the scroller. The active item brings itself into
+ *   view (`useScrollIntoRow`), and a label never wraps. `spill`, the default,
+ *   renders exactly what it did.
+ * - `wrap`: the row breaks between items onto a second line instead; a label
+ *   never does. It wins over `overflow`.
+ * - `full`: equal shares of the row, never below a label. That is already
+ *   develop's default width, so outside the workspace profile `full` changes
+ *   nothing. Under the profile a control without `full` is as wide as its
+ *   labels — maint's default: a two-word control is not 672px wide.
+ *
+ * Scrolling and wrapping draw the shell `rounded-control`, `glass` included:
+ * two rows inside a pill put their corners outside its curve, and a fade over
+ * a pill's round end paints a square corner onto the page. The fade is
+ * `from-raised`, the glass scrim at the flat material.
  */
 type SegmentedControlVariant = 'glass' | 'on-glass';
 
@@ -128,19 +152,45 @@ interface SegmentedControlProps {
    * `Select` in a desk toolbar.
    */
   size?: SegmentedControlSize;
+  /**
+   * #168 — stretch to the row, in equal shares, never below a label's width.
+   * Develop's default already does; under the workspace profile the default
+   * is the width of the labels, and `full` is how a control asks for the row.
+   */
+  full?: boolean;
+  /**
+   * #168 — `spill` (default) lets a control wider than its row overflow into
+   * the parent, which is the parent's to scroll. `scroll` scrolls it inside
+   * its own shell, with a fade on the side that has more.
+   */
+  overflow?: SegmentedControlOverflow;
+  /**
+   * #168 — wrap onto a second line instead of scrolling. The row breaks
+   * between items; a label never does. With `full`, `full` decides the width.
+   */
+  wrap?: boolean;
 }
+
+type SegmentedControlOverflow = 'spill' | 'scroll';
+
+/** How the row lays out: develop's spill, or maint's scroll or wrap. */
+type SegmentedControlMode = SegmentedControlOverflow | 'wrap';
 
 interface SegmentedControlShape {
   /** The wrapper is a `<div>` in a role, so the items are `<div>`s too. */
   listless: boolean;
   variant: SegmentedControlVariant;
   size: SegmentedControlSize;
+  full: boolean;
+  mode: SegmentedControlMode;
 }
 
 const SegmentedControlContext = createContext<SegmentedControlShape>({
   listless: false,
   variant: 'glass',
   size: 'md',
+  full: false,
+  mode: 'spill',
 });
 
 const WRAPPER_CLASSES: Record<SegmentedControlVariant, string> = {
@@ -164,6 +214,20 @@ const SM_CAPSULE_CLASSES: Record<SegmentedControlVariant, string> = {
     'absolute inset-0 rounded-[calc(var(--radius-control)-2px)] bg-accent-soft',
 };
 
+/** #168 — the shell as a box around a list, for `scroll` and `wrap`: the
+ *  list carries the flex row, and the corner is the control's. */
+const BOX_CLASSES: Record<SegmentedControlVariant, string> = {
+  glass: 'rounded-control glass p-1',
+  'on-glass': 'rounded-control border border-line p-1',
+};
+
+/** The capsule inside a `rounded-control` box: 4px in, as `on-glass`'s is. */
+const BOX_CAPSULE_CLASSES = CAPSULE_CLASSES['on-glass'];
+
+/** Under the workspace profile, a control without `full` is as wide as its
+ *  labels; with it, or outside the profile, it fills the row. */
+const LABEL_WIDTH = 'workspace:w-fit workspace:max-w-full';
+
 /** The one place the old name is spelt: everything past it knows two variants. */
 function resolveVariant(
   variant: SegmentedControlVariant | DeprecatedSegmentedControlVariant,
@@ -177,25 +241,62 @@ export function SegmentedControl({
   role,
   variant: requested = 'glass',
   size = 'md',
+  full = false,
+  overflow = 'spill',
+  wrap = false,
   ...props
 }: SegmentedControlProps) {
   const Wrapper = role ? 'div' : 'ul';
   const variant = resolveVariant(requested);
-  return (
-    <SegmentedControlContext.Provider
-      value={{ listless: !!role, variant, size }}
+  const mode: SegmentedControlMode = wrap ? 'wrap' : overflow;
+  const shape = { listless: !!role, variant, size, full, mode };
+
+  if (mode === 'spill') {
+    return (
+      <SegmentedControlContext.Provider value={shape}>
+        <Wrapper
+          role={role}
+          className={cn(
+            WRAPPER_CLASSES[variant],
+            size === 'sm' && SM_WRAPPER_CLASSES,
+            !full && LABEL_WIDTH,
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </Wrapper>
+      </SegmentedControlContext.Provider>
+    );
+  }
+
+  const box = cn(
+    BOX_CLASSES[variant],
+    size === 'sm' && (mode === 'wrap' ? 'min-h-(--size-control) p-0.5' : SM_WRAPPER_CLASSES),
+    full ? 'w-full' : LABEL_WIDTH,
+    className,
+  );
+  const list = (
+    <Wrapper
+      role={role}
+      className={mode === 'wrap' ? 'flex flex-wrap gap-1' : 'flex w-max min-w-full gap-1'}
+      {...props}
     >
-      <Wrapper
-        role={role}
-        className={cn(
-          WRAPPER_CLASSES[variant],
-          size === 'sm' && SM_WRAPPER_CLASSES,
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </Wrapper>
+      {children}
+    </Wrapper>
+  );
+  return (
+    <SegmentedControlContext.Provider value={shape}>
+      {mode === 'wrap' ? (
+        <div className={box}>{list}</div>
+      ) : (
+        <ScrollHintRow
+          edgeClassName="from-raised"
+          className={cn('scrollbar-hide relative overflow-x-auto', box)}
+        >
+          {list}
+        </ScrollHintRow>
+      )}
     </SegmentedControlContext.Provider>
   );
 }
@@ -220,13 +321,22 @@ export function SegmentedControlItem({
   className,
 }: SegmentedControlItemProps) {
   const reduced = useReducedMotion();
-  const { listless, variant, size } = useContext(SegmentedControlContext);
+  const { listless, variant, size, full, mode } = useContext(SegmentedControlContext);
+  const ref = useRef<HTMLLIElement & HTMLDivElement>(null);
+  // The row is the scroller only in `scroll`; elsewhere the item's
+  // `offsetParent` is some unrelated ancestor, and there is nothing to bring
+  // into view.
+  useScrollIntoRow(ref, active && mode === 'scroll');
   const Item = listless ? 'div' : 'li';
+  const boxed = mode !== 'spill';
   return (
     <Item
+      ref={ref}
       className={cn(
         'relative min-w-max flex-1',
         size === 'sm' && 'flex',
+        !full && 'workspace:flex-none',
+        boxed && '[&>*]:whitespace-nowrap',
         active && 'text-accent-ink',
         className,
       )}
@@ -235,9 +345,13 @@ export function SegmentedControlItem({
         <motion.span
           layoutId={layoutId}
           className={
-            size === 'sm'
-              ? SM_CAPSULE_CLASSES[variant]
-              : CAPSULE_CLASSES[variant]
+            boxed && variant === 'glass'
+              ? size === 'sm'
+                ? SM_CAPSULE_CLASSES['on-glass']
+                : BOX_CAPSULE_CLASSES
+              : size === 'sm'
+                ? SM_CAPSULE_CLASSES[variant]
+                : CAPSULE_CLASSES[variant]
           }
           transition={
             reduced

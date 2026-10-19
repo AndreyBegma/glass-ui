@@ -317,3 +317,144 @@ describe('Tabs', () => {
     expect(item.className).not.toContain('flex-1');
   });
 });
+
+/**
+ * FEAT-20260930-004 (SYS-16, TASKS-1), #168 — `scroll`: a row that does not
+ * fit says so.
+ *
+ * happy-dom has no layout, so the geometry is given: a 200px row holding
+ * 600px of tabs, the current one at 400px. What is asserted is what the
+ * component does with it — the row scrolls, fades on the side with more, and
+ * brings the current tab to the middle.
+ */
+describe('Tabs scroll, in a row too narrow for them', () => {
+  const geometry: Record<string, PropertyDescriptor | undefined> = {};
+  const GIVEN = {
+    // The scroller is `ScrollHintRow`'s inner div (BUG-20261013-001), the one
+    // carrying `overflow-x-auto`; the list inside it never overflows by itself.
+    scrollWidth: (el: HTMLElement) => (el.classList.contains('overflow-x-auto') ? 600 : 0),
+    clientWidth: (el: HTMLElement) => (el.classList.contains('overflow-x-auto') ? 200 : 0),
+    offsetWidth: (el: HTMLElement) => (el.tagName === 'LI' ? 100 : 0),
+    offsetLeft: (el: HTMLElement) => (el.dataset.at ? Number(el.dataset.at) : 0),
+    offsetParent: (el: HTMLElement) => el.closest('.overflow-x-auto'),
+  };
+
+  function given() {
+    for (const [name, get] of Object.entries(GIVEN)) {
+      geometry[name] = Object.getOwnPropertyDescriptor(HTMLElement.prototype, name);
+      Object.defineProperty(HTMLElement.prototype, name, {
+        configurable: true,
+        get() {
+          return get(this);
+        },
+      });
+    }
+  }
+
+  function restore() {
+    for (const [name, descriptor] of Object.entries(geometry)) {
+      if (descriptor) Object.defineProperty(HTMLElement.prototype, name, descriptor);
+    }
+  }
+
+  function row() {
+    return render(
+      <Tabs aria-label="Views" scroll>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <TabsItem key={i} current={i === 4} layoutId="tabs-scroll">
+            <a href={`/${i}`}>{`View ${i}`}</a>
+          </TabsItem>
+        ))}
+      </Tabs>,
+    );
+  }
+
+  test('items are their content’s width and never wrap their label', () => {
+    row();
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item.className).toBe('relative min-w-fit flex-1 [&>*]:whitespace-nowrap');
+    }
+  });
+
+  test('the row scrolls sideways, with its bar hidden', () => {
+    const { container } = row();
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller?.className).toContain('scrollbar-hide');
+    // The list is inside the scroller and does not scroll itself.
+    expect(scroller?.contains(screen.getByRole('list', { name: 'Views' }))).toBe(true);
+    expect(screen.getByRole('list', { name: 'Views' }).className).not.toContain('overflow-x-auto');
+  });
+
+  test('the current tab is scrolled to the middle of the row on mount', () => {
+    given();
+    try {
+      // `offsetLeft` is read from `data-at`, which the link's ref sets on its
+      // item — refs attach before the item's layout effect runs.
+      const { container } = render(
+        <Tabs aria-label="Views" scroll>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <TabsItem key={i} current={i === 4} layoutId="tabs-scroll-mid">
+              <a
+                href={`/${i}`}
+                ref={(a) => a?.parentElement?.setAttribute('data-at', String(i * 100))}
+              >
+                {`View ${i}`}
+              </a>
+            </TabsItem>
+          ))}
+        </Tabs>,
+      );
+      const scroller = container.querySelector('.overflow-x-auto');
+      // 400 − (200 − 100) / 2
+      expect(scroller?.scrollLeft).toBe(350);
+    } finally {
+      restore();
+    }
+  });
+
+  test('the side with more is faded, the side without is not', () => {
+    given();
+    try {
+      const { container } = row();
+      const fades = container.querySelectorAll('[aria-hidden="true"].pointer-events-none');
+      expect(fades).toHaveLength(2);
+      for (const fade of fades) expect(fade.className).toContain('from-surface');
+    } finally {
+      restore();
+    }
+  });
+
+  // BUG-20261013-001 — the fades measure the element that scrolls.
+  test('at the start only the end fade shows; scrolled to the end only the start fade does', () => {
+    given();
+    try {
+      const { container } = row();
+      const [start, end] = Array.from(
+        container.querySelectorAll('[aria-hidden="true"].pointer-events-none'),
+      );
+      const scroller = container.querySelector('.overflow-x-auto') as HTMLElement;
+      scroller.scrollLeft = 0;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-0');
+      expect(end?.className).toContain('opacity-100');
+      scroller.scrollLeft = 400;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-100');
+      expect(end?.className).toContain('opacity-0');
+    } finally {
+      restore();
+    }
+  });
+
+  test('without `scroll` there is no scroller, and the row is what it was', () => {
+    const { container } = render(
+      <Tabs aria-label="Plain">
+        <TabsItem current layoutId="tabs-plain">
+          <a href="/a">A</a>
+        </TabsItem>
+      </Tabs>,
+    );
+    expect(container.querySelector('.overflow-x-auto')).toBeNull();
+    expect(screen.getByRole('listitem').className).toBe('relative min-w-0 flex-1');
+  });
+});

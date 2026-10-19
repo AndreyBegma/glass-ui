@@ -27,14 +27,21 @@ function isActionData(action: unknown): action is EmptyStateAction {
 function ActionControl({
   action,
   link,
+  variant,
 }: {
   action: EmptyStateAction;
   link?: NavLinkRender;
+  /** `ghost` for the secondary; the glass default for the one that fills it. */
+  variant?: 'ghost';
 }) {
   if (action.href === undefined) {
-    return <Button onClick={action.onClick}>{action.label}</Button>;
+    return (
+      <Button variant={variant} onClick={action.onClick}>
+        {action.label}
+      </Button>
+    );
   }
-  const className = buttonClassName();
+  const className = buttonClassName({ variant });
   if (link) return <>{link({ href: action.href, className, children: action.label })}</>;
   return (
     <a href={action.href} className={className}>
@@ -61,47 +68,79 @@ function ActionControl({
  * one; a section with nothing in it yet is an invitation. Anything that tints
  * this warn or danger has confused the two.
  *
- * One action, or none. Three choices at zero data is a menu rather than an
- * invitation.
+ * One filling action, and at most one quiet secondary. Three choices at zero
+ * data is a menu rather than an invitation.
+ *
+ * FEAT-20261013-004 (#168) — `align` is where the block sits: `center` (the
+ * default) for a card or a dialog, `start` when the page's content begins at
+ * its left edge and the empty state must begin there too. `secondaryAction`
+ * sits on the action's row as a `ghost`. Under the workspace profile the
+ * anatomy is maint's: the icon in a 40px disc, the title at 16/600.
  */
-export function EmptyState({
-  title,
-  description,
-  action,
-  icon,
-  link,
-}: {
+export interface EmptyStateProps {
   /** What this section is for. Not "No tasks" — "Tasks you have not done yet". */
   title: string;
   /** One sentence. What appears here, and how it gets here. */
   description?: string;
   /**
-   * The single action that fills it. One, or none. Prefer the data shape
+   * The single action that fills it. Prefer the data shape
    * (`{ label, onClick }` or `{ label, href }`, #130); a `ReactNode` still
    * renders as given.
    */
   action?: ReactNode | EmptyStateAction;
+  /** Optional, quieter, on the same row — a `ghost` when given as data. */
+  secondaryAction?: ReactNode | EmptyStateAction;
   icon?: ReactNode;
   /** Renders an `href` action's anchor. See `nav-link.ts`. Plain `<a>` without it. */
   link?: NavLinkRender;
-}) {
+  align?: 'center' | 'start';
+}
+
+export function EmptyState({
+  title,
+  description,
+  action,
+  secondaryAction,
+  icon,
+  link,
+  align = 'center',
+}: EmptyStateProps) {
+  const control = (value: ReactNode | EmptyStateAction, variant?: 'ghost') =>
+    isActionData(value) ? <ActionControl action={value} link={link} variant={variant} /> : value;
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-3 rounded-surface',
-        'px-6 py-12 text-center',
+        'flex flex-col gap-3 py-12',
+        align === 'center'
+          ? 'items-center justify-center rounded-surface px-6 text-center'
+          : 'max-w-md items-start text-left',
       )}
     >
-      {icon && <div className="text-ink-3">{icon}</div>}
-      <p className="text-ink text-sm font-medium">{title}</p>
+      {icon && (
+        <div
+          className={cn(
+            'text-ink-3',
+            'workspace:bg-hover workspace:text-ink-2 workspace:grid workspace:size-10',
+            'workspace:place-items-center workspace:rounded-full workspace:[&_svg]:size-5',
+          )}
+        >
+          {icon}
+        </div>
+      )}
+      <p className="text-ink text-sm font-medium workspace:text-base workspace:font-semibold">
+        {title}
+      </p>
       {description && (
         <p className="text-ink-2 max-w-sm text-sm">{description}</p>
       )}
-      {action && (
-        <div className="mt-1">
-          {isActionData(action) ? <ActionControl action={action} link={link} /> : action}
+      {secondaryAction ? (
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          {action ? control(action) : null}
+          {control(secondaryAction, 'ghost')}
         </div>
-      )}
+      ) : action ? (
+        <div className="mt-1">{control(action)}</div>
+      ) : null}
     </div>
   );
 }

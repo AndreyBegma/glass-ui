@@ -111,7 +111,11 @@ export {
   type DataTableSort,
   sortRows,
 } from './patterns/data-table';
-export { EmptyState } from './patterns/empty-state';
+export {
+  EmptyState,
+  type EmptyStateAction,
+  type EmptyStateProps,
+} from './patterns/empty-state';
 export {
   FileItem,
   type FileItemProps,

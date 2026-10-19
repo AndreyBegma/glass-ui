@@ -67,7 +67,9 @@ type Attrs = {
   scale?: 'desk';
   accent?: string;
   palette?: string;
+  profile?: 'workspace';
   prefersLight: boolean;
+  coarse?: boolean;
 };
 
 function matches(selector: string, a: Attrs): boolean {
@@ -79,6 +81,7 @@ function matches(selector: string, a: Attrs): boolean {
     'data-scale': a.scale,
     'data-accent': a.accent,
     'data-palette': a.palette,
+    'data-profile': a.profile,
   };
   for (const m of where[1].matchAll(/:not\(\[([a-z-]+)="([^"]+)"\]\)/g)) {
     if (attrs[m[1]] === m[2]) return false;
@@ -93,6 +96,8 @@ function matches(selector: string, a: Attrs): boolean {
 
 const MEDIA: Record<string, (a: Attrs) => boolean> = {
   '@media (prefers-color-scheme: light)': (a) => a.prefersLight,
+  // #168 — the workspace profile's touch sizes. A fine pointer unless asked.
+  '@media (pointer: coarse)': (a) => a.coarse === true,
 };
 
 /** The cascade for a page with these attributes: every matching rule, in order. */

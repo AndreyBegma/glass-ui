@@ -61,6 +61,21 @@ const AT_DESK: [string, string[][]][] = [
   ['light (explicit)', [BASE, LIGHT_EXPLICIT, DESK, DESK_EXPLICIT]],
 ];
 
+const WORKSPACE = declarations(':root:where([data-scale="desk"][data-profile="workspace"])');
+const WORKSPACE_SYSTEM = declarations(
+  ':root:where(:not([data-theme="dark"])[data-scale="desk"][data-profile="workspace"])',
+);
+const WORKSPACE_EXPLICIT = declarations(
+  ':root:where([data-theme="light"][data-scale="desk"][data-profile="workspace"])',
+);
+
+/** #168 — each theme at a desk with `data-profile="workspace"`, maint's desk. */
+const AT_WORKSPACE: [string, string[][]][] = [
+  ['dark', [BASE, DESK, WORKSPACE]],
+  ['light', [BASE, LIGHT_SYSTEM, DESK, DESK_SYSTEM, WORKSPACE, WORKSPACE_SYSTEM]],
+  ['light (explicit)', [BASE, LIGHT_EXPLICIT, DESK, DESK_EXPLICIT, WORKSPACE, WORKSPACE_EXPLICIT]],
+];
+
 /** The same themes with `data-scale` unset — the sofa, which is Luna Watch. */
 const AT_SOFA: [string, string[][]][] = [
   ['dark', [BASE]],
@@ -140,9 +155,14 @@ function deskSurfaces(sets: string[][]): [string, number[]][] {
   ];
 }
 
-function failing(sets: string[][], token: string, floor: number): string[] {
+function failing(
+  sets: string[][],
+  token: string,
+  floor: number,
+  surfaces: [string, number[]][] = deskSurfaces(sets),
+): string[] {
   const ink = colour(resolve(sets, token));
-  return deskSurfaces(sets)
+  return surfaces
     .map(([name, bg]) => [name, contrast(over(ink, bg), bg)] as const)
     .filter(([, ratio]) => ratio < floor)
     .map(([name, ratio]) => `${name}: ${ratio.toFixed(2)}:1`);
@@ -159,6 +179,50 @@ describe('the third level of text clears 4.5:1 at a desk', () => {
     const page = colour(resolve(sets, '--color-ground')).rgb;
     const ratio = (token: string) => contrast(over(colour(resolve(sets, token)), page), page);
     expect(ratio('--color-ink-2')).toBeGreaterThan(ratio('--color-ink-3') + 1);
+  });
+
+  test.each(AT_WORKSPACE)('%s, workspace: ink-3 on every page, card and glass surface', (_n, sets) => {
+    // The workspace's white light card is a surface ink-3 is read on too.
+    const card = colour(resolve(sets, '--color-card')).rgb;
+    const hover = colour(resolve(sets, '--color-hover'));
+    const surfaces: [string, number[]][] = [
+      ...deskSurfaces(sets),
+      ['--color-card', card],
+      ['hover over --color-card', over(hover, card)],
+    ];
+    expect(failing(sets, '--color-ink-3', 4.5, surfaces)).toEqual([]);
+  });
+});
+
+/**
+ * W237 (FEAT-20261013-001), #168 — the workspace ring is 2px at a 2px offset,
+ * in a softened ink, and it must still be seen: WCAG 1.4.11 asks 3:1 for a
+ * graphical object. Composited on the pages, the cards — the workspace's own
+ * card included — and a hovered row, in both themes. The desk without the
+ * profile keeps develop's accent ring at 3px and 4px, and so does the sofa.
+ */
+describe('the workspace focus ring is a workspace ring that is still seen', () => {
+  test.each(AT_WORKSPACE)('%s: the ring clears 3:1 on the pages, a card and a hovered row', (_n, sets) => {
+    const card = colour(resolve(sets, '--color-card')).rgb;
+    const hover = colour(resolve(sets, '--color-hover'));
+    const surfaces: [string, number[]][] = [
+      ...deskSurfaces(sets).filter(([name]) => !name.startsWith('glass')),
+      ['--color-card', card],
+      ['hover over --color-card', over(hover, card)],
+    ];
+    expect(failing(sets, '--color-focus', 3, surfaces)).toEqual([]);
+  });
+
+  test.each(AT_WORKSPACE)('%s: 2px at a 2px offset', (_n, sets) => {
+    expect(resolve(sets, '--focus-width')).toBe('2px');
+    expect(resolve(sets, '--focus-offset')).toBe('2px');
+  });
+
+  test.each([...AT_DESK, ...AT_SOFA])('%s, no profile: 3px at 4px, an opaque ring', (_n, sets) => {
+    expect(resolve(sets, '--focus-width')).toBe('3px');
+    expect(resolve(sets, '--focus-offset')).toBe('4px');
+    // Opaque: the softened 0.72 ink is the workspace's alone.
+    expect(resolve(sets, '--color-focus')).toMatch(/^#[0-9a-f]{6}$/i);
   });
 });
 

@@ -1,6 +1,18 @@
 import { describe, expect, test } from 'bun:test';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { SegmentedControl, SegmentedControlItem } from './segmented-control';
+
+/**
+ * #168 — the class string a page without the workspace profile renders: the
+ * `workspace:` classes are inert outside it, so the byte-for-byte promises
+ * below are made of everything else. That nothing else was added is asserted
+ * on its own, in `the workspace profile` block.
+ */
+const outside = (element: Element | null | undefined) =>
+  (element?.className ?? '')
+    .split(' ')
+    .filter((c) => !c.startsWith('workspace:'))
+    .join(' ');
 
 describe('SegmentedControl', () => {
   test('is a named list by default', () => {
@@ -71,7 +83,7 @@ describe('SegmentedControl', () => {
         </SegmentedControlItem>
       </SegmentedControl>,
     );
-    expect(container.querySelector('li')?.className).toBe(
+    expect(outside(container.querySelector('li'))).toBe(
       'relative min-w-max flex-1',
     );
   });
@@ -139,7 +151,7 @@ describe('SegmentedControl', () => {
         </SegmentedControlItem>
       </SegmentedControl>,
     );
-    expect(container.querySelector('ul')?.className).toBe(
+    expect(outside(container.querySelector('ul'))).toBe(
       'flex min-w-max gap-1 rounded-full glass p-1',
     );
     expect(container.querySelector('ul')?.className).not.toContain(
@@ -160,7 +172,7 @@ describe('SegmentedControl', () => {
         </SegmentedControlItem>
       </SegmentedControl>,
     );
-    expect(container.querySelector('ul')?.className).toBe(
+    expect(outside(container.querySelector('ul'))).toBe(
       'flex min-w-max gap-1 rounded-full glass p-1',
     );
     expect(container.querySelector('li > span')?.className).toBe(
@@ -181,7 +193,7 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     const list = container.querySelector('ul');
-    expect(list?.className).toBe('flex min-w-max gap-1 rounded-full glass p-1');
+    expect(outside(list)).toBe('flex min-w-max gap-1 rounded-full glass p-1');
     expect(list?.className).not.toContain('bg-surface');
     expect(list?.hasAttribute('variant')).toBe(false);
     expect(container.querySelector('li > span')?.className).toBe(
@@ -222,7 +234,7 @@ describe('SegmentedControl', () => {
       </SegmentedControl>,
     );
     const list = container.querySelector('ul');
-    expect(list?.className).toBe(
+    expect(outside(list)).toBe(
       'flex gap-1 rounded-control border border-line p-1',
     );
     expect(list?.className).not.toContain('bg-surface');
@@ -270,7 +282,7 @@ describe('SegmentedControl', () => {
         </SegmentedControlItem>
       </SegmentedControl>,
     );
-    expect(container.querySelector('ul')?.className).toBe(
+    expect(outside(container.querySelector('ul'))).toBe(
       'flex gap-1 rounded-control border border-line h-(--size-control) p-0.5',
     );
     expect(container.querySelector('li > span')?.className).toBe(
@@ -286,10 +298,10 @@ describe('SegmentedControl', () => {
         </SegmentedControlItem>
       </SegmentedControl>,
     );
-    expect(container.querySelector('ul')?.className).toBe(
+    expect(outside(container.querySelector('ul'))).toBe(
       'flex min-w-max gap-1 rounded-full glass p-1',
     );
-    expect(container.querySelector('li')?.className).toBe(
+    expect(outside(container.querySelector('li'))).toBe(
       'relative min-w-max flex-1 text-accent-ink',
     );
     expect(container.querySelector('ul')?.hasAttribute('size')).toBe(false);
@@ -322,5 +334,228 @@ describe('SegmentedControl', () => {
     const item = container.querySelector('[role="presentation"] > div');
     expect(item?.className).toContain('flex-none');
     expect(item?.className).not.toContain('flex-1');
+  });
+});
+
+const classesOf = (element: Element | null | undefined) =>
+  element?.className.split(' ').filter(Boolean) ?? [];
+
+/**
+ * #168 — maint's default width is the workspace profile's: a control without
+ * `full` is as wide as its labels there, and fills the row everywhere else, as
+ * it always has. The only classes the default gains are `workspace:` ones.
+ */
+describe('SegmentedControl under the workspace profile', () => {
+  function control(full?: boolean) {
+    return render(
+      <SegmentedControl aria-label="View" full={full}>
+        <SegmentedControlItem active layoutId="ws">
+          <button type="button">Month</button>
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+  }
+
+  test('without `full` the workspace sizes it to its labels', () => {
+    const { container } = control();
+    expect(classesOf(container.querySelector('ul'))).toEqual(
+      expect.arrayContaining(['workspace:w-fit', 'workspace:max-w-full']),
+    );
+    expect(classesOf(container.querySelector('li'))).toContain('workspace:flex-none');
+  });
+
+  test('`full` asks for the row, in the workspace too, and renders develop’s default', () => {
+    const { container } = control(true);
+    const ul = classesOf(container.querySelector('ul'));
+    expect(ul).toEqual(['flex', 'min-w-max', 'gap-1', 'rounded-full', 'glass', 'p-1']);
+    expect(classesOf(container.querySelector('li')).filter((c) => c.startsWith('workspace:'))).toEqual(
+      [],
+    );
+  });
+
+  test('the default gains nothing but `workspace:` classes', () => {
+    const { container } = control();
+    const extra = [
+      ...classesOf(container.querySelector('ul')),
+      ...classesOf(container.querySelector('li')),
+    ].filter((c) => c.includes(':') && !c.startsWith('workspace:'));
+    expect(extra).toEqual([]);
+  });
+});
+
+/** FEAT-20261013-005 (W241), BUG-20261013-001 — `overflow="scroll"`. */
+describe('SegmentedControl overflow="scroll"', () => {
+  function control(full?: boolean) {
+    return render(
+      <SegmentedControl aria-label="View" overflow="scroll" full={full}>
+        <SegmentedControlItem active layoutId="size">
+          <button type="button">Month</button>
+        </SegmentedControlItem>
+        <SegmentedControlItem active={false} layoutId="size">
+          <button type="button">Week</button>
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+  }
+
+  test('the scroller carries the shell; without `full` the workspace sizes it to its labels', () => {
+    const { container } = control();
+    const scroller = classesOf(container.querySelector('.overflow-x-auto'));
+    expect(scroller).toEqual(expect.arrayContaining(['glass', 'rounded-control', 'p-1']));
+    expect(scroller).toEqual(expect.arrayContaining(['workspace:w-fit', 'workspace:max-w-full']));
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(classesOf(item)).toContain('workspace:flex-none');
+    }
+  });
+
+  test('`full` shares the row in equal parts, never below a label', () => {
+    const { container } = control(true);
+    const scroller = classesOf(container.querySelector('.overflow-x-auto'));
+    expect(scroller).toContain('w-full');
+    expect(scroller.some((c) => c.includes('w-fit'))).toBe(false);
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(classesOf(item)).toEqual(expect.arrayContaining(['flex-1', 'min-w-max']));
+    }
+  });
+
+  test('no item can shrink below its label or wrap it, in either width', () => {
+    for (const full of [false, true]) {
+      const { unmount } = control(full);
+      for (const item of screen.getAllByRole('listitem')) {
+        expect(item.className).not.toContain('min-w-0');
+        expect(item.className).toContain('[&>*]:whitespace-nowrap');
+      }
+      unmount();
+    }
+  });
+
+  test('the control sits inside a ScrollHintRow, the bar hidden', () => {
+    const { container } = control();
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller?.className).toContain('scrollbar-hide');
+    expect(scroller?.contains(screen.getByRole('list'))).toBe(true);
+    const fades = container.querySelectorAll('[aria-hidden="true"].pointer-events-none');
+    expect(fades).toHaveLength(2);
+    for (const fade of fades) expect(fade.className).toContain('from-raised');
+  });
+
+  // BUG-20261013-001 — the fades measure the element that scrolls. happy-dom
+  // has no layout, so the geometry is given: 600px of items in a 200px row.
+  test('an overflowing control shows the end fade; scrolled to the end, the start fade', () => {
+    const names = ['scrollWidth', 'clientWidth'] as const;
+    const saved = names.map((n) => Object.getOwnPropertyDescriptor(HTMLElement.prototype, n));
+    names.forEach((n, i) => {
+      Object.defineProperty(HTMLElement.prototype, n, {
+        configurable: true,
+        get() {
+          return this.classList.contains('overflow-x-auto') ? [600, 200][i] : 0;
+        },
+      });
+    });
+    try {
+      const { container } = control();
+      const [start, end] = Array.from(
+        container.querySelectorAll('[aria-hidden="true"].pointer-events-none'),
+      );
+      const scroller = container.querySelector('.overflow-x-auto') as HTMLElement;
+      scroller.scrollLeft = 0;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-0');
+      expect(end?.className).toContain('opacity-100');
+      scroller.scrollLeft = 400;
+      fireEvent.scroll(scroller);
+      expect(start?.className).toContain('opacity-100');
+      expect(end?.className).toContain('opacity-0');
+    } finally {
+      names.forEach((n, i) => {
+        const d = saved[i];
+        if (d) Object.defineProperty(HTMLElement.prototype, n, d);
+      });
+    }
+  });
+
+  test('the list does not wrap: it is as wide as its items, inside the scroller', () => {
+    const { container } = control();
+    const list = screen.getByRole('list');
+    expect(list.className).toContain('w-max');
+    expect(list.className).not.toContain('flex-wrap');
+    expect(container.querySelector('.overflow-x-auto')?.contains(list)).toBe(true);
+  });
+
+  test('inside the rounded-control box the capsule steps in 4px, glass included', () => {
+    const { container } = control();
+    expect(container.querySelector('.bg-accent-soft')?.className).toContain(
+      'rounded-[calc(var(--radius-control)-4px)]',
+    );
+  });
+});
+
+/** FEAT-20261013-709 (W359) — `wrap`: the row breaks, a label does not. */
+describe('SegmentedControl wrap', () => {
+  function control(props: { full?: boolean; className?: string } = {}) {
+    return render(
+      <SegmentedControl aria-label="Order" wrap {...props}>
+        {['Name', 'Last seen', 'Created'].map((label, i) => (
+          <SegmentedControlItem key={label} active={i === 0} layoutId="wrap">
+            <button type="button">{label}</button>
+          </SegmentedControlItem>
+        ))}
+      </SegmentedControl>,
+    );
+  }
+
+  test('the list wraps and is as wide as its row allows, not as its items', () => {
+    control();
+    const list = screen.getByRole('list', { name: 'Order' });
+    expect(list.className).toContain('flex-wrap');
+    expect(list.className).not.toContain('w-max');
+    expect(list.className).not.toContain('min-w-full');
+  });
+
+  test('there is no scroller and no edge fades', () => {
+    const { container } = control();
+    expect(container.querySelector('.overflow-x-auto')).toBeNull();
+    expect(container.querySelector('.scrollbar-hide')).toBeNull();
+    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(0);
+    const box = classesOf(screen.getByRole('list').parentElement);
+    expect(box).toEqual(expect.arrayContaining(['rounded-control', 'glass']));
+    expect(box).toEqual(expect.arrayContaining(['workspace:w-fit', 'workspace:max-w-full']));
+  });
+
+  test('a label still never breaks, and an item never shrinks below it', () => {
+    control();
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(item.className).toContain('[&>*]:whitespace-nowrap');
+      expect(item.className).toContain('min-w-max');
+      expect(item.className).not.toContain('min-w-0');
+    }
+  });
+
+  test('with `full`, `full` decides the width and items stretch per line', () => {
+    control({ full: true });
+    const box = classesOf(screen.getByRole('list').parentElement);
+    expect(box).toContain('w-full');
+    expect(box.some((c) => c.includes('w-fit'))).toBe(false);
+    for (const item of screen.getAllByRole('listitem')) {
+      expect(classesOf(item)).toContain('flex-1');
+      expect(classesOf(item)).not.toContain('workspace:flex-none');
+    }
+  });
+
+  test('it wins over `overflow="scroll"`', () => {
+    const { container } = render(
+      <SegmentedControl aria-label="Both" wrap overflow="scroll">
+        <SegmentedControlItem active layoutId="both">
+          <button type="button">One</button>
+        </SegmentedControlItem>
+      </SegmentedControl>,
+    );
+    expect(container.querySelector('.overflow-x-auto')).toBeNull();
+    expect(screen.getByRole('list').className).toContain('flex-wrap');
+  });
+
+  test('a consumer `className` lands on the box, as it does on the scroller', () => {
+    control({ className: 'mt-2' });
+    expect(screen.getByRole('list').parentElement?.className).toContain('mt-2');
   });
 });

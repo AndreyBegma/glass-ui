@@ -385,6 +385,12 @@ const ADDED: Record<string, string> = {
   '--glass-rim-strong': 'BUG-20260919-626 — the rim\'s straight run on a large panel, quieter',
   '--glass-rim-shade-strong': 'BUG-20260919-626 — the shade\'s straight run on a large panel, quieter',
   '--color-ink-4': 'BUG-20260923-019 — the quiet tone, today\'s ink-3 kept by name when the desk raises ink-3',
+  '--size-control-sm': 'BUG-20260930-001 (SYS-15), #168 — Button `sm`, named so the workspace profile keeps it under `md`',
+  '--size-chip': 'FEAT-20260930-004, #168 — Chip `md`, named so the workspace profile can move it',
+  '--focus-width': 'FEAT-20261013-001, #168 — the ring width, named so the workspace profile can draw 2px',
+  '--focus-offset': 'FEAT-20261013-001, #168 — the ring offset, named so the workspace profile can draw 2px',
+  '--color-card': 'FEAT-20260930-004 (SYS-04), #168 — the raised card; `raised` everywhere but the light workspace',
+  '--color-card-line': 'FEAT-20260930-004 (SYS-04), #168 — the raised card\'s edge; `line` everywhere but the workspace',
   '--dur-scene': 'FEAT-20260924-680 — motion round 2; the fourth duration, for a change that covers the viewport',
   '--tilt-angle': 'FEAT-20260924-680 — motion round 2; how far `.luna-tilt` leans at most',
   '--tilt-depth': 'FEAT-20260924-680 — motion round 2; the perspective `.luna-tilt` leans in',
@@ -761,11 +767,20 @@ describe('the accent clears its contrast gates in both themes (#93)', () => {
  * digit.
  */
 
-type Attrs = { theme?: 'light' | 'dark'; scale?: 'desk'; accent?: string; prefersLight: boolean };
+type Attrs = {
+  theme?: 'light' | 'dark';
+  scale?: 'desk';
+  accent?: string;
+  profile?: 'workspace';
+  prefersLight: boolean;
+  coarse?: boolean;
+};
 
 /** Each `@media` this file uses, and when it holds. A new one fails loudly. */
 const MEDIA: Record<string, (a: Attrs) => boolean> = {
   '@media (prefers-color-scheme: light)': (a) => a.prefersLight,
+  // #168 — the workspace profile's touch sizes. A fine pointer unless asked.
+  '@media (pointer: coarse)': (a) => a.coarse === true,
 };
 
 /** `:root:where(...)`'s conditions, as `[data-x="y"]` and `:not([data-x="y"])`. */
@@ -777,6 +792,7 @@ function matches(selector: string, a: Attrs): boolean {
     'data-theme': a.theme,
     'data-scale': a.scale,
     'data-accent': a.accent,
+    'data-profile': a.profile,
   };
   for (const m of where[1].matchAll(/:not\(\[([a-z-]+)="([^"]+)"\]\)/g)) {
     if (attrs[m[1]] === m[2]) return false;

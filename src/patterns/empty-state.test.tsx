@@ -61,3 +61,87 @@ describe('EmptyState', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 });
+
+// FEAT-20261013-004 (a35cb71), #168 — one anatomy. `align` and
+// `secondaryAction` are props; the disc and the 16/600 title are the
+// workspace profile's, beside develop's own classes.
+describe('EmptyState anatomy', () => {
+  const root = (container: HTMLElement) => container.firstElementChild as HTMLElement;
+
+  test('centred by default, exactly as before', () => {
+    const { container } = render(<EmptyState title="Nothing here" />);
+    expect(root(container).className.split(' ')).toEqual(
+      expect.arrayContaining(['items-center', 'justify-center', 'rounded-surface', 'px-6', 'text-center']),
+    );
+  });
+
+  test('align="start" starts at the left edge', () => {
+    const { container } = render(<EmptyState title="Nothing here" align="start" />);
+    const cls = root(container).className.split(' ');
+    expect(cls).toContain('items-start');
+    expect(cls).toContain('text-left');
+    expect(cls).not.toContain('items-center');
+    expect(cls).not.toContain('text-center');
+  });
+
+  test('the title is 14/500, and 16/600 in the workspace', () => {
+    render(<EmptyState title="Nothing here" />);
+    const cls = screen.getByText('Nothing here').className.split(' ');
+    expect(cls).toEqual(expect.arrayContaining(['text-sm', 'font-medium']));
+    expect(cls).toEqual(expect.arrayContaining(['workspace:text-base', 'workspace:font-semibold']));
+  });
+
+  test('the icon is quiet ink, and sits in a 40px disc in the workspace', () => {
+    const { container } = render(
+      <EmptyState title="Nothing here" icon={<svg data-testid="icon" />} />,
+    );
+    const disc = screen.getByTestId('icon').parentElement as HTMLElement;
+    const cls = disc.className.split(' ');
+    expect(cls).toContain('text-ink-3');
+    expect(cls).toEqual(expect.arrayContaining(['workspace:size-10', 'workspace:rounded-full']));
+    expect(root(container).contains(disc)).toBe(true);
+  });
+
+  test('action then secondaryAction, in one row', () => {
+    render(
+      <EmptyState
+        title="Nothing here"
+        action={<button type="button">Create</button>}
+        secondaryAction={<button type="button">Learn more</button>}
+      />,
+    );
+    const first = screen.getByText('Create');
+    const second = screen.getByText('Learn more');
+    expect(first.parentElement).toBe(second.parentElement as HTMLElement);
+    expect(first.nextElementSibling).toBe(second);
+  });
+
+  test('a secondaryAction alone still gets the row', () => {
+    render(
+      <EmptyState title="Nothing here" secondaryAction={<button type="button">Learn more</button>} />,
+    );
+    expect(screen.getByText('Learn more').parentElement?.className).toContain('flex');
+  });
+
+  test('a secondaryAction as data is a ghost', () => {
+    const onClick = mock(() => {});
+    render(
+      <EmptyState
+        title="Nothing here"
+        action={{ label: 'Create', onClick: () => {} }}
+        secondaryAction={{ label: 'Learn more', onClick }}
+      />,
+    );
+    const secondary = screen.getByRole('button', { name: 'Learn more' });
+    expect(secondary.className).toContain('text-ink-2');
+    expect(secondary.className).not.toContain('glass');
+    fireEvent.click(secondary);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  test('no actions given → no actions row', () => {
+    const { container } = render(<EmptyState title="Nothing here" description="Soon." />);
+    expect(container.querySelector('.mt-1')).toBeNull();
+    expect(root(container).children.length).toBe(2);
+  });
+});

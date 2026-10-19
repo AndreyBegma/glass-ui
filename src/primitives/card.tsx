@@ -24,6 +24,14 @@ import { type Hue, hueClasses } from '../lib/hue';
  * Never on a grid item. Fifty blurred surfaces in a catalogue is both the
  * cheap-looking version of this effect and the one that costs the television
  * its frame rate.
+ *
+ * FEAT-20260930-004 (SYS-04), #168 — under the workspace profile `raised`
+ * reads `card` and `card-line`. In dark they are `raised` and the desk's
+ * hairline; in light `raised` is darker than the white ground and the card
+ * read as sunken, so the workspace card is the ground's white with an edge
+ * measured to lift it as far as dark's does — the numbers are in
+ * `tokens.css`. Still flat: no shadow (`E-104`). Outside the profile it is
+ * `raised` on `line`, as before.
  */
 const card = tv({
   base: 'rounded-surface',
@@ -31,7 +39,7 @@ const card = tv({
     variant: {
       /** Near-opaque paper with a hairline: the content surface (#93). */
       content: 'surface-content',
-      raised: 'bg-raised border border-line',
+      raised: 'bg-raised border border-line workspace:bg-card workspace:border-card-line',
       surface: 'bg-surface border border-line',
       glass: 'glass',
       /** No fill at all — for grouping without drawing a second box. */
@@ -60,7 +68,7 @@ const card = tv({
  */
 const HUED_SURFACE = {
   content: 'border bg-content',
-  raised: 'border bg-raised',
+  raised: 'border bg-raised workspace:bg-card',
   surface: 'border bg-surface',
   glass: 'glass border',
   plain: 'border',

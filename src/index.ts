@@ -35,6 +35,7 @@ export {
   useFileUpload,
 } from './hooks/use-file-upload';
 export { useScrollEdges } from './hooks/use-scroll-edges';
+export { useScrollIntoRow } from './hooks/use-scroll-into-row';
 export { cn } from './lib/cn';
 export type { Hue, HueClasses } from './lib/hue';
 export { HUES, hueClasses, hueFor } from './lib/hue';
@@ -110,7 +111,11 @@ export {
   type DataTableSort,
   sortRows,
 } from './patterns/data-table';
-export { EmptyState } from './patterns/empty-state';
+export {
+  EmptyState,
+  type EmptyStateAction,
+  type EmptyStateProps,
+} from './patterns/empty-state';
 export {
   FileItem,
   type FileItemProps,
@@ -150,6 +155,7 @@ export {
   type NavRailProps,
 } from './patterns/nav-rail';
 export { PageHeader, type PageHeaderProps } from './patterns/page-header';
+export { PeriodSwitcher, type PeriodSwitcherProps } from './patterns/period-switcher';
 export {
   PopoverAnchor,
   PopoverContent,
@@ -290,6 +296,7 @@ export {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from './primitives/context-menu';
+export { DateField, type DateFieldProps } from './primitives/date-field';
 export { DateInput } from './primitives/date-input';
 export { DialogContent, DialogRoot } from './primitives/dialog';
 export { Disclosure } from './primitives/disclosure';
@@ -387,6 +394,7 @@ export {
   tiltFromDirection,
   useTilt,
 } from './primitives/tilt';
+export { TimeField, type TimeFieldProps } from './primitives/time-field';
 export { ACHIEVEMENTS_TOASTER, Toaster, toast } from './primitives/toast';
 export { Toggle } from './primitives/toggle';
 export { Tooltip } from './primitives/tooltip';

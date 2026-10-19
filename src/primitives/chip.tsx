@@ -39,9 +39,22 @@ const chip = tv({
       /** Selected state for a filter the user has switched on. */
       selected: 'bg-ink text-ground',
     },
+    // FEAT-20260930-004, #168 — `md` reads `--size-chip`: 28px, the `h-7` it
+    // was, and 24px under the workspace profile. There the radii are
+    // fractions of the control's, the way `Button sm`'s is, rather than
+    // `-4px` and `-6px`, which at a small corner leave 2px and nothing at
+    // all; and `sm` is 12px text, not 10 — U7 sets 12px as the floor for text
+    // anywhere (`E-127` d3). At 12px the 20px pill still fits with 4px above
+    // and below the line box (`leading-none`), so its height does not move.
     size: {
-      sm: 'h-5 px-1.5 text-[10px] rounded-[calc(var(--radius-control)-6px)]',
-      md: 'h-7 px-2.5 text-xs rounded-[calc(var(--radius-control)-4px)]',
+      sm: [
+        'h-5 px-1.5 text-[10px] rounded-[calc(var(--radius-control)-6px)]',
+        'workspace:text-xs workspace:rounded-[calc(var(--radius-control)/2)]',
+      ],
+      md: [
+        'h-(--size-chip) px-2.5 text-xs rounded-[calc(var(--radius-control)-4px)]',
+        'workspace:rounded-[calc(var(--radius-control)*2/3)]',
+      ],
       lg: 'h-9 px-3.5 text-sm rounded-control',
     },
   },

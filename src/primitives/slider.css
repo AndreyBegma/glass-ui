@@ -141,15 +141,17 @@ input.luna-slider::-moz-range-thumb {
    every `input`, because a text field draws its own. A range input draws
    nothing, so until this rule the volume slider had no focus state on the
    television at all. The same ring, restated on the one element the
-   exemption strips it from; a consumer still declares none. */
+   exemption strips it from; a consumer still declares none. #168 — its
+   width and offset are `base.css`'s tokens, so the workspace's 2px ring
+   reaches the thumb too. */
 input.luna-slider:focus-visible::-webkit-slider-thumb {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 4px;
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
 }
 
 input.luna-slider:focus-visible::-moz-range-thumb {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 4px;
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
 }
 
 /* ---- The Radix parts (RangeSlider) ------------------------------------ */

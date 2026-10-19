@@ -206,10 +206,13 @@ body[data-scroll-locked] #main-content {
  *
  * #93 — and since then the ring takes the accent: the reading colour in dark,
  * the fill in light. Every value is at least 3:1 on every surface, and
- * `tokens.spec.ts` holds it there. */
+ * `tokens.spec.ts` holds it there.
+ *
+ * FEAT-20261013-001 (#168) — the width and the offset are tokens, 3px and
+ * 4px as they were, so the workspace profile can draw a 2px ring at 2px. */
 :focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 4px;
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
 }
 
 /* BUG-20260919-625 — no ring under the pointer.

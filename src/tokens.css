@@ -72,6 +72,13 @@
   --color-surface: #101015;
   --color-raised: #17171e;
 
+  /* FEAT-20260930-004 (SYS-04, #168) — a raised card and its edge, named.
+     `raised` and `line` to the digit in every theme, so `bg-card` and
+     `border-card-line` draw what `bg-raised` and `border-line` do. The
+     workspace profile is where they differ: a white card on a light page. */
+  --color-card: #17171e;
+  --color-card-line: rgb(255 255 255 / 0.08);
+
   /* FEAT-20260905-001 — the page, and the thing it lies on.
    *
    * `ground`/`surface`/`raised` are a ladder of *chrome*: how far a panel is
@@ -311,6 +318,12 @@
      in dark (10.18:1 on the ground), `--color-accent`'s in light (6.29:1 on
      white). Still a literal and not a `var()`, for the reason above. */
   --color-focus: #b4b2ff;
+
+  /* FEAT-20261013-001 (#168) — the ring's geometry, named so the workspace
+     profile can draw it at 2px with a 2px offset. These are the values
+     `base.css` had written into `:focus-visible`, so nothing else moves. */
+  --focus-width: 3px;
+  --focus-offset: 4px;
 
   /* #93 — the accent, in every theme and at every distance.
    *
@@ -570,6 +583,13 @@
   --size-nav: 40px;
   --size-tap: 44px;
 
+  /* BUG-20260930-001 (SYS-15) — `Button`'s `sm`, named so the workspace
+     profile can keep it under its `md`. 32px is the `h-8` it was, at either
+     distance: the desk profile does not move it.
+     FEAT-20260930-004 — `Chip`'s `md`, the `h-7` it was. */
+  --size-control-sm: 32px;
+  --size-chip: 28px;
+
   /* FEAT-20260823-364 — the layers, named.
    *
    * There were ten z values in the app and no scheme behind them: `z-10`,
@@ -773,6 +793,8 @@
     --color-ground: #ffffff;
     --color-surface: #fafafa;
     --color-raised: #f4f4f5;
+    --color-card: #f4f4f5;
+    --color-card-line: rgb(0 0 0 / 0.08);
 
     /* The page and its desk, the other way round — see the dark set for what
        the pair is for. Here the page *is* the ground and the desk is darkened
@@ -937,6 +959,8 @@
   --color-ground: #ffffff;
   --color-surface: #fafafa;
   --color-raised: #f4f4f5;
+  --color-card: #f4f4f5;
+  --color-card-line: rgb(0 0 0 / 0.08);
 
   /* The page and its desk, the other way round — see the dark set for what
      the pair is for. Here the page *is* the ground and the desk is darkened
@@ -1389,6 +1413,169 @@
 /* #93 — the accent, measured. The table is above the dark values, next to the
  * tokens it is about. FEAT-20260911-001's desk-only table (`#806ffc` /
  * `#5b4bd1`) that used to stand here is retired with those values. */
+
+/* #168 — the workspace profile. `data-profile="workspace"`, beside
+ * `data-scale="desk"`.
+ *
+ * `maint/v0.8` (Denitsa's line, v0.8.x) moved the desk on after the two lines
+ * diverged: 32/32/36 controls, 8/12/16 corners, a 2px ink ring, an ink primary
+ * that stays quiet when disabled, a white card on a light page, eight mark
+ * colours. Develop's desk did not take those, and it is not Denitsa's alone —
+ * AgentDock renders `data-scale="desk"` too and is tuned to the values above.
+ * So maint's desk is a sixth attribute rather than a rewrite of the fifth:
+ * an application that never writes `data-profile` is not reached by anything
+ * below, exactly as the desk profile's own note promises Luna Watch.
+ *
+ * **It is a refinement of the desk, not a profile of its own.** Every block
+ * names both attributes, so `data-profile="workspace"` without the desk does
+ * nothing. The same `:where()` (0,1,0) discipline as every block above, and
+ * the same order rule: these come after the desk blocks, so they win, and
+ * before the accent presets, so a preset still wins the ring.
+ *
+ * The accent is not re-valued. Maint's desk carried its own (`#806ffc`);
+ * develop made the accent global (#93), and one accent in two values is two
+ * products. The marks below are the one colour family the profile defines.
+ *
+ * A component reads the profile through the `workspace:` variant when the
+ * change is a class rather than a value: the ink primary, the empty state's
+ * disc, the hint hidden under a coarse pointer. */
+@custom-variant workspace (&:where([data-scale="desk"][data-profile="workspace"] *));
+
+:root:where([data-scale="desk"][data-profile="workspace"]) {
+  /* FEAT-20261013-001 (W236) — the desk's corners and controls, one rung up:
+     8/12/16 and 36/32/28/32/32. A 28px control under a 6px corner read as a
+     form from 2009; the workspace is a desktop app read at 60cm, and these
+     are the sizes the platform's own controls are drawn at. `sm` stays a rung
+     under `md`, and `Chip`'s `md` a rung under `sm`. */
+  --radius-control: 8px;
+  --radius-surface: 12px;
+  --radius-sheet: 16px;
+
+  --size-row: 36px;
+  --size-control: 32px;
+  --size-control-sm: 28px;
+  --size-field: 32px;
+  --size-nav: 32px;
+  --size-chip: 24px;
+
+  /* FEAT-20260930-004 / W237 — the focus ring, a workspace ring. The sofa's
+     3px at 4px is for a ring somebody navigates a television with; at a desk
+     it is a harsh outline. 2px at 2px, in a softened ink (0.72 alpha), and not
+     the accent: `E-127` keeps the accent to three places. The light blocks
+     below turn the colour back over. `desk.spec.ts` gates it at 3:1 (WCAG
+     1.4.11) on the ground, a card and a hovered row, in both themes. */
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --color-focus: rgb(242 242 246 / 0.72);
+
+  /* SYS-04 — a dark card is `raised` as everywhere; its edge is the desk's
+     own hairline rather than the sofa's. */
+  --color-card-line: rgb(255 255 255 / 0.1);
+
+  /* FEAT-20261013-709 (W359) — eight mark colours, for categorical dots.
+   *
+   * Defined here only: outside the profile these resolve to nothing. Read as
+   * `var(--color-mark-1)` — not a Tailwind utility, because a dot picks its
+   * colour from an index and `bg-mark-${n}` is a class no scanner can see.
+   * Not `--color-hue-*` either: the hues are #109's identity colours, cut
+   * for tinted surfaces; these are equal-lightness dots.
+   *
+   * oklch, eight hues 45° apart starting at 284.5°. One lightness and one
+   * chroma per theme, so no mark is louder than another: the chroma is the
+   * largest at which all eight stay inside sRGB (teal, at 194.5°, is the one
+   * that sets it). Dark L 0.72 C 0.122; light L 0.58 C 0.099. A mark is not
+   * text, so the gate is 3:1 (WCAG 1.4.11) on ground, surface and raised.
+   * Worst case: `mark-3` on dark raised, 6.79:1; `mark-6` on light raised,
+   * 3.71:1. The table is below. `tokens.spec.ts` is the gate. */
+  --color-mark-1: #9c99ee;
+  --color-mark-2: #cf88ca;
+  --color-mark-3: #e6838d;
+  --color-mark-4: #dc9150;
+  --color-mark-5: #b1a844;
+  --color-mark-6: #69ba7a;
+  --color-mark-7: #09bcbb;
+  --color-mark-8: #52aee9;
+}
+
+/* The theme-dependent half, turned back over — the desk's own two selectors
+   with the profile folded into the same `:where()`. Byte-identical, and
+   `tokens.spec.ts` asserts it. */
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])[data-scale="desk"][data-profile="workspace"]) {
+    --color-focus: rgb(24 24 27 / 0.72);
+
+    /* SYS-04 — the card is the ground's white, lifted off a light page by its
+       edge alone: 17% black, the smallest alpha that lifts it as far as the
+       dark card's edge does. */
+    --color-card: #ffffff;
+    --color-card-line: rgb(0 0 0 / 0.17);
+
+    /* W359 — the marks at L 0.58 C 0.099, the same eight hues. */
+    --color-mark-1: #7472b3;
+    --color-mark-2: #9b6497;
+    --color-mark-3: #ad6068;
+    --color-mark-4: #a56b39;
+    --color-mark-5: #847d2f;
+    --color-mark-6: #4c8b5a;
+    --color-mark-7: #008c8c;
+    --color-mark-8: #3b82af;
+  }
+}
+
+:root:where([data-theme="light"][data-scale="desk"][data-profile="workspace"]) {
+  --color-focus: rgb(24 24 27 / 0.72);
+
+  /* SYS-04 — the card is the ground's white, lifted off a light page by its
+     edge alone: 17% black, the smallest alpha that lifts it as far as the
+     dark card's edge does. */
+  --color-card: #ffffff;
+  --color-card-line: rgb(0 0 0 / 0.17);
+
+  /* W359 — the marks at L 0.58 C 0.099, the same eight hues. */
+  --color-mark-1: #7472b3;
+  --color-mark-2: #9b6497;
+  --color-mark-3: #ad6068;
+  --color-mark-4: #a56b39;
+  --color-mark-5: #847d2f;
+  --color-mark-6: #4c8b5a;
+  --color-mark-7: #008c8c;
+  --color-mark-8: #3b82af;
+}
+
+/* BUG-20260930-001 (SYS-14), FEAT-20260930-004 — a field, a row and a
+   navigation item have no invisible hit area the way `Button` does: a menu
+   row, a tree row and a rail item are the whole target. Under a thumb the
+   workspace gives them `--size-tap`'s 44px. Last of the profile's blocks and
+   at (0,1,0), so it wins on source order. */
+@media (pointer: coarse) {
+  :root:where([data-scale="desk"][data-profile="workspace"]) {
+    --size-field: 44px;
+    --size-row: 44px;
+    --size-nav: 44px;
+  }
+}
+
+/* FEAT-20261013-709 (W359) — the marks, measured. 2026-10-13.
+ *
+ * Computed, not sampled: every value is an opaque hex on an opaque ground, so
+ * there is nothing for a compositor to disagree about, and `tokens.spec.ts`
+ * runs this same arithmetic as the gate. The hexes are oklch → sRGB rounded to
+ * the byte; the ratios are of the hexes.
+ *
+ *              dark L 0.72 C 0.122               light L 0.58 C 0.099
+ *        hue   hex      ground surface raised    hex      ground surface raised
+ *   1  284.5   #9c99ee   7.77   7.41   6.97      #7472b3   4.37   4.19   3.98
+ *   2  329.5   #cf88ca   7.60   7.25   6.82      #9b6497   4.50   4.31   4.10
+ *   3   14.5   #e6838d   7.57   7.22   6.79      #ad6068   4.52   4.33   4.11
+ *   4   59.5   #dc9150   7.77   7.42   6.97      #a56b39   4.41   4.22   4.01
+ *   5  104.5   #b1a844   8.10   7.73   7.26      #847d2f   4.24   4.06   3.86
+ *   6  149.5   #69ba7a   8.43   8.04   7.56      #4c8b5a   4.08   3.91   3.71
+ *   7  194.5   #09bcbb   8.45   8.06   7.58      #008c8c   4.09   3.92   3.72
+ *   8  239.5   #52aee9   8.13   7.76   7.29      #3b82af   4.20   4.03   3.82
+ *
+ * Light has the least room, and it was spent on purpose: a lighter L buys
+ * chroma (0.105 at L 0.62) but leaves `mark-6` at 3.15:1 on raised, which is
+ * no margin for a dot drawn over a hovered or selected row. */
 
 /* #110 — the accent axis. `data-accent="<preset>"`.
  *

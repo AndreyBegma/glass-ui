@@ -208,4 +208,10 @@ describe('MenuItem reads the density scale', () => {
   test('the desk rung measures 32px', () => {
     expect(tokenValue(DESK, '--size-row')).toBe('32px');
   });
+
+  // FEAT-20261013-001 (0971ed3), #168 — maint's desk pin, at the workspace.
+  test('the workspace rung measures 36px', () => {
+    const workspace = block(':root:where([data-scale="desk"][data-profile="workspace"])');
+    expect(tokenValue(workspace, '--size-row')).toBe('36px');
+  });
 });

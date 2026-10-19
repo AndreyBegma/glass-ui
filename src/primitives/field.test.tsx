@@ -68,6 +68,22 @@ describe('the field controls read the density scale', () => {
   test('the desk rung measures 28px', () => {
     expect(tokenValue(DESK, '--size-field')).toBe('28px');
   });
+
+  // FEAT-20261013-001 (0971ed3), #168 — maint's desk pin, at the workspace.
+  test('the workspace rung measures 32px', () => {
+    const workspace = block(':root:where([data-scale="desk"][data-profile="workspace"])');
+    expect(tokenValue(workspace, '--size-field')).toBe('32px');
+  });
+
+  test('W254 — the workspace focus ring is the token-built ring, the same as fieldClassName', () => {
+    render(<Input aria-label="plain" />);
+    const cls = screen.getByLabelText('plain').className.split(' ');
+    expect(cls).toContain('workspace:focus:ring-ink/22');
+    // Outside the profile the ring is what it was: `field.tsx`'s own literal,
+    // which no other file may spell (`tokens.spec.ts`), so matched by shape.
+    expect(cls.filter((c) => /^focus:ring-\S+\/22$/.test(c))).toHaveLength(1);
+    expect(cls).not.toContain('focus:ring-ink/22');
+  });
 });
 
 // BUG-20260916-613 — the fill by where the field sits. The default is the
@@ -76,10 +92,12 @@ describe('the field controls read the density scale', () => {
 describe('the field tone', () => {
   // The focus ring's literal is `field.tsx`'s one allowed raw colour, and
   // `tokens.spec.ts` forbids spelling it in any other file — so the ring is
-  // masked before the compare, and asserted present on its own.
+  // masked before the compare, and asserted present on its own. #168 — the
+  // `workspace:` ring is drawn under that profile only, so it is part of the
+  // string and of nothing an application without the profile renders.
   const RING = /focus:ring-\S+\/22/;
   const SURFACE_BASE =
-    'w-full bg-surface text-ink placeholder:text-ink-3 border border-line-strong rounded-control transition-[border-color,box-shadow] duration-(--dur-fast) focus:border-ink/70 focus:ring-2 RING focus:outline-none disabled:opacity-40';
+    'w-full bg-surface text-ink placeholder:text-ink-3 border border-line-strong rounded-control transition-[border-color,box-shadow] duration-(--dur-fast) focus:border-ink/70 focus:ring-2 RING focus:outline-none workspace:focus:ring-ink/22 disabled:opacity-40';
   const masked = (el: Element) => el.className.replace(RING, 'RING');
 
   test('`Input` renders the string it always did', () => {

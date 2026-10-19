@@ -173,11 +173,12 @@ describe('slider.css', () => {
       'utf8',
     );
     const ring = base.match(/:focus-visible \{([^}]*)\}/)?.[1] ?? '';
-    expect(ring).toContain('outline: 3px solid var(--color-focus);');
+    expect(ring).toContain('outline: var(--focus-width) solid var(--color-focus);');
+    expect(ring).toContain('outline-offset: var(--focus-offset);');
     for (const thumb of ['::-webkit-slider-thumb', '::-moz-range-thumb']) {
       const rule = block(`input.luna-slider:focus-visible${thumb} {`);
-      expect(rule).toContain('outline: 3px solid var(--color-focus);');
-      expect(rule).toContain('outline-offset: 4px;');
+      expect(rule).toContain('outline: var(--focus-width) solid var(--color-focus);');
+      expect(rule).toContain('outline-offset: var(--focus-offset);');
     }
     // And none on the Radix thumb: it is a span, and base.css reaches it.
     expect(block('.luna-slider-thumb {')).not.toContain('outline');

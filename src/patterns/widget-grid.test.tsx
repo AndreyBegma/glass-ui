@@ -168,8 +168,13 @@ describe('WidgetGrid', () => {
       expect(screen.getByRole('region', { name: 'Today' })).toBeTruthy();
       const list = screen.getByRole('list');
       expect(list.style.gridTemplateColumns).toBe('repeat(2, minmax(0, 1fr))');
-      expect(list.className).toContain('items-start');
+      expect(list.className).not.toContain('items-start');
       expect(list.className).not.toContain('dense');
+      for (const li of itemEls()) {
+        expect(li.className).toContain('flex-col');
+        const wrapper = li.querySelector('p')?.parentElement;
+        expect(wrapper?.className).toContain('flex-1');
+      }
       expect(itemEls().map((li) => li.style.gridColumn)).toEqual([
         'span 2 / span 2',
         'span 2 / span 2',

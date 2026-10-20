@@ -151,6 +151,7 @@ export {
   resolveKeys,
 } from './patterns/key-hint';
 export { Launcher, type LauncherProps } from './patterns/launcher';
+export { ListDetail, type ListDetailProps } from './patterns/list-detail';
 export {
   type LogLine,
   LogViewer,
@@ -192,6 +193,7 @@ export {
   type RowActionsProps,
   rowActionsHost,
 } from './patterns/row-actions';
+export { Section, type SectionProps } from './patterns/section';
 export {
   SectionHeader,
   type SectionHeaderProps,

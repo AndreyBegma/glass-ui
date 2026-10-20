@@ -387,6 +387,8 @@ const ADDED: Record<string, string> = {
   '--color-ink-4': 'BUG-20260923-019 — the quiet tone, today\'s ink-3 kept by name when the desk raises ink-3',
   '--size-control-sm': 'BUG-20260930-001 (SYS-15), #168 — Button `sm`, named so the workspace profile keeps it under `md`',
   '--size-chip': 'FEAT-20260930-004, #168 — Chip `md`, named so the workspace profile can move it',
+  '--breakpoint-tablet': 'C-281 (AgentDock S-7) — the tablet band\'s first pixel, Tailwind\'s `sm`',
+  '--breakpoint-desktop': 'C-281 (AgentDock S-7) — the desktop band\'s first pixel, Tailwind\'s `lg`',
   '--focus-width': 'FEAT-20261013-001, #168 — the ring width, named so the workspace profile can draw 2px',
   '--focus-offset': 'FEAT-20261013-001, #168 — the ring offset, named so the workspace profile can draw 2px',
   '--color-card': 'FEAT-20260930-004 (SYS-04), #168 — the raised card; `raised` everywhere but the light workspace',

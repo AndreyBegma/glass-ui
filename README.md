@@ -23,8 +23,8 @@ dense desktop dashboard, without writing their own primitives.
 
 ## What is in it
 
-- **Tokens** — palette, radius, motion, density and type scales, a z-index
-  ladder, eight identity hues and six status colours, and six independent
+- **Tokens** — palette, radius, motion, density and type scales, three
+  named widths (phone, tablet, desktop), a z-index ladder, eight identity hues and six status colours, and six independent
   switches (`data-theme`, `data-material`, `data-scale`, `data-accent`,
   `data-palette`, `data-profile`) for light/dark, glass/flat, sofa/desk
   density, a named accent preset, a named surface palette and the desk's
@@ -40,7 +40,8 @@ dense desktop dashboard, without writing their own primitives.
 - **Patterns** — app and nav rails, bottom capsule, breadcrumb, command
   palette, toolbar, popover, side panel, split pane, data table, tree, trace
   tree, timeline, board, stat tile, widget grid, log viewer, terminal, a file
-  upload row and a dependency-free SVG chart.
+  upload row, a dependency-free SVG chart, and the calm page set — page
+  header, section, empty state and list/detail.
 - **Shipped as compiled ESM** with type declarations and one subpath per
   module; client components keep `'use client'`, so they render from React
   Server Components with no `transpilePackages`.
@@ -65,6 +66,7 @@ decline the third:
 [Desk activity primitives](#desk-activity-primitives) ·
 [Desk automation primitives](#desk-automation-primitives) ·
 [File input](#file-input) ·
+[Calm pages](#calm-pages-agentdock-s-7) ·
 [Developing](#developing) · [Releasing](#releasing) · [License](#license)
 
 ## Install
@@ -1704,6 +1706,126 @@ is announced. Pass none on a coarse pointer. `hints` draws one row of key hints
 under the list, in the consumer's words. `onInputKeyDown` is called with the
 field's key events before the palette's own handling, including when the list
 is empty; a handler that calls `preventDefault()` takes the key.
+
+## Calm pages (AgentDock S-7)
+
+AgentDock's stack S-7 redesigns the project pages around the Board: calmer,
+less glass, fewer frames, more air, the navy palette kept. This is what the
+package adds for it (card C-281). Every prop is optional and defaults to what
+shipped before; the one change of default is scoped to `data-palette="navy"`.
+
+| Import | What it is |
+|---|---|
+| `@andrewbehma/glass-ui/breakpoints` | `BREAKPOINTS` (`{ tablet: 640, desktop: 1024 }`), `PHONE_QUERY`, `TABLET_QUERY`, `DESKTOP_QUERY`, `BREAKPOINT_QUERIES`, `breakpointFor(width)` and the `Breakpoint` type (`'phone' \| 'tablet' \| 'desktop'`). Pure, safe on the server. |
+| `@andrewbehma/glass-ui/use-breakpoint` | `useBreakpoint(serverFallback = 'desktop')` — the band the viewport is in; re-renders only when it crosses an edge. |
+| `@andrewbehma/glass-ui/section` | `Section` — a titled block of content on the content surface. |
+| `@andrewbehma/glass-ui/list-detail` | `ListDetail` — a list and its detail: stacked on a phone, side by side from a tablet up. |
+| `@andrewbehma/glass-ui/page-header` | `PageHeader` gains `primaryAction`, `overflow` and `primaryActionOnPhone`. |
+| `@andrewbehma/glass-ui/nav-rail` | `NavRail` gains `collapsed="tablet"` and `NavRailItem.primary`. |
+
+### Three widths
+
+| Band | Width | CSS | Script |
+|---|---|---|---|
+| phone | below 640px | the base, or `max-tablet:` | `'phone'`, `PHONE_QUERY` |
+| tablet | 640–1023px | `tablet:` (and `max-desktop:`) | `'tablet'`, `TABLET_QUERY` |
+| desktop | 1024px and up | `desktop:` | `'desktop'`, `DESKTOP_QUERY` |
+
+`tokens.css` declares `--breakpoint-tablet: 40rem` and
+`--breakpoint-desktop: 64rem`, which Tailwind turns into the `tablet:` and
+`desktop:` variants. They are the values of `sm` and `lg`, so a component
+written with `sm:` or `lg:` breaks at the same pixel as one written with the
+new names. `breakpoints.ts` carries the same numbers for script and
+`breakpoints.spec.ts` fails if the two disagree. Prefer the CSS variants when
+only the look changes; reach for `useBreakpoint` when what is rendered changes.
+The server has no viewport: `useBreakpoint` answers its `serverFallback` there
+and on the first client render, then corrects itself after hydration.
+
+### The rail on a tablet, and the primary entry
+
+**`NavRail collapsed`** takes `true`, `false` or `'tablet'`. `'tablet'` draws
+the 64px icon strip (`w-16`) while the viewport is in the tablet band and the
+open rail on a desktop — the labels go to `sr-only`, exactly as with
+`collapsed`. On a phone the application draws `BottomCapsule` instead; a rail
+still drawn there stays open.
+
+The fold is CSS, not JavaScript: in this mode the rail renders the open rail's
+classes plus their folded counterparts under `tablet:max-desktop:` (width,
+item padding, the primary entry's 44px square, the headings and labels going
+`sr-only`, the group edges). Pieces that differ between the two states — a
+badge inline beside the label or riding the glyph, the `unavailable` dot — are
+rendered in both placements and toggled with `hidden` / `contents`, so a reader
+hears one. The server's HTML is therefore already right at every width, and
+hydration moves nothing. Only the label `Tooltip`s, which are invisible until
+hovered or focused, are added after hydration through `useBreakpoint`. A
+collapsible group is drawn open in the band (there is no heading to reopen it
+with). The rail carries `data-collapsed="tablet"` in this mode and
+`data-collapsed="true"` when `collapsed` is `true`; `collapsed={true}` and
+`collapsed={false}` render the same classes as before.
+
+**`NavRailItem.primary`** marks the one entry the product is built around (the
+Board) and draws it in an accent frame: `bg-accent/8` with a `border-accent/40`
+hairline, the glyph on a 24px solid `bg-accent` tile in `text-on-accent`, the
+label in `ink` at 600, 38px tall with 6px under it; folded, a 44px square. It
+stays `ink` when active — the frame already says "this one", the capsule says
+"you are here". Its `link`, `aria-current`, badge and `unavailable` behave as on
+any item, so a reader hears it as an ordinary entry. One per rail.
+
+### PageHeader: one primary, one overflow
+
+`PageHeader` keeps every prop it had and adds:
+
+- `primaryAction` — `{ label, onClick, icon? }` or `{ label, href, icon? }`,
+  drawn as the screen's single `solid` button at the end of the row (an `href`
+  goes through `link`, like `EmptyState`'s action). A `ReactNode` renders as
+  given.
+- `primaryActionOnPhone` — `'inline'` (default) or `'hidden'`, which drops the
+  primary below the tablet edge for a phone layout whose floating button
+  already carries it.
+- `overflow` — `{ id, label, onSelect, icon?, tone?, disabled? }[]`, drawn as a
+  ghost `…` icon button after the primary that opens a `Menu`.
+  `overflowLabel` names it (default "More actions"). An empty list draws
+  nothing.
+
+`actions` still renders first, for the one secondary glass button the calm
+layout keeps beside the primary. Order in the row: `actions`, `primaryAction`,
+`overflow`.
+
+### Section, EmptyState and ListDetail
+
+**`Section`** — `title`, `description?`, `actions?`, `headingLevel?` (2), and
+the body as `children`. A `<section aria-labelledby>` whose `SectionHeader` sits
+on the page and whose body sits on `surface-content` — one hairline per block,
+no title bar inside a frame. `surface="none"` draws no box (for a body that is
+already a surface — a `DataTable`, a grid of `Card`s); `pad="none"` runs rows
+and their dividers edge to edge. `id` passes through, for an in-page table of
+contents. Stack sections with a `gap-8` between them: more air between blocks
+than inside them.
+
+**`EmptyState`** is the one empty state, unchanged: put it in a `Section` body
+(`align="center"`) or straight on the page (`surface="none"`,
+`align="start"`).
+
+**`ListDetail`** — `list`, `detail`, `phoneView?`, `listWidth?`, `stickyList?`,
+`listLabel?`. Below the tablet edge it is one column: `phoneView="both"` (the
+default) stacks the list above the detail, `'list'` or `'detail'` shows one
+pane, for a flow where picking a row navigates and Back returns. From the tablet
+edge up it is two columns, the list at `listWidth` (280px by default; a number
+is pixels, a string any CSS length) and the detail taking the rest, and
+`phoneView` no longer applies. Pure CSS, so the server renders it right at
+every width. It draws no surface: the panes are the consumer's.
+
+### The calm default under navy
+
+Under `data-palette="navy"`, `material.css` sets the four optical layers liquid
+glass added — `--glass-rim`, `--glass-rim-shade`, their `-strong` pair,
+`--glass-meniscus` and `--glass-refract` — to `transparent`. The three glass
+rungs keep their scrim, sheen, top highlight, blur and drop shadow, so a rail
+still reads as a frosted pane over the canvas, without a bevel on every panel.
+Only `transparent`, only tokens every flat route already sets to
+`transparent`, so it composes with `data-material="flat"` and reduced
+transparency in any order; no colour of the palette moves. Without navy nothing
+changes. `calm.spec.ts` holds the block to exactly that.
 
 ## Developing
 

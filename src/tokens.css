@@ -590,6 +590,27 @@
   --size-control-sm: 32px;
   --size-chip: 28px;
 
+  /* C-281 (AgentDock S-7) — the three widths, named.
+   *
+   * The package used Tailwind's own `sm` (640) and `lg` (1024) as "phone" and
+   * "desktop" without saying so, and everything between was a desktop that
+   * happened to be narrow. A tablet is its own layout: the rail folds to its
+   * icons, a list and its detail sit side by side, and the bottom capsule is
+   * not drawn yet. So the band gets a name.
+   *
+   *   phone    below 640px    (no variant: it is the base)
+   *   tablet   640–1023px     `tablet:`  — the same edge as `sm:`
+   *   desktop  1024px and up  `desktop:` — the same edge as `lg:`
+   *
+   * `--breakpoint-*` is Tailwind's namespace, so these two emit the `tablet:`
+   * and `desktop:` variants as well as the custom properties. They are the
+   * values `sm` and `lg` already have, on purpose: a component written with
+   * `sm:` before this block breaks at exactly the same pixel. `breakpoints.ts`
+   * carries the same two numbers for script (`useBreakpoint`), and
+   * `breakpoints.spec.ts` holds the two to each other. */
+  --breakpoint-tablet: 40rem;
+  --breakpoint-desktop: 64rem;
+
   /* FEAT-20260823-364 — the layers, named.
    *
    * There were ten z values in the app and no scheme behind them: `z-10`,

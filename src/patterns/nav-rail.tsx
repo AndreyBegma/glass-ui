@@ -3,6 +3,7 @@
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { useBreakpoint } from '../hooks/use-breakpoint';
 import { cn } from '../lib/cn';
 import { Badge } from '../primitives/badge';
 import { Tooltip } from '../primitives/tooltip';
@@ -16,6 +17,26 @@ import {
 } from './nav-rail-parts';
 
 export type { RailBadge } from './nav-rail-parts';
+
+/**
+ * C-281 — how the rail is drawn. `open` and `folded` are `collapsed={false}`
+ * and `collapsed={true}`, unchanged. `band` is `collapsed="tablet"`: the open
+ * rail's classes plus their folded counterparts under `tablet:max-desktop:`,
+ * so the stylesheet folds it in the tablet band and the server's HTML is
+ * already right at every width — nothing visible waits for hydration.
+ */
+type Fold = 'open' | 'folded' | 'band';
+
+/**
+ * The classes for one piece of the rail. Every string is written out in full
+ * at the call site, because Tailwind finds classes by scanning the source and
+ * a class assembled at runtime is a class it never emits.
+ */
+function foldClass(fold: Fold, open: string, folded: string, band: string) {
+  if (fold === 'open') return open;
+  if (fold === 'folded') return folded;
+  return `${open} ${band}`;
+}
 
 /**
  * FEAT-20260902-004 — the vertical rail, for a product with more than four
@@ -63,6 +84,17 @@ export interface NavRailItem {
    * count draws nothing. Its `label` is what a reader hears after the item's.
    */
   badge?: RailBadge;
+  /**
+   * C-281 (AgentDock S-7) — the one entry the product is built around (the
+   * Board), drawn in an accent frame: a faint accent fill, an accent hairline,
+   * the glyph on a solid accent tile and the label in `ink` at 600. Taller
+   * than its neighbours (38px open, a 44px square folded), with a little air
+   * under it, so it reads as the door rather than as the first row.
+   *
+   * One per rail. It is still an item — same `link`, `aria-current`, badge and
+   * `unavailable` contract — so emphasis never changes what a reader hears.
+   */
+  primary?: boolean;
 }
 
 export interface NavRailGroup {
@@ -97,6 +129,7 @@ function GroupSection({
   group,
   headingId,
   collapsed,
+  band,
   reduced,
   hasActive,
   children,
@@ -104,12 +137,17 @@ function GroupSection({
   group: NavRailGroup;
   headingId: string;
   collapsed: boolean;
+  /** `collapsed="tablet"`: the heading hides, and the group opens, in the band by CSS. */
+  band: boolean;
   reduced: boolean;
   hasActive: boolean;
   children: ReactNode;
 }) {
   const panelId = useId();
   const toggleable = !!group.collapsible && !collapsed;
+  // The look: in the band the heading's classes are the open rail's, folded
+  // by CSS, whatever `collapsed` says after hydration.
+  const folded = collapsed && !band;
   const controlled = group.open !== undefined;
   const [inner, setInner] = useState((group.defaultOpen ?? true) || hasActive);
   const open = controlled ? !!group.open : inner;
@@ -132,10 +170,13 @@ function GroupSection({
     <h2
       id={headingId}
       className={cn(
-        collapsed
+        folded
           ? 'sr-only'
           : 'text-ink-3 text-[10px] font-semibold uppercase tracking-widest',
-        !collapsed && !toggleable && 'px-3 py-2',
+        !folded && !toggleable && 'px-3 py-2',
+        // C-281 — in the tablet band the heading leaves the eye by CSS, so
+        // the fold does not wait for hydration (which then drops the toggle).
+        band && 'tablet:max-desktop:sr-only',
       )}
     >
       {toggleable ? (
@@ -181,7 +222,12 @@ function GroupSection({
       <div
         id={panelId}
         inert={!open}
-        className="grid ease-out transition-[grid-template-rows]"
+        className={cn(
+          'grid ease-out transition-[grid-template-rows]',
+          // A folded rail has no headings to reopen a group with, so in the
+          // tablet band a closed group is drawn open — over the inline style.
+          band && 'tablet:max-desktop:grid-rows-[1fr]!',
+        )}
         style={{
           gridTemplateRows: open ? '1fr' : '0fr',
           transitionDuration: reduced ? '0ms' : 'var(--dur-base)',
@@ -206,8 +252,18 @@ export interface NavRailProps {
    * The visible name is `Tooltip` (glass-ui#10), opened on hover and on
    * keyboard focus — issue #11 item 1 (`u3-shell`, 2026-09-02): a native
    * `title=` does not open on focus and is invisible to touch.
+   *
+   * C-281 (AgentDock S-7) — `'tablet'` folds the rail to its 64px icon strip
+   * only while the viewport is in the tablet band (640–1023px, see
+   * `breakpoints.ts`) and draws it open on a desktop and a phone (where the
+   * application normally draws `BottomCapsule` instead). The fold is CSS —
+   * the open rail's classes plus `tablet:max-desktop:` counterparts — so the
+   * server's HTML is already right at every width and hydration moves
+   * nothing. Only the tooltips, which are invisible until hovered, wait for
+   * `useBreakpoint`. The rail carries `data-collapsed="tablet"` in this mode
+   * (`"true"` when `collapsed` is `true`).
    */
-  collapsed?: boolean;
+  collapsed?: boolean | 'tablet';
   /** Above the groups: a wordmark, a collapse toggle. Drawn once. */
   head?: ReactNode;
   /** Below them, pinned under the scroll: an account row, a version. */
@@ -221,13 +277,19 @@ export function NavRail({
   groups,
   link,
   'aria-label': ariaLabel,
-  collapsed = false,
+  collapsed: collapsedProp = false,
   head,
   footer,
   layoutId = 'glass-nav-rail',
   className,
 }: NavRailProps) {
   const reduced = useReducedMotion();
+  const breakpoint = useBreakpoint();
+  // `collapsed` is behaviour — the tooltips, whether a heading toggles — and
+  // may wait for hydration. `fold` is the look, and never does.
+  const band = collapsedProp === 'tablet';
+  const collapsed = band ? breakpoint === 'tablet' : collapsedProp;
+  const fold: Fold = band ? 'band' : collapsed ? 'folded' : 'open';
   const headingPrefix = useId();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fade = useScrollFade(scrollRef);
@@ -257,9 +319,10 @@ export function NavRail({
   return (
     <nav
       aria-label={ariaLabel}
+      data-collapsed={band ? 'tablet' : collapsed ? 'true' : undefined}
       className={cn(
         'glass rounded-surface flex flex-col gap-2 p-2',
-        collapsed ? 'w-16' : 'w-60',
+        foldClass(fold, 'w-60', 'w-16', 'tablet:max-desktop:w-16'),
         className,
       )}
     >
@@ -276,14 +339,20 @@ export function NavRail({
                 // Collapsed, the headings are gone from the eye, so the groups
                 // need some other edge between them or the rail reads as one
                 // long column of glyphs.
-                collapsed && index > 0 && 'border-line mt-2 border-t pt-2',
-                !collapsed && index > 0 && 'mt-3',
+                index > 0 &&
+                  foldClass(
+                    fold,
+                    'mt-3',
+                    'border-line mt-2 border-t pt-2',
+                    'tablet:max-desktop:border-line tablet:max-desktop:mt-2 tablet:max-desktop:border-t tablet:max-desktop:pt-2',
+                  ),
               )}
             >
               <GroupSection
                 group={group}
                 headingId={headingId}
                 collapsed={collapsed}
+                band={band}
                 reduced={!!reduced}
                 hasActive={group.items.some((item) => item.active)}
               >
@@ -303,18 +372,46 @@ export function NavRail({
                     // 0.985 press; collapsed, it is a square and takes 0.97.
                     'lit relative flex w-full items-center rounded-control',
                     'text-sm motion-safe:transition-colors duration-(--dur-fast)',
-                    collapsed
-                      ? 'justify-center px-0 py-2.5'
-                      : 'press-row gap-3 px-3 py-2.5',
-                    item.active ? 'text-accent-ink' : 'text-ink-2 hover:bg-hover',
+                    item.primary
+                      ? // C-281 — the primary entry's accent frame. The text
+                        // stays `ink` when active: the frame already says
+                        // "this one", and the capsule says "you are here".
+                        [
+                          'border border-accent/40 bg-accent/8 font-semibold text-ink',
+                          !item.active && 'hover:bg-accent/12',
+                          foldClass(
+                            fold,
+                            'press-row min-h-[38px] gap-3 px-2 py-1.5',
+                            'mx-auto size-11 justify-center px-0',
+                            'tablet:max-desktop:mx-auto tablet:max-desktop:size-11 tablet:max-desktop:min-h-0 tablet:max-desktop:justify-center tablet:max-desktop:gap-0 tablet:max-desktop:px-0 tablet:max-desktop:py-0',
+                          ),
+                        ]
+                      : [
+                          foldClass(
+                            fold,
+                            'press-row gap-3 px-3 py-2.5',
+                            'justify-center px-0 py-2.5',
+                            'tablet:max-desktop:justify-center tablet:max-desktop:gap-0 tablet:max-desktop:px-0',
+                          ),
+                          item.active
+                            ? 'text-accent-ink'
+                            : 'text-ink-2 hover:bg-hover',
+                        ],
                   );
 
                   const inner = (
                     <>
                       {item.active ? capsule : null}
-                      <span className="relative flex shrink-0 items-center">
-                        <Icon size={18} aria-hidden="true" />
-                        {item.unavailable && collapsed ? (
+                      <span
+                        data-nav-rail-primary-tile={item.primary ? '' : undefined}
+                        className={cn(
+                          'relative flex shrink-0 items-center',
+                          item.primary &&
+                            'size-6 justify-center rounded-control bg-accent text-on-accent',
+                        )}
+                      >
+                        <Icon size={item.primary ? 14 : 18} aria-hidden="true" />
+                        {item.unavailable && fold !== 'open' ? (
                           // Collapsed there is no label to sit beside, so the
                           // dot rides the glyph. Under a badge it drops to the
                           // opposite corner rather than sitting on it.
@@ -325,25 +422,51 @@ export function NavRail({
                             className={cn(
                               'absolute -right-1 size-1.5',
                               hasBadge(item.badge) ? '-bottom-1' : '-top-1',
+                              fold === 'band' && 'hidden tablet:max-desktop:inline-flex',
                             )}
                           />
                         ) : null}
-                        {collapsed && hasBadge(item.badge) ? (
+                        {fold === 'folded' && hasBadge(item.badge) ? (
                           <RailBadgeMark badge={item.badge} placement="corner" />
+                        ) : null}
+                        {fold === 'band' && hasBadge(item.badge) ? (
+                          // `contents`: no box of its own, so the mark still
+                          // pins to this glyph.
+                          <span className="hidden tablet:max-desktop:contents">
+                            <RailBadgeMark badge={item.badge} placement="corner" />
+                          </span>
                         ) : null}
                       </span>
 
-                      {collapsed ? (
+                      {fold === 'folded' ? (
                         <span className="sr-only">{item.label}</span>
                       ) : (
-                        <span className="relative min-w-0 flex-1 truncate">
+                        // One label layer in the band: visible open, `sr-only`
+                        // folded, the accessible name the same throughout.
+                        <span
+                          className={cn(
+                            'relative min-w-0 flex-1 truncate',
+                            fold === 'band' && 'tablet:max-desktop:sr-only',
+                          )}
+                        >
                           {item.label}
                         </span>
                       )}
 
                       {hasBadge(item.badge) ? (
-                        collapsed ? (
+                        fold === 'folded' ? (
                           <RailBadgeSpeech badge={item.badge} />
+                        ) : fold === 'band' ? (
+                          // Both placements, one shown per band; the hidden
+                          // one is `display: none`, so a reader hears one.
+                          <>
+                            <span className="contents tablet:max-desktop:hidden">
+                              <RailBadgeMark badge={item.badge} placement="inline" />
+                            </span>
+                            <span className="hidden tablet:max-desktop:contents">
+                              <RailBadgeSpeech badge={item.badge} />
+                            </span>
+                          </>
                         ) : (
                           <RailBadgeMark badge={item.badge} placement="inline" />
                         )
@@ -351,12 +474,15 @@ export function NavRail({
 
                       {item.unavailable ? (
                         <>
-                          {collapsed ? null : (
+                          {fold === 'folded' ? null : (
                             <Badge
                               dot
                               tone="warn"
                               aria-hidden="true"
-                              className="relative size-1.5 shrink-0"
+                              className={cn(
+                                'relative size-1.5 shrink-0',
+                                fold === 'band' && 'tablet:max-desktop:hidden',
+                              )}
                             />
                           )}
                           {/*
@@ -390,7 +516,11 @@ export function NavRail({
                     );
 
                   return (
-                    <li key={item.id} className="relative">
+                    <li
+                      key={item.id}
+                      data-nav-rail-primary={item.primary ? '' : undefined}
+                      className={cn('relative', item.primary && 'mb-1.5')}
+                    >
                       {collapsed ? (
                         <Tooltip content={item.label} side="right">
                           {anchor}

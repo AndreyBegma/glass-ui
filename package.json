@@ -403,6 +403,22 @@
       "types": "./dist/hooks/use-scroll-into-row.d.ts",
       "import": "./dist/hooks/use-scroll-into-row.js"
     },
+    "./breakpoints": {
+      "types": "./dist/lib/breakpoints.d.ts",
+      "import": "./dist/lib/breakpoints.js"
+    },
+    "./use-breakpoint": {
+      "types": "./dist/hooks/use-breakpoint.d.ts",
+      "import": "./dist/hooks/use-breakpoint.js"
+    },
+    "./section": {
+      "types": "./dist/patterns/section.d.ts",
+      "import": "./dist/patterns/section.js"
+    },
+    "./list-detail": {
+      "types": "./dist/patterns/list-detail.d.ts",
+      "import": "./dist/patterns/list-detail.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

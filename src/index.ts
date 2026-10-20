@@ -26,6 +26,7 @@ export { DepthOrigin } from './depth-origin';
  * resolve by keeping both. Sorting this list is a separate pull request, on a
  * day when nobody else is in it.
  */
+export { useBreakpoint } from './hooks/use-breakpoint';
 export { useCommandPaletteShortcut } from './hooks/use-command-palette-shortcut';
 export {
   type UploadItem,
@@ -36,6 +37,15 @@ export {
 } from './hooks/use-file-upload';
 export { useScrollEdges } from './hooks/use-scroll-edges';
 export { useScrollIntoRow } from './hooks/use-scroll-into-row';
+export {
+  BREAKPOINT_QUERIES,
+  BREAKPOINTS,
+  type Breakpoint,
+  breakpointFor,
+  DESKTOP_QUERY,
+  PHONE_QUERY,
+  TABLET_QUERY,
+} from './lib/breakpoints';
 export { cn } from './lib/cn';
 export type { Hue, HueClasses } from './lib/hue';
 export { HUES, hueClasses, hueFor } from './lib/hue';
@@ -141,6 +151,7 @@ export {
   resolveKeys,
 } from './patterns/key-hint';
 export { Launcher, type LauncherProps } from './patterns/launcher';
+export { ListDetail, type ListDetailProps } from './patterns/list-detail';
 export {
   type LogLine,
   LogViewer,
@@ -154,7 +165,12 @@ export {
   type NavRailItem,
   type NavRailProps,
 } from './patterns/nav-rail';
-export { PageHeader, type PageHeaderProps } from './patterns/page-header';
+export {
+  PageHeader,
+  type PageHeaderAction,
+  type PageHeaderOverflowItem,
+  type PageHeaderProps,
+} from './patterns/page-header';
 export { PeriodSwitcher, type PeriodSwitcherProps } from './patterns/period-switcher';
 export {
   PopoverAnchor,
@@ -177,6 +193,7 @@ export {
   type RowActionsProps,
   rowActionsHost,
 } from './patterns/row-actions';
+export { Section, type SectionProps } from './patterns/section';
 export {
   SectionHeader,
   type SectionHeaderProps,

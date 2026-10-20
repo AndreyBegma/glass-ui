@@ -566,3 +566,29 @@
   --glass-shadow: transparent;
   --glass-filter: none;
 }
+
+/* C-281 (AgentDock S-7) — the calm default under navy.
+ *
+ * The redesign asked for less glass: the rail and the top bar stay frosted,
+ * but they stop being jewellery. Under `data-palette="navy"` the three glass
+ * rungs keep their scrim, sheen, top highlight, blur and drop shadow — what
+ * makes them read as a pane over the canvas — and lose the four optical
+ * layers liquid glass added on top (FEAT-20260919-618): the rim and its
+ * shade, the meniscus and the refraction ring. On a desk-density navy screen
+ * those are a bevel on every panel, and the mockup draws none of them.
+ *
+ * Only `transparent`, and only tokens every flat route already sets to
+ * `transparent` — so this composes with `data-material="flat"`, reduced
+ * transparency and the `@supports` fallback in any order, and it is
+ * `:where()` so it weighs what the palette's own blocks weigh. Content
+ * surfaces are untouched here: `surface-content` already draws one hairline
+ * and no blur, and `Section` is where the calm layout drops the second box.
+ * Without navy nothing changes, so Luna Watch and Denitsa keep their glass. */
+:root:where([data-palette="navy"]) {
+  --glass-rim: transparent;
+  --glass-rim-shade: transparent;
+  --glass-rim-strong: transparent;
+  --glass-rim-shade-strong: transparent;
+  --glass-meniscus: transparent;
+  --glass-refract: transparent;
+}

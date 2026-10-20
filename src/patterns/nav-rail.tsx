@@ -3,6 +3,7 @@
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { useBreakpoint } from '../hooks/use-breakpoint';
 import { cn } from '../lib/cn';
 import { Badge } from '../primitives/badge';
 import { Tooltip } from '../primitives/tooltip';
@@ -63,6 +64,17 @@ export interface NavRailItem {
    * count draws nothing. Its `label` is what a reader hears after the item's.
    */
   badge?: RailBadge;
+  /**
+   * C-281 (AgentDock S-7) — the one entry the product is built around (the
+   * Board), drawn in an accent frame: a faint accent fill, an accent hairline,
+   * the glyph on a solid accent tile and the label in `ink` at 600. Taller
+   * than its neighbours (38px open, a 44px square folded), with a little air
+   * under it, so it reads as the door rather than as the first row.
+   *
+   * One per rail. It is still an item — same `link`, `aria-current`, badge and
+   * `unavailable` contract — so emphasis never changes what a reader hears.
+   */
+  primary?: boolean;
 }
 
 export interface NavRailGroup {
@@ -206,8 +218,15 @@ export interface NavRailProps {
    * The visible name is `Tooltip` (glass-ui#10), opened on hover and on
    * keyboard focus — issue #11 item 1 (`u3-shell`, 2026-09-02): a native
    * `title=` does not open on focus and is invisible to touch.
+   *
+   * C-281 (AgentDock S-7) — `'tablet'` folds the rail to its 64px icon strip
+   * only while the viewport is in the tablet band (640–1023px, see
+   * `breakpoints.ts`) and draws it open on a desktop. The rail reads the band
+   * through `useBreakpoint`, so the server and the first client render draw
+   * it open and a tablet folds it on hydration. On a phone the rail is
+   * normally not drawn at all (`BottomCapsule` is); if it is, it stays open.
    */
-  collapsed?: boolean;
+  collapsed?: boolean | 'tablet';
   /** Above the groups: a wordmark, a collapse toggle. Drawn once. */
   head?: ReactNode;
   /** Below them, pinned under the scroll: an account row, a version. */
@@ -221,13 +240,16 @@ export function NavRail({
   groups,
   link,
   'aria-label': ariaLabel,
-  collapsed = false,
+  collapsed: collapsedProp = false,
   head,
   footer,
   layoutId = 'glass-nav-rail',
   className,
 }: NavRailProps) {
   const reduced = useReducedMotion();
+  const breakpoint = useBreakpoint();
+  const collapsed =
+    collapsedProp === 'tablet' ? breakpoint === 'tablet' : collapsedProp;
   const headingPrefix = useId();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fade = useScrollFade(scrollRef);
@@ -257,6 +279,7 @@ export function NavRail({
   return (
     <nav
       aria-label={ariaLabel}
+      data-collapsed={collapsed ? 'true' : undefined}
       className={cn(
         'glass rounded-surface flex flex-col gap-2 p-2',
         collapsed ? 'w-16' : 'w-60',
@@ -303,17 +326,39 @@ export function NavRail({
                     // 0.985 press; collapsed, it is a square and takes 0.97.
                     'lit relative flex w-full items-center rounded-control',
                     'text-sm motion-safe:transition-colors duration-(--dur-fast)',
-                    collapsed
-                      ? 'justify-center px-0 py-2.5'
-                      : 'press-row gap-3 px-3 py-2.5',
-                    item.active ? 'text-accent-ink' : 'text-ink-2 hover:bg-hover',
+                    item.primary
+                      ? // C-281 — the primary entry's accent frame. The text
+                        // stays `ink` when active: the frame already says
+                        // "this one", and the capsule says "you are here".
+                        [
+                          'border border-accent/40 bg-accent/8 font-semibold text-ink',
+                          !item.active && 'hover:bg-accent/12',
+                          collapsed
+                            ? 'mx-auto size-11 justify-center px-0'
+                            : 'press-row min-h-[38px] gap-3 px-2 py-1.5',
+                        ]
+                      : [
+                          collapsed
+                            ? 'justify-center px-0 py-2.5'
+                            : 'press-row gap-3 px-3 py-2.5',
+                          item.active
+                            ? 'text-accent-ink'
+                            : 'text-ink-2 hover:bg-hover',
+                        ],
                   );
 
                   const inner = (
                     <>
                       {item.active ? capsule : null}
-                      <span className="relative flex shrink-0 items-center">
-                        <Icon size={18} aria-hidden="true" />
+                      <span
+                        data-nav-rail-primary-tile={item.primary ? '' : undefined}
+                        className={cn(
+                          'relative flex shrink-0 items-center',
+                          item.primary &&
+                            'size-6 justify-center rounded-control bg-accent text-on-accent',
+                        )}
+                      >
+                        <Icon size={item.primary ? 14 : 18} aria-hidden="true" />
                         {item.unavailable && collapsed ? (
                           // Collapsed there is no label to sit beside, so the
                           // dot rides the glyph. Under a badge it drops to the
@@ -390,7 +435,11 @@ export function NavRail({
                     );
 
                   return (
-                    <li key={item.id} className="relative">
+                    <li
+                      key={item.id}
+                      data-nav-rail-primary={item.primary ? '' : undefined}
+                      className={cn('relative', item.primary && 'mb-1.5')}
+                    >
                       {collapsed ? (
                         <Tooltip content={item.label} side="right">
                           {anchor}

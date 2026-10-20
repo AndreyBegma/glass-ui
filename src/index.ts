@@ -164,7 +164,12 @@ export {
   type NavRailItem,
   type NavRailProps,
 } from './patterns/nav-rail';
-export { PageHeader, type PageHeaderProps } from './patterns/page-header';
+export {
+  PageHeader,
+  type PageHeaderAction,
+  type PageHeaderOverflowItem,
+  type PageHeaderProps,
+} from './patterns/page-header';
 export { PeriodSwitcher, type PeriodSwitcherProps } from './patterns/period-switcher';
 export {
   PopoverAnchor,

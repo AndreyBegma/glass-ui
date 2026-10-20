@@ -1745,11 +1745,23 @@ and on the first client render, then corrects itself after hydration.
 
 **`NavRail collapsed`** takes `true`, `false` or `'tablet'`. `'tablet'` draws
 the 64px icon strip (`w-16`) while the viewport is in the tablet band and the
-open rail on a desktop — the labels go to `sr-only` and a `Tooltip`, exactly as
-with `collapsed`. On a phone the application draws `BottomCapsule` instead; a
-rail still drawn there stays open. The band is read through `useBreakpoint`, so
-the server renders the open rail and a tablet folds it on hydration. The rail
-carries `data-collapsed="true"` while folded.
+open rail on a desktop — the labels go to `sr-only`, exactly as with
+`collapsed`. On a phone the application draws `BottomCapsule` instead; a rail
+still drawn there stays open.
+
+The fold is CSS, not JavaScript: in this mode the rail renders the open rail's
+classes plus their folded counterparts under `tablet:max-desktop:` (width,
+item padding, the primary entry's 44px square, the headings and labels going
+`sr-only`, the group edges). Pieces that differ between the two states — a
+badge inline beside the label or riding the glyph, the `unavailable` dot — are
+rendered in both placements and toggled with `hidden` / `contents`, so a reader
+hears one. The server's HTML is therefore already right at every width, and
+hydration moves nothing. Only the label `Tooltip`s, which are invisible until
+hovered or focused, are added after hydration through `useBreakpoint`. A
+collapsible group is drawn open in the band (there is no heading to reopen it
+with). The rail carries `data-collapsed="tablet"` in this mode and
+`data-collapsed="true"` when `collapsed` is `true`; `collapsed={true}` and
+`collapsed={false}` render the same classes as before.
 
 **`NavRailItem.primary`** marks the one entry the product is built around (the
 Board) and draws it in an accent frame: `bg-accent/8` with a `border-accent/40`

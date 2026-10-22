@@ -2311,7 +2311,43 @@ const [code, setCode] = useState('');
 
 ### Carousel
 
-In progress — see #188.
+`glass-ui/carousel` — galleries and onboarding slides on native scroll-snap:
+touch and trackpad work without script; the buttons and dots call `scrollTo`,
+and the index follows wherever the row actually rests.
+
+| Prop | Meaning |
+|---|---|
+| `label` | Accessible name of the region (required). |
+| `slidesPerView` | `number` (default `1`) or `'auto'` (each slide keeps its own width). |
+| `gap` | Between slides, in px. Default `16`. |
+| `loop` | Next on the last slide goes to the first, and back. Default off (buttons disable at the ends). |
+| `autoplay` | Milliseconds between slides. Off by default. |
+| `index` / `onIndexChange` | Controlled first visible slide (0-based). Omit `index` and it keeps its own. |
+| `labels` | Overrides for `previous`, `next`, `goTo(n)`, `dots`, `pause`, `play`, `slide(n, total)`. |
+
+Children must be `CarouselSlide`s written directly inside `Carousel` (a
+component that returns several slides counts as one). Each slide is named
+"3 of 7".
+
+**Autoplay** pauses while the pointer is over the carousel, while focus is
+inside it, and while the page is hidden. A visible pause button stops it until
+pressed again. Under `prefers-reduced-motion` it never runs, no pause button is
+drawn, and buttons scroll instantly.
+
+**Keyboard** (APG carousel): every control is a button in the tab order —
+previous, one per position, next, pause — and activated with `Enter` / `Space`.
+Slide content that takes focus is scrolled into view by the browser. The current
+dot is wider as well as filled.
+
+```tsx
+import { Carousel, CarouselSlide } from 'glass-ui/carousel';
+
+<Carousel label="Highlights" slidesPerView={2} loop autoplay={5000}>
+  <CarouselSlide>One</CarouselSlide>
+  <CarouselSlide>Two</CarouselSlide>
+  <CarouselSlide>Three</CarouselSlide>
+</Carousel>;
+```
 
 ### Rating
 

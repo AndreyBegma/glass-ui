@@ -1939,7 +1939,31 @@ In progress — see #181.
 
 ### Fieldset
 
-In progress — see #182.
+`glass-ui/fieldset` — grouping for long settings forms: a titled group of
+fields, a two-column settings section, and a summary of every error at the top.
+Solid surfaces, never glass.
+
+```tsx
+import { ErrorSummary, Fieldset, FormSection } from 'glass-ui/fieldset';
+
+<ErrorSummary errors={[{ fieldId: 'email', message: 'Email is required' }]} />
+<FormSection title="Profile" description="Shown on your public page.">
+  <Fieldset legend="Contact" description="How we reach you." error={contactError}>
+    <Input id="email" />
+  </Fieldset>
+</FormSection>;
+```
+
+| Component | Props |
+|---|---|
+| `Fieldset` | `legend`, `description`, `error`, `disabled`, `className`. A real `<fieldset>`/`<legend>`: `disabled` disables every native control inside. `description` and `error` are both in `aria-describedby`; the error is danger-coloured with an icon. |
+| `FormSection` | `title`, `description`, `aside` (beside the copy, e.g. a help link), `className`. Copy left, fields right; stacks below `md`; a `Separator` above every section but the first. |
+| `ErrorSummary` | `errors: { fieldId, message }[]`, `title`, `labels`, `className`. `role="alert"`; focuses itself when errors appear or change (once per change). Renders nothing when empty. `labels`: `title` ("There is a problem"), `list` ("Errors"). |
+
+Keyboard: the summary is focusable programmatically (`tabIndex={-1}`, not a tab
+stop); each item is a link — <kbd>Enter</kbd> focuses the field with that id and
+scrolls it into view (without animation under reduced motion). Inside a disabled
+`Fieldset`, nothing takes focus.
 
 ### TagInput
 

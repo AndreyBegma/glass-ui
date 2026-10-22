@@ -1848,7 +1848,57 @@ In progress — see #178.
 
 ### Pagination
 
-In progress — see #179.
+`glass-ui/pagination` — two forms. `Pagination` is for a list whose page count
+is known; `CursorPagination` is for cursor APIs (GitHub, Woodpecker), with no
+page numbers, only previous and next. Both are controlled: the page, the page
+size and `loading` are the caller's, nothing is held inside.
+
+```tsx
+import { CursorPagination, Pagination } from '@andrewbehma/glass-ui/pagination';
+
+<Pagination
+  page={page}
+  pageCount={Math.ceil(total / pageSize)}
+  onPageChange={setPage}
+  pageSize={pageSize}
+  pageSizeOptions={[10, 25, 50]}
+  onPageSizeChange={setPageSize}
+  total={total}
+/>;
+
+<CursorPagination
+  hasPrevious={Boolean(prevCursor)}
+  hasNext={Boolean(nextCursor)}
+  onPrevious={() => load(prevCursor)}
+  onNext={() => load(nextCursor)}
+  loading={isFetching}
+  summary="1–20"
+/>;
+```
+
+| `Pagination` prop | |
+|---|---|
+| `page`, `pageCount`, `onPageChange` | Current page (1-based), how many, and the change handler |
+| `siblingCount`, `boundaryCount` | Pages kept either side of the current one (1) and at each end (1) |
+| `pageSize`, `pageSizeOptions`, `onPageSizeChange` | With options and a handler, a "rows per page" select |
+| `total` | With `pageSize`, the "1–25 of 312" summary |
+| `labels`, `className` | Every visible string is overridable: `nav`, `previous`, `next`, `page(n)`, `pageOf(n, m)`, `range(from, to, total)`, `pageSize`, `pageSizeOption(size)` |
+
+`CursorPagination` takes `hasPrevious`, `hasNext`, `onPrevious`, `onNext`,
+`loading` (disables both buttons and sets `aria-busy`), `summary`, `className`
+and `labels` (`nav`, `previous`, `next`).
+
+`pageRange(page, pageCount, siblingCount?, boundaryCount?)` is exported from
+the same subpath: the page numbers and `'ellipsis-start'` / `'ellipsis-end'`
+markers, at a constant length as the page moves.
+
+Below the tablet breakpoint the numbered row collapses to "‹ Page 3 of 12 ›".
+
+Keyboard: the control is a `<nav>` of native buttons, as the APG pagination
+pattern has it. <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd> move between them,
+<kbd>Enter</kbd> or <kbd>Space</kbd> presses. The current page carries
+`aria-current="page"`; ellipses are not focusable; previous and next are
+disabled at the ends.
 
 ### DateRangePicker
 

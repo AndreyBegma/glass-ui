@@ -2417,7 +2417,60 @@ the first), hover previews without committing.
 
 ### ColorPicker
 
-In progress — see #190.
+`@andrewbehma/glass-ui/color-picker` — a colour input for themes, labels and
+hues. A swatch button (or a text field with a swatch in it) opens a
+`PopoverContent` with a saturation × brightness area, a hue `Slider`, an
+optional opacity `Slider`, a text input and your swatches. The value is a
+string: `#rrggbb` (`#rrggbbaa` with alpha) or `oklch(L C H[ / A])`.
+
+```tsx
+import { ColorPicker } from '@andrewbehma/glass-ui/color-picker';
+
+const [accent, setAccent] = useState('oklch(0.62 0.19 255)');
+
+<ColorPicker
+  value={accent}
+  onValueChange={setAccent}
+  swatches={['oklch(0.62 0.19 255)', 'oklch(0.7 0.17 150)', '#e5484d']}
+  alpha
+/>;
+```
+
+| Prop | Default | |
+|---|---|---|
+| `value` / `onValueChange` / `defaultValue` | — | The colour, controlled; or `defaultValue` alone for the uncontrolled form. |
+| `format` | the value's own | `'hex'` or `'oklch'` — what is written back. Omitted, an `oklch()` value comes back as `oklch()` and anything else as hex; a typed colour or a swatch carries its own format the same way. |
+| `swatches` | — | Colours offered as buttons. One that does not parse is shown disabled. |
+| `alpha` | `false` | Adds the opacity slider. Without it the output is always opaque. |
+| `trigger` | `'swatch'` | `'swatch'`: a button; the text input is in the popover. `'field'`: a text field with the swatch button inside it. |
+| `disabled` | `false` | |
+| `className` | — | On the outer element. |
+| `labels` | English | `trigger(value)`, `title`, `area`, `areaRole`, `areaValue(s, v, colour)`, `hue`, `alpha`, `input`, `invalid`, `swatches`, `swatch(value)`. |
+
+The text input accepts `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa` and
+`oklch(L C H [/ A])` (percentages and `deg` allowed) and commits on `Enter` or
+blur. Anything else stays in the input, marked invalid, with the message
+under it (danger token, an icon and the words) — nothing is called. An
+`oklch()` outside sRGB is accepted and brought in by reducing its chroma at the
+same lightness and hue. The picker keeps its own hue across greys, so dragging
+to black and back does not lose it.
+
+| Key (on the area) | |
+|---|---|
+| `ArrowLeft` / `ArrowRight` | Saturation −1 / +1. With `Shift`, ×10. |
+| `ArrowDown` / `ArrowUp` | Brightness −1 / +1. With `Shift`, ×10. |
+| `Home` / `End` | Saturation 0 / 100. |
+| `PageDown` / `PageUp` | Brightness −10 / +10. |
+
+The area is one `role="slider"` (APG Slider, on two axes) with
+`aria-roledescription="2D slider"` and an `aria-valuetext` naming both axes and
+the colour; the hue and opacity sliders are native range inputs. Swatches are a
+named group of buttons, each named by its value, the current one
+`aria-pressed` — colour is never the only signal.
+
+The colour maths is exported from the same subpath, pure and dependency-free:
+`parseColor`, `formatColor`, `hexToRgb` / `rgbToHex`, `rgbToHsv` /
+`hsvToRgb`, `rgbToOklch` / `oklchToRgb` (gamut-mapped) and `isInSrgb`.
 
 ### Tour
 

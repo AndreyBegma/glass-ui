@@ -1832,7 +1832,7 @@ changes. `calm.spec.ts` holds the block to exactly that.
 Sixteen components, scaffolded in `#175` and filled one slot each. Four new
 optional peers carry the heavy parts: `react-markdown` and `remark-gfm`
 (`Markdown`), `diff` (`DiffView`) and `@radix-ui/react-hover-card`
-(`HoverCard`). Each section below is a placeholder until its slot lands.
+(`HoverCard`).
 
 ### DiffView
 

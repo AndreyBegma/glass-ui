@@ -2281,7 +2281,33 @@ In progress — see #186.
 
 ### PinInput
 
-In progress — see #187.
+`glass-ui/pin-input` — one-time codes and PINs.
+
+**One real input, N drawn cells.** The cells are `aria-hidden`; a single
+transparent `<input autocomplete="one-time-code">` lies over them, so SMS
+autofill and paste work and a screen reader hears one labelled field (not
+N boxes). The caret is pinned to the end: typing appends, Backspace removes
+the last character, the active cell (the focus ring) is the first empty one.
+
+| Prop | |
+|---|---|
+| `value`, `onValueChange` | Controlled. |
+| `length` | Cells, default 6. |
+| `type` | `'numeric'` (default, numeric keypad) or `'alphanumeric'`. Other characters are dropped. |
+| `onComplete` | Called once each time the value reaches `length`. |
+| `mask` | Cells show `•`; the field is `type="password"`. |
+| `disabled`, `tone`, `className` | As the other fields (`tone`: `surface` / `on-glass`). |
+| `label` | The field's accessible name (required). |
+| `labels` | `{ progress(filled, length) }` — the spoken "3 of 6 characters". |
+
+Keyboard: characters append, Backspace/Delete remove the last, Tab leaves.
+Paste replaces the value from the first cell, filtered and cut to `length`.
+
+```tsx
+const [code, setCode] = useState('');
+<PinInput label="Verification code" value={code} onValueChange={setCode}
+          onComplete={(c) => verify(c)} />
+```
 
 ### Carousel
 

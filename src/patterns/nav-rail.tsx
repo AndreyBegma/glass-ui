@@ -370,11 +370,11 @@ export function NavRail({
                   const itemClassName = cn(
                     // `press-row` (#93): a full-width row keeps the quieter
                     // 0.985 press; collapsed, it is a square and takes 0.97.
-                    // #124 - a `<button>` centres its text by default and a
-                    // link does not, so the button variant states the row
-                    // alignment instead of inheriting it. `foldClass`'s
-                    // `justify-center` still wins once the rail is folded.
-                    'lit relative flex w-full items-center justify-start rounded-control text-left',
+                    // #124 — a `<button>` sets `text-align: center` and a
+                    // link does not; the label is a `flex-1` span, so it
+                    // inherits that and centres inside the row. Stating
+                    // `text-left` here gives both renderings one alignment.
+                    'lit relative flex w-full items-center rounded-control text-left',
                     'text-sm motion-safe:transition-colors duration-(--dur-fast)',
                     item.primary
                       ? // C-281 — the primary entry's accent frame. The text

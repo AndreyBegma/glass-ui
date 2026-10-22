@@ -143,37 +143,38 @@ describe('NavRail', () => {
   });
 
   /**
-   * #124 - an item that acts rather than navigates is a `<button>`, and a
-   * button centres its text by default. The link beside it does not, so a rail
-   * that mixes the two used to show two alignments. The row alignment is now
-   * stated, not inherited.
+   * #124 — an item that acts rather than navigates is a `<button>`, and a
+   * button centres its text by default. The label is a `flex-1` span, so it
+   * inherited that and sat centred in the row while the link beside it did
+   * not. The alignment is now stated on the row, not inherited.
    */
   test('an item that acts aligns like one that navigates (#124)', () => {
     render(<Shell />);
 
     const inbox = screen.getByRole('button', { name: 'Inbox' });
-    expect(inbox.className.split(' ')).toContain('justify-start');
     expect(inbox.className.split(' ')).toContain('text-left');
   });
 
   /**
    * The link half of the same claim. `Shell` strips every `href`, so the test
-   * above only ever renders buttons - this is the mixed rail #124 describes.
+   * above only ever renders buttons — this is the mixed rail #124 describes.
    */
-  test('a navigating item states the same row alignment (#124)', () => {
+  test('a navigating item states the same alignment (#124)', () => {
     render(<NavRail aria-label="Sections" link={link} groups={groups('inbox')} />);
 
     const inbox = screen.getByRole('link', { name: 'Inbox' });
-    expect(inbox.className.split(' ')).toContain('justify-start');
     expect(inbox.className.split(' ')).toContain('text-left');
   });
 
+  /**
+   * The row is never given a `justify-*` of its own, so nothing can merge
+   * over the folded square's `justify-center`.
+   */
   test('the folded item still centres (#124)', () => {
     render(<Shell collapsed />);
 
     const inbox = screen.getByRole('button', { name: 'Inbox' });
     expect(inbox.className.split(' ')).toContain('justify-center');
-    expect(inbox.className.split(' ')).not.toContain('justify-start');
   });
 
   /**

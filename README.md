@@ -1836,7 +1836,51 @@ optional peers carry the heavy parts: `react-markdown` and `remark-gfm`
 
 ### DiffView
 
-In progress — see #176.
+`@andrewbehma/glass-ui/diff-view` — subpath only, never the barrel: it needs
+the optional peer `diff` (jsdiff, >=7). A line diff of two texts, or a rendered
+unified patch, on a solid surface: for pull requests, config changes and agent
+reviews.
+
+```tsx
+import { DiffView } from '@andrewbehma/glass-ui/diff-view';
+
+<DiffView
+  fileName="config.yaml"
+  language="yaml"
+  oldText={before}
+  newText={after}
+  defaultMode="split"
+  maxHeight={480}
+/>;
+```
+
+| Prop | Default | |
+|---|---|---|
+| `oldText`, `newText` | — | The two texts, diffed by line (`diffLines`). |
+| `patch` | — | A unified diff (`parsePatch`); when given, the texts are ignored. A multi-file patch renders its first file. |
+| `mode` / `defaultMode` / `onModeChange` | `'unified'` | `'unified'` or `'split'`, controlled or not. Below the tablet edge it renders unified and the switch is hidden. |
+| `fileName` | — | Header label. |
+| `language` | — | Header label only, no highlighting. |
+| `context` | `3` | Unchanged lines kept around a change; longer runs fold into an "N unchanged lines" button that expands in place. |
+| `wrap` | `false` | Wrap long lines instead of scrolling sideways. |
+| `maxHeight` | — | px; the rows scroll inside it. |
+| `labels` | English | Every visible and spoken string: `noChanges`, `unified`, `split`, `viewMode`, `copy`, `copied`, `table`, `unchangedLines(n)`, `added(line)`, `removed(line)`, `unchanged(line)`, `counts(a, d)`. |
+
+Added and removed lines get an `ok` / `danger` tint **and** a `+` / `−` sign.
+In a modified pair the words that changed are also marked (`diffWordsWithSpace`).
+The header shows `+a −d` and a copy-new-text button (not shown for a `patch`,
+which does not hold the whole new text). Between the hunks of a patch, the lines
+are not known, so that gap shows its count and cannot be expanded.
+
+The rows are a `<table>` (APG Table). Gutters and signs are hidden from
+assistive technology. Each line is read as "added line 12: …", "removed line
+9: …" or "line 4: …", and an unchanged pair in split mode is read once.
+
+| Key | |
+|---|---|
+| `Tab` | Moves through the mode switch, the copy button, the scroll region and each "N unchanged lines" button. |
+| `Enter` / `Space` | Activates the focused switch segment, copy, or expand button. |
+| Arrow keys | Scroll the focused rows region. |
 
 ### JsonInspector
 

@@ -2049,7 +2049,33 @@ In progress — see #183.
 
 ### HoverCard
 
-In progress — see #184.
+`@andrewbehma/glass-ui/hover-card` — a rich preview on hover: a user, a commit,
+an issue. `Tooltip` is too small for it and `Popover` opens on click. Built on
+`@radix-ui/react-hover-card`; the card has `PopoverContent`'s glass surface,
+radius and motion (still under reduced motion).
+
+| Part | Props |
+|---|---|
+| `HoverCard` | `openDelay` (500 ms), `closeDelay` (150 ms), `open`, `defaultOpen`, `onOpenChange` |
+| `HoverCardTrigger` | Radix `Trigger`; use `asChild` on a link |
+| `HoverCardContent` | `side` (`bottom`), `align` (`center`), `sideOffset`, `className`, `container` |
+
+Keyboard: focusing the trigger opens the card, blurring or `Escape` closes it.
+Touch: a tap does not open it — the link navigates. The card is never the only
+route to its information, so the trigger must be a link to the same thing. It
+takes no focus and has no visible English strings, so there are no `labels`.
+
+```tsx
+<HoverCard>
+  <HoverCardTrigger asChild>
+    <a href="/users/ada">Ada Lovelace</a>
+  </HoverCardTrigger>
+  <HoverCardContent side="top">
+    <p className="font-semibold">Ada Lovelace</p>
+    <p className="text-ink-2">Joined 2024 · 42 commits</p>
+  </HoverCardContent>
+</HoverCard>
+```
 
 ### Meter
 

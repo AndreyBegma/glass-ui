@@ -143,6 +143,41 @@ describe('NavRail', () => {
   });
 
   /**
+   * #124 — an item that acts rather than navigates is a `<button>`, and a
+   * button centres its text by default. The label is a `flex-1` span, so it
+   * inherited that and sat centred in the row while the link beside it did
+   * not. The alignment is now stated on the row, not inherited.
+   */
+  test('an item that acts aligns like one that navigates', () => {
+    render(<Shell />);
+
+    const inbox = screen.getByRole('button', { name: 'Inbox' });
+    expect(inbox.className.split(' ')).toContain('text-left');
+  });
+
+  /**
+   * The link half of the same claim. `Shell` strips every `href`, so the test
+   * above only ever renders buttons — this is the mixed rail #124 describes.
+   */
+  test('a navigating item states the same alignment', () => {
+    render(<NavRail aria-label="Sections" link={link} groups={groups('inbox')} />);
+
+    const inbox = screen.getByRole('link', { name: 'Inbox' });
+    expect(inbox.className.split(' ')).toContain('text-left');
+  });
+
+  /**
+   * The row is never given a `justify-*` of its own, so nothing can merge
+   * over the folded square's `justify-center`.
+   */
+  test('the folded item still centres', () => {
+    render(<Shell collapsed />);
+
+    const inbox = screen.getByRole('button', { name: 'Inbox' });
+    expect(inbox.className.split(' ')).toContain('justify-center');
+  });
+
+  /**
    * A coloured dot is nothing at all in the accessibility tree, so the marker
    * is two halves: the dot for the eye and a phrase the consumer wrote for the
    * reader. The section stays in the rail and stays navigable — a missing row

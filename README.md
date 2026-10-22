@@ -2323,7 +2323,50 @@ In progress — see #190.
 
 ### Tour
 
-In progress — see #191.
+`glass-ui/tour` — a guided tour: a sequence of coachmarks, each anchored to
+an element already on the page.
+
+**A popover with no trigger.** Each step is a `PopoverContent` card anchored
+to a virtual element whose rectangle is the target's, so it re-anchors on
+scroll and resize. The target is scrolled to the centre of the viewport
+(instantly under reduced motion). The spotlight dims the page with
+`--color-scrim` around a cut-out over the target and blocks clicks on
+everything but the card. A step whose target is not on the page is skipped,
+in the direction of travel, with a warning in development; "2 of 5" counts
+only the steps that resolve, and with none at all the tour closes.
+
+**Non-modal dialog.** `role="dialog"`, named by the step's title and
+described by the count and the body. Focus moves to the card on each step and
+returns to whatever had it before the tour opened. Tab is not fenced. A click
+or focus outside does not close it.
+
+| Prop | |
+|---|---|
+| `steps` | `{ id, target, title, body?, side? }[]`. `target` is a selector or `() => Element \| null`; `side` is `'top' \| 'right' \| 'bottom' \| 'left'` (default `bottom`). |
+| `open`, `onOpenChange` | Controlled. Skip, Escape and Done all call `onOpenChange(false)`. |
+| `step`, `onStepChange` | The current step's id. Omit `step` and the tour keeps its own, from the first step on every open; `onStepChange` fires either way, including when a missing target is skipped. |
+| `onFinish` | Done on the last step, once per opening. Not Skip, not Escape. |
+| `spotlight` | Default `true`. `false` leaves the page visible and clickable. |
+| `labels` | `{ tour, back, next, done, skip, progress(current, total) }` — `tour` is the card's hidden heading. |
+
+| Key | |
+|---|---|
+| `→` / `←` | Next / previous step (not on the last / first; never finishes). |
+| `Escape` | Close. |
+| `Tab` | Through the card's buttons, and out of it. |
+
+```tsx
+const [open, setOpen] = useState(false);
+<Tour
+  open={open}
+  onOpenChange={setOpen}
+  onFinish={() => markTourSeen()}
+  steps={[
+    { id: 'search', target: '#search', title: 'Search', body: 'Find anything from here.' },
+    { id: 'new', target: () => newButton.current, title: 'Create', side: 'left' },
+  ]}
+/>
+```
 
 ## Developing
 

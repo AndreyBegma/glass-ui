@@ -2277,7 +2277,42 @@ It is a readout, not an input: it takes no focus and has no keyboard map.
 
 ### ActivityHeatmap
 
-In progress — see #186.
+`glass-ui/activity-heatmap` — a calendar of activity, a week to a column and a
+weekday to a row, with the month above and every other weekday beside. A solid
+surface; only the hover readout is glass.
+
+| Prop | |
+|---|---|
+| `data` | `{ date: 'YYYY-MM-DD', value }[]`; duplicate dates are summed, days outside the range and values `<= 0` are ignored |
+| `start`, `end` | the range; default the 52 weeks up to today |
+| `weekStartsOn` | `0` (Sunday, default) or `1` (Monday) |
+| `levels` | shades **including** the empty one, default `5` (the hairline and four shades), minimum `2` |
+| `tone` | an identity hue (`1`–`8`) instead of the accent |
+| `onDayClick` | `(day: { date, value }) => void`; an empty day has `value: 0` |
+| `formatValue` | `(value) => string`, default compact (`1.2K`); supplies the unit in a day's name |
+| `labels` | every visible string: `grid`, `less`, `more`, `day`, `none`, `date`, `month`, `weekday`, `summary`, `tableDate`, `tableValue`, `tableEmpty` |
+
+Levels are quantiles of the non-zero values, so the busiest day is always the
+top shade and one outlier does not flatten the rest; equal values share a level.
+The shade is the accent (or `tone`) at a stepped opacity, zero is the surface
+hairline. Colour is never the only signal: each day is named ("3 runs on 12
+October 2026" when `formatValue` returns "3 runs"), the readout prints the
+same, and a visually hidden table lists the days with activity. The box scrolls
+horizontally on narrow widths and opens on the newest week.
+
+Keyboard (ARIA grid, one tab stop — the day last focused, else the newest):
+`←` `→` a week, `↑` `↓` a day (no wrap), `Home` `End` the ends of the row,
+`Ctrl`+`Home`/`End` the first and last day, `Enter` / `Space` `onDayClick`,
+`Escape` hides the readout. Focus shows what hover shows.
+
+```tsx
+<ActivityHeatmap
+  data={runs}                       // [{ date: '2026-10-12', value: 3 }, …]
+  weekStartsOn={1}
+  formatValue={(n) => `${n} ${n === 1 ? 'run' : 'runs'}`}
+  onDayClick={(day) => router.push(`/runs?date=${day.date}`)}
+/>
+```
 
 ### PinInput
 

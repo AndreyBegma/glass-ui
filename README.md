@@ -1827,6 +1827,77 @@ Only `transparent`, only tokens every flat route already sets to
 transparency in any order; no colour of the palette moves. Without navy nothing
 changes. `calm.spec.ts` holds the block to exactly that.
 
+## v0.38.0 wave
+
+Sixteen components, scaffolded in `#175` and filled one slot each. Four new
+optional peers carry the heavy parts: `react-markdown` and `remark-gfm`
+(`Markdown`), `diff` (`DiffView`) and `@radix-ui/react-hover-card`
+(`HoverCard`). Each section below is a placeholder until its slot lands.
+
+### DiffView
+
+In progress — see #176.
+
+### JsonInspector
+
+In progress — see #177.
+
+### Markdown
+
+In progress — see #178.
+
+### Pagination
+
+In progress — see #179.
+
+### DateRangePicker
+
+In progress — see #180.
+
+### Stepper
+
+In progress — see #181.
+
+### Fieldset
+
+In progress — see #182.
+
+### TagInput
+
+In progress — see #183.
+
+### HoverCard
+
+In progress — see #184.
+
+### Meter
+
+In progress — see #185.
+
+### ActivityHeatmap
+
+In progress — see #186.
+
+### PinInput
+
+In progress — see #187.
+
+### Carousel
+
+In progress — see #188.
+
+### Rating
+
+In progress — see #189.
+
+### ColorPicker
+
+In progress — see #190.
+
+### Tour
+
+In progress — see #191.
+
 ## Developing
 
 ```sh

@@ -148,7 +148,7 @@ describe('NavRail', () => {
    * inherited that and sat centred in the row while the link beside it did
    * not. The alignment is now stated on the row, not inherited.
    */
-  test('an item that acts aligns like one that navigates (#124)', () => {
+  test('an item that acts aligns like one that navigates', () => {
     render(<Shell />);
 
     const inbox = screen.getByRole('button', { name: 'Inbox' });
@@ -159,7 +159,7 @@ describe('NavRail', () => {
    * The link half of the same claim. `Shell` strips every `href`, so the test
    * above only ever renders buttons — this is the mixed rail #124 describes.
    */
-  test('a navigating item states the same alignment (#124)', () => {
+  test('a navigating item states the same alignment', () => {
     render(<NavRail aria-label="Sections" link={link} groups={groups('inbox')} />);
 
     const inbox = screen.getByRole('link', { name: 'Inbox' });
@@ -170,7 +170,7 @@ describe('NavRail', () => {
    * The row is never given a `justify-*` of its own, so nothing can merge
    * over the folded square's `justify-center`.
    */
-  test('the folded item still centres (#124)', () => {
+  test('the folded item still centres', () => {
     render(<Shell collapsed />);
 
     const inbox = screen.getByRole('button', { name: 'Inbox' });

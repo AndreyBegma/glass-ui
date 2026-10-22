@@ -2261,7 +2261,34 @@ In progress — see #188.
 
 ### Rating
 
-In progress — see #189.
+`glass-ui/rating` — a star (or icon) rating, as an input or a display.
+
+| Prop | Meaning |
+|---|---|
+| `value` / `onValueChange` / `defaultValue` | The rating; `0` is "none". Controlled, or uncontrolled with `defaultValue`. |
+| `max` | Number of icons. Default `5`. |
+| `allowHalf` | Half steps: each icon takes two half-width radios, the filled layer is clipped. |
+| `allowClear` | Clicking the current value clears it to `0`. Default `true`. |
+| `readOnly` | One `role="img"` named "`label`, 4.5 out of 5". |
+| `icon` | A `LucideIcon`. Default `Star`. |
+| `size` | `sm` · `md` · `lg`. |
+| `label` | The accessible name (required). |
+| `labels` | `{ value(value, max) }` — the step names and the read-only text. |
+
+Interactive, it is the APG radio group: one tab stop (the checked step, else
+the first), hover previews without committing.
+
+| Key | Action |
+|---|---|
+| `→` `↑` | Next step, and select it |
+| `←` `↓` | Previous step, and select it |
+| `Home` / `End` | First step / `max` |
+| `Space` `Enter` | Select the focused step; on the current one, clear |
+
+```tsx
+<Rating label="Quality" value={score} onValueChange={setScore} allowHalf />
+<Rating label="Quality" value={4.5} allowHalf readOnly />
+```
 
 ### ColorPicker
 

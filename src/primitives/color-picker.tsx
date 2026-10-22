@@ -1,13 +1,7 @@
 'use client';
 
 import { CircleAlert } from 'lucide-react';
-import {
-  type CSSProperties,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
-  useId,
-  useState,
-} from 'react';
+import { type CSSProperties, useId, useState } from 'react';
 import { cn } from '../lib/cn';
 import {
   PopoverAnchor,
@@ -15,10 +9,10 @@ import {
   PopoverRoot,
   PopoverTrigger,
 } from '../patterns/popover';
+import { BLACK, CHECKER, ColorArea, type Hsva, opaque, Preview } from './color-picker-area';
 import {
   type ColorFormat,
   formatColor,
-  type Hsv,
   hsvToRgb,
   parseColor,
   rgbToHex,
@@ -70,8 +64,8 @@ export {
  * axes and the colour. ←/→ move saturation, ↑/↓ brightness, Shift ×10;
  * Home/End are saturation 0/100, PageUp/PageDown brightness ±10.
  *
- * `tokens.spec.ts` exempts this file's family from the colour-literal rule by
- * name; nothing here styles with a literal. The previews are the value itself
+ * `tokens.spec.ts` exempts only this component's tests from the colour-literal
+ * rule; this file spells no literal. The previews are the value itself
  * (`style={{ background: value }}`) and the area's and sliders' gradients are
  * computed from the current hue through the same maths.
  */
@@ -131,23 +125,10 @@ export type ColorPickerProps = {
   className?: string;
 };
 
-type Hsva = Hsv & { a: number };
-
-const BLACK: Hsva = { h: 0, s: 0, v: 0, a: 1 };
-
-const opaque = (hsv: Hsv) => rgbToHex({ ...hsvToRgb(hsv), a: 1 });
-const clamp = (n: number) => Math.min(100, Math.max(0, n));
-
 /** The sRGB hue wheel, unrolled. */
 const HUE_TRACK = `linear-gradient(to right, ${[0, 60, 120, 180, 240, 300, 360]
   .map((h) => opaque({ h, s: 100, v: 100 }))
   .join(', ')})`;
-const WHITE = opaque({ h: 0, s: 0, v: 100 });
-const INK = opaque(BLACK);
-
-/** What shows through a colour that is not opaque. Tokens, not colours. */
-const CHECKER =
-  'repeating-conic-gradient(var(--color-line-strong) 0 25%, transparent 0 50%) 0 0 / 8px 8px';
 
 /** The HSV of `text`, keeping `previous`'s hue where the colour has none. */
 function toHsva(text: string, previous: Hsva): Hsva | null {
@@ -380,127 +361,6 @@ export function ColorPicker({
         </PopoverContent>
       </PopoverRoot>
       {trigger === 'field' ? error : null}
-    </div>
-  );
-}
-
-/** The value, drawn. Over a checkerboard when it may carry alpha; a dashed
- *  outline, not a colour, when there is no value to draw. */
-function Preview({
-  color,
-  alpha,
-  className,
-}: {
-  color: string | undefined;
-  alpha: boolean;
-  className?: string;
-}) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'block overflow-hidden rounded-[calc(var(--radius-control)-0.25rem)]',
-        color === undefined && 'border border-dashed border-ink-3',
-        className,
-      )}
-      style={alpha && color ? { background: CHECKER } : undefined}
-    >
-      {color ? <span className="block size-full" style={{ background: color }} /> : null}
-    </span>
-  );
-}
-
-function ColorArea({
-  hsva,
-  label,
-  roleDescription,
-  valueText,
-  onChange,
-}: {
-  hsva: Hsva;
-  label: string;
-  roleDescription: string;
-  valueText: string;
-  onChange: (next: Hsva) => void;
-}) {
-  function fromPointer(event: ReactPointerEvent<HTMLDivElement>) {
-    const box = event.currentTarget.getBoundingClientRect();
-    if (!box.width || !box.height) return;
-    onChange({
-      ...hsva,
-      s: Math.round(clamp(((event.clientX - box.left) / box.width) * 100)),
-      v: Math.round(clamp((1 - (event.clientY - box.top) / box.height) * 100)),
-    });
-  }
-
-  function onKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    const step = event.shiftKey ? 10 : 1;
-    let s = Math.round(hsva.s);
-    let v = Math.round(hsva.v);
-    switch (event.key) {
-      case 'ArrowLeft':
-        s -= step;
-        break;
-      case 'ArrowRight':
-        s += step;
-        break;
-      case 'ArrowDown':
-        v -= step;
-        break;
-      case 'ArrowUp':
-        v += step;
-        break;
-      case 'Home':
-        s = 0;
-        break;
-      case 'End':
-        s = 100;
-        break;
-      case 'PageDown':
-        v -= 10;
-        break;
-      case 'PageUp':
-        v += 10;
-        break;
-      default:
-        return;
-    }
-    event.preventDefault();
-    onChange({ ...hsva, s: clamp(s), v: clamp(v) });
-  }
-
-  return (
-    <div
-      role="slider"
-      tabIndex={0}
-      aria-label={label}
-      aria-roledescription={roleDescription}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(hsva.s)}
-      aria-valuetext={valueText}
-      onKeyDown={onKeyDown}
-      onPointerDown={(event) => {
-        event.currentTarget.setPointerCapture?.(event.pointerId);
-        fromPointer(event);
-      }}
-      onPointerMove={(event) => {
-        if (event.currentTarget.hasPointerCapture?.(event.pointerId)) fromPointer(event);
-      }}
-      className="relative h-36 w-full cursor-crosshair touch-none rounded-control"
-      style={{
-        background: `linear-gradient(to top, ${INK}, transparent), linear-gradient(to right, ${WHITE}, transparent), ${opaque({ h: hsva.h, s: 100, v: 100 })}`,
-      }}
-    >
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -ml-2 -mt-2 size-4 rounded-full border-2 border-paper ring-1 ring-ink/60"
-        style={{
-          left: `${hsva.s}%`,
-          top: `${100 - hsva.v}%`,
-          background: opaque(hsva),
-        }}
-      />
     </div>
   );
 }

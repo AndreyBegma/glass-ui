@@ -2112,7 +2112,56 @@ scrolls it into view (without animation under reduced motion). Inside a disabled
 
 ### TagInput
 
-In progress — see #183.
+`@andrewbehma/glass-ui/tag-input` — free-form values as chips: labels, env
+keys, emails. `Combobox multiple` only picks from a list; this takes whatever is
+typed. It looks like the field family, with the chips inline before the text
+input, wrapping onto more lines.
+
+```tsx
+import { TagInput } from '@andrewbehma/glass-ui/tag-input';
+
+const [emails, setEmails] = useState<string[]>([]);
+
+<TagInput
+  aria-label="Invite by email"
+  value={emails}
+  onValueChange={setEmails}
+  placeholder="name@example.com"
+  validate={(tag) => (/^\S+@\S+\.\S+$/.test(tag) ? null : 'Not an email address')}
+  suggestions={['ada@example.com', 'alan@example.com']}
+  max={10}
+/>;
+```
+
+| Prop | Default | |
+|---|---|---|
+| `value` / `onValueChange` / `defaultValue` | — | The tags, controlled; or `defaultValue` alone for the uncontrolled form. |
+| `separators` | `[',', 'Enter']` | Key names (`'Enter'`, `'Tab'`) or single characters (`','`, `' '`, `';'`). A character splits whatever it arrives in, typed or pasted. |
+| `validate` | — | `(tag) => message \| null`. |
+| `suggestions` | — | A filtered listbox under the input (Combobox styling); tags already added are not offered. |
+| `max` | — | No more tags past it. |
+| `allowDuplicates` | `false` | Otherwise a repeat is rejected like an invalid tag. |
+| `placeholder` | — | Shown while there are no tags. |
+| `tone` | `'surface'` | The field family's `surface` / `on-glass`. |
+| `disabled` | `false` | |
+| `id`, `aria-label` | — | For a `<label htmlFor>`, or a name when there is no visible label. |
+| `labels` | English | Every visible and spoken string: `tags`, `input`, `remove(tag)`, `added(tag)`, `removed(tag)`, `duplicate(tag)`, `maxReached(max)`, `suggestions`, `matches(n)`. |
+
+An entry that is rejected — invalid, a duplicate, past `max` — stays in the input
+with its message below (danger token, an icon and the words), never dropped. A
+paste commits every piece it can and leaves the rest in the input.
+
+| Key | |
+|---|---|
+| a separator | Commits the text. With an empty input `Enter` / `Tab` do what they always do. |
+| `Backspace` (empty input) | Selects the last chip; a second `Backspace` removes it. |
+| `ArrowLeft` (caret at start) | Enters the chips; `ArrowLeft` / `ArrowRight` move between them, `ArrowRight` off the last returns to the input. |
+| `Delete` / `Backspace` (on a chip) | Removes it; focus goes to its neighbour, else the input. |
+| `ArrowDown` / `ArrowUp` | Moves through the suggestions (APG Combobox, listbox popup, `aria-activedescendant`); nothing is highlighted until then, so `Enter` commits what was typed. |
+| `Enter` (suggestion highlighted) | Commits the suggestion. `Escape` closes the list. |
+
+Each chip's remove button is named "Remove <tag>" and is out of the Tab order —
+the keyboard removes with `Delete`. Adds and removals are announced politely.
 
 ### HoverCard
 

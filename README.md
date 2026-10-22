@@ -1840,7 +1840,42 @@ In progress — see #176.
 
 ### JsonInspector
 
-In progress — see #177.
+`glass-ui/json-inspector` — a collapsible viewer for JSON-like values: event
+payloads, MCP responses, log fields. `Tree` is for navigation; this is for
+data. A solid surface, never glass.
+
+```tsx
+import { JsonInspector } from 'glass-ui/json-inspector';
+
+<JsonInspector
+  value={event.payload}
+  rootLabel="payload"
+  defaultExpandDepth={2}
+  sortKeys
+  copyable
+/>;
+```
+
+| Prop | Meaning |
+|---|---|
+| `value` | Any value. `Date`, `Map`, `Set`, `bigint` and circular references are handled; a cycle renders as `[Circular]` and is never followed. |
+| `expanded` / `onExpandedChange` | Controlled set of open paths (`$`, `$.items[3].id`, `$["odd key"]`; `Map`/`Set` entries by position, `$.tags[0]`). Without `expanded` the viewer keeps its own. |
+| `defaultExpandDepth` | Containers shallower than this start open. Default `1` (the root). |
+| `rootLabel` | The root row's key. |
+| `sortKeys` | Sort object keys. |
+| `maxStringLength` | Longer strings truncate with a show-full control. Default `120`. |
+| `copyable` | Copy value / copy path per row, with the inline "Copied" confirmation. |
+| `labels` | Every visible English string: `tree`, `copyValue`, `copyPath`, `copied`, `showFullString`, `showLessString`, `showMore(count)`, `circular`. |
+
+A container with more than 100 children renders the first 100 and a
+"Show N more" row. Types are told by shape and colour: strings are quoted,
+`null`/`undefined` are italic, numbers are `tabular-nums`, a `bigint` ends in `n`.
+
+Keyboard (WAI-ARIA `tree`, one tab stop): <kbd>↑</kbd> <kbd>↓</kbd> move,
+<kbd>→</kbd> opens or enters, <kbd>←</kbd> closes or goes to the parent,
+<kbd>Home</kbd> / <kbd>End</kbd> jump, <kbd>*</kbd> opens the siblings,
+<kbd>Enter</kbd> / <kbd>Space</kbd> toggle (and unfold a truncated string or show
+more). With `copyable`: <kbd>c</kbd> copies the value, <kbd>p</kbd> the path.
 
 ### Markdown
 

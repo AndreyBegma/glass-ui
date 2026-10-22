@@ -97,7 +97,10 @@ export { Canvas } from './patterns/canvas';
  * `Chart` only: `CronInput` and `Terminal` are deliberately not here, because
  * they import the optional peers `cron-parser`, `cronstrue`, `@xterm/xterm` and
  * `@xterm/addon-fit`, and the barrel must never pull those in. Import them from
- * `glass-ui/cron-input` and `glass-ui/terminal`.
+ * `glass-ui/cron-input` and `glass-ui/terminal`. The v0.38.0 wave adds three
+ * more on the same rule: `DiffView` (`diff`), `Markdown` (`react-markdown`,
+ * `remark-gfm`) and `HoverCard` (`@radix-ui/react-hover-card`) — import them
+ * from `glass-ui/diff-view`, `glass-ui/markdown` and `glass-ui/hover-card`.
  */
 export {
   Chart,
@@ -422,20 +425,10 @@ export { Tooltip } from './primitives/tooltip';
  * the one file they would all otherwise collide on.
  */
 export {
-  DiffView,
-  type DiffViewLabels,
-  type DiffViewProps,
-} from './patterns/diff-view';
-export {
   JsonInspector,
   type JsonInspectorLabels,
   type JsonInspectorProps,
 } from './primitives/json-inspector';
-export {
-  Markdown,
-  type MarkdownComponents,
-  type MarkdownProps,
-} from './primitives/markdown';
 export {
   CursorPagination,
   type CursorPaginationProps,
@@ -473,13 +466,6 @@ export {
   type TagInputLabels,
   type TagInputProps,
 } from './primitives/tag-input';
-export {
-  HoverCard,
-  HoverCardContent,
-  type HoverCardContentProps,
-  type HoverCardProps,
-  HoverCardTrigger,
-} from './patterns/hover-card';
 export { Meter, type MeterProps } from './primitives/meter';
 export {
   ActivityHeatmap,

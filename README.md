@@ -1891,7 +1891,50 @@ In progress — see #180.
 
 ### Stepper
 
-In progress — see #181.
+`glass-ui/stepper` — steps for onboarding and multi-step forms. `Stepper` is the
+progress display; `Wizard` is `Stepper` + the current step's panel + Back / Next /
+Finish. Solid surfaces, never glass.
+
+```tsx
+import { Wizard } from 'glass-ui/stepper';
+
+const steps = [
+  { id: 'repo', label: 'Connect repository' },
+  { id: 'secrets', label: 'Secrets', optional: true },
+  { id: 'run', label: 'First run', description: 'Takes about a minute' },
+];
+
+<Wizard
+  steps={steps}
+  current={current}
+  onStepChange={setCurrent}
+  onFinish={start}
+  canAdvance={repoConnected}
+>
+  {panelFor(current)}
+</Wizard>;
+```
+
+| Prop | Meaning |
+|---|---|
+| `steps` | `{ id, label, description?, optional?, status?: 'error' }[]`. |
+| `current` / `onStepChange` | The current step id; called with the id a click, Back or Next asks for. Both controlled — the stepper keeps only focus. |
+| `completed` | `ReadonlySet<string>` of finished ids. Omitted → the steps before `current`; given → authoritative. |
+| `navigable` | `none` (default, read-only), `completed` (finished steps are buttons) or `all` (every step but the current). |
+| `orientation` | `horizontal` (default) or `vertical`, for side panels. |
+| `canAdvance` | Wizard only. `false` disables Next and Finish. |
+| `onFinish` | Wizard only. The Finish button on the last step. |
+| `labels` | Every visible English string: `steps`, `completed`, `error`, `optional`, `stepOf(index, total, label)`, `back`, `next`, `finish`. |
+
+The current step is `aria-current="step"`; completed shows a check, an error shows
+an icon and the word, so colour is never the only signal. The connector fills up to
+the current step. A horizontal stepper narrower than the `sm` container width
+collapses to "Step 2 of 4 · Secrets" (the list stays available to screen readers).
+`Wizard` moves focus to the panel heading when the step changes, not on mount.
+
+Keyboard: no WAI-ARIA pattern covers a stepper. Clickable steps and the footer
+buttons are plain buttons in the Tab order — <kbd>Tab</kbd> moves, <kbd>Enter</kbd> /
+<kbd>Space</kbd> activates.
 
 ### Fieldset
 

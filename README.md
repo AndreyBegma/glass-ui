@@ -2079,7 +2079,35 @@ takes no focus and has no visible English strings, so there are no `labels`.
 
 ### Meter
 
-In progress — see #185.
+How full something is — budget, quota, limits. `Progress` is task progress;
+`Meter` is a level, with `role="meter"`.
+
+| Prop | |
+|---|---|
+| `value` | Clamped to `min`..`max` |
+| `min` / `max` | `0` / `100` |
+| `low` / `high` / `optimum` | The HTML `<meter>` thresholds; they choose the tone `ok` / `warn` / `danger` |
+| `label` | Required, the accessible name |
+| `valueText` | Visible and spoken value, defaults to the clamped value |
+| `variant` | `bar` (default, with ticks at `low` / `high`) or `gauge` (240° arc, fits `StatTile`) |
+| `size` | `sm` / `md` / `lg` |
+| `labels` | `{ ok, warn, danger }` — the tone words, `OK` / `Warning` / `Critical` |
+
+Colour is never the only signal: the tone word is drawn and is part of
+`aria-valuetext`. The fill animates with `--dur-base` under `motion-safe` only.
+It is a readout, not an input: it takes no focus and has no keyboard map.
+
+```tsx
+<Meter
+  label="Storage"
+  value={86}
+  low={50}
+  high={80}
+  optimum={20}
+  valueText="86 of 100 GB"
+/>
+<Meter variant="gauge" label="CPU" value={42} valueText="42%" />
+```
 
 ### ActivityHeatmap
 

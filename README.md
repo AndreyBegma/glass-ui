@@ -1976,7 +1976,57 @@ import { ChatThread } from '@andrewbehma/glass-ui/chat-thread';
 
 ### Pagination
 
-In progress — see #179.
+`glass-ui/pagination` — two forms. `Pagination` is for a list whose page count
+is known; `CursorPagination` is for cursor APIs (GitHub, Woodpecker), with no
+page numbers, only previous and next. Both are controlled: the page, the page
+size and `loading` are the caller's, nothing is held inside.
+
+```tsx
+import { CursorPagination, Pagination } from '@andrewbehma/glass-ui/pagination';
+
+<Pagination
+  page={page}
+  pageCount={Math.ceil(total / pageSize)}
+  onPageChange={setPage}
+  pageSize={pageSize}
+  pageSizeOptions={[10, 25, 50]}
+  onPageSizeChange={setPageSize}
+  total={total}
+/>;
+
+<CursorPagination
+  hasPrevious={Boolean(prevCursor)}
+  hasNext={Boolean(nextCursor)}
+  onPrevious={() => load(prevCursor)}
+  onNext={() => load(nextCursor)}
+  loading={isFetching}
+  summary="1–20"
+/>;
+```
+
+| `Pagination` prop | |
+|---|---|
+| `page`, `pageCount`, `onPageChange` | Current page (1-based), how many, and the change handler |
+| `siblingCount`, `boundaryCount` | Pages kept either side of the current one (1) and at each end (1) |
+| `pageSize`, `pageSizeOptions`, `onPageSizeChange` | With options and a handler, a "rows per page" select |
+| `total` | With `pageSize`, the "1–25 of 312" summary |
+| `labels`, `className` | Every visible string is overridable: `nav`, `previous`, `next`, `page(n)`, `pageOf(n, m)`, `range(from, to, total)`, `pageSize`, `pageSizeOption(size)` |
+
+`CursorPagination` takes `hasPrevious`, `hasNext`, `onPrevious`, `onNext`,
+`loading` (disables both buttons and sets `aria-busy`), `summary`, `className`
+and `labels` (`nav`, `previous`, `next`).
+
+`pageRange(page, pageCount, siblingCount?, boundaryCount?)` is exported from
+the same subpath: the page numbers and `'ellipsis-start'` / `'ellipsis-end'`
+markers, at a constant length as the page moves.
+
+Below the tablet breakpoint the numbered row collapses to "‹ Page 3 of 12 ›".
+
+Keyboard: the control is a `<nav>` of native buttons, as the APG pagination
+pattern has it. <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd> move between them,
+<kbd>Enter</kbd> or <kbd>Space</kbd> presses. The current page carries
+`aria-current="page"`; ellipses are not focusable; previous and next are
+disabled at the ends.
 
 ### DateRangePicker
 
@@ -2084,11 +2134,84 @@ buttons are plain buttons in the Tab order — <kbd>Tab</kbd> moves, <kbd>Enter<
 
 ### Fieldset
 
-In progress — see #182.
+`glass-ui/fieldset` — grouping for long settings forms: a titled group of
+fields, a two-column settings section, and a summary of every error at the top.
+Solid surfaces, never glass.
+
+```tsx
+import { ErrorSummary, Fieldset, FormSection } from 'glass-ui/fieldset';
+
+<ErrorSummary errors={[{ fieldId: 'email', message: 'Email is required' }]} />
+<FormSection title="Profile" description="Shown on your public page.">
+  <Fieldset legend="Contact" description="How we reach you." error={contactError}>
+    <Input id="email" />
+  </Fieldset>
+</FormSection>;
+```
+
+| Component | Props |
+|---|---|
+| `Fieldset` | `legend`, `description`, `error`, `disabled`, `className`. A real `<fieldset>`/`<legend>`: `disabled` disables every native control inside. `description` and `error` are both in `aria-describedby`; the error is danger-coloured with an icon. |
+| `FormSection` | `title`, `description`, `aside` (beside the copy, e.g. a help link), `className`. Copy left, fields right; stacks below `md`; a `Separator` above every section but the first. |
+| `ErrorSummary` | `errors: { fieldId, message }[]`, `title`, `labels`, `className`. `role="alert"`; focuses itself when errors appear or change (once per change). Renders nothing when empty. `labels`: `title` ("There is a problem"), `list` ("Errors"). |
+
+Keyboard: the summary is focusable programmatically (`tabIndex={-1}`, not a tab
+stop); each item is a link — <kbd>Enter</kbd> focuses the field with that id and
+scrolls it into view (without animation under reduced motion). Inside a disabled
+`Fieldset`, nothing takes focus.
 
 ### TagInput
 
-In progress — see #183.
+`@andrewbehma/glass-ui/tag-input` — free-form values as chips: labels, env
+keys, emails. `Combobox multiple` only picks from a list; this takes whatever is
+typed. It looks like the field family, with the chips inline before the text
+input, wrapping onto more lines.
+
+```tsx
+import { TagInput } from '@andrewbehma/glass-ui/tag-input';
+
+const [emails, setEmails] = useState<string[]>([]);
+
+<TagInput
+  aria-label="Invite by email"
+  value={emails}
+  onValueChange={setEmails}
+  placeholder="name@example.com"
+  validate={(tag) => (/^\S+@\S+\.\S+$/.test(tag) ? null : 'Not an email address')}
+  suggestions={['ada@example.com', 'alan@example.com']}
+  max={10}
+/>;
+```
+
+| Prop | Default | |
+|---|---|---|
+| `value` / `onValueChange` / `defaultValue` | — | The tags, controlled; or `defaultValue` alone for the uncontrolled form. |
+| `separators` | `[',', 'Enter']` | Key names (`'Enter'`, `'Tab'`) or single characters (`','`, `' '`, `';'`). A character splits whatever it arrives in, typed or pasted. |
+| `validate` | — | `(tag) => message \| null`. |
+| `suggestions` | — | A filtered listbox under the input (Combobox styling); tags already added are not offered. |
+| `max` | — | No more tags past it. |
+| `allowDuplicates` | `false` | Otherwise a repeat is rejected like an invalid tag. |
+| `placeholder` | — | Shown while there are no tags. |
+| `tone` | `'surface'` | The field family's `surface` / `on-glass`. |
+| `disabled` | `false` | |
+| `id`, `aria-label` | — | For a `<label htmlFor>`, or a name when there is no visible label. |
+| `labels` | English | Every visible and spoken string: `tags`, `input`, `remove(tag)`, `added(tag)`, `removed(tag)`, `duplicate(tag)`, `maxReached(max)`, `suggestions`, `matches(n)`. |
+
+An entry that is rejected — invalid, a duplicate, past `max` — stays in the input
+with its message below (danger token, an icon and the words), never dropped. A
+paste commits every piece it can and leaves the rest in the input.
+
+| Key | |
+|---|---|
+| a separator | Commits the text. With an empty input `Enter` / `Tab` do what they always do. |
+| `Backspace` (empty input) | Selects the last chip; a second `Backspace` removes it. |
+| `ArrowLeft` (caret at start) | Enters the chips; `ArrowLeft` / `ArrowRight` move between them, `ArrowRight` off the last returns to the input. |
+| `Delete` / `Backspace` (on a chip) | Removes it; focus goes to its neighbour, else the input. |
+| `ArrowDown` / `ArrowUp` | Moves through the suggestions (APG Combobox, listbox popup, `aria-activedescendant`); nothing is highlighted until then, so `Enter` commits what was typed. |
+| `Enter` (suggestion highlighted) | Commits the suggestion. `Escape` closes the list. |
+
+Each chip's remove button is named "Remove <tag>" and is out of the Tab order —
+the keyboard removes with `Delete`. Adds and removals are announced politely.
 
 ### HoverCard
 
@@ -2122,7 +2245,35 @@ takes no focus and has no visible English strings, so there are no `labels`.
 
 ### Meter
 
-In progress — see #185.
+How full something is — budget, quota, limits. `Progress` is task progress;
+`Meter` is a level, with `role="meter"`.
+
+| Prop | |
+|---|---|
+| `value` | Clamped to `min`..`max` |
+| `min` / `max` | `0` / `100` |
+| `low` / `high` / `optimum` | The HTML `<meter>` thresholds; they choose the tone `ok` / `warn` / `danger` |
+| `label` | Required, the accessible name |
+| `valueText` | Visible and spoken value, defaults to the clamped value |
+| `variant` | `bar` (default, with ticks at `low` / `high`) or `gauge` (240° arc, fits `StatTile`) |
+| `size` | `sm` / `md` / `lg` |
+| `labels` | `{ ok, warn, danger }` — the tone words, `OK` / `Warning` / `Critical` |
+
+Colour is never the only signal: the tone word is drawn and is part of
+`aria-valuetext`. The fill animates with `--dur-base` under `motion-safe` only.
+It is a readout, not an input: it takes no focus and has no keyboard map.
+
+```tsx
+<Meter
+  label="Storage"
+  value={86}
+  low={50}
+  high={80}
+  optimum={20}
+  valueText="86 of 100 GB"
+/>
+<Meter variant="gauge" label="CPU" value={42} valueText="42%" />
+```
 
 ### ActivityHeatmap
 
@@ -2165,7 +2316,33 @@ Keyboard (ARIA grid, one tab stop — the day last focused, else the newest):
 
 ### PinInput
 
-In progress — see #187.
+`glass-ui/pin-input` — one-time codes and PINs.
+
+**One real input, N drawn cells.** The cells are `aria-hidden`; a single
+transparent `<input autocomplete="one-time-code">` lies over them, so SMS
+autofill and paste work and a screen reader hears one labelled field (not
+N boxes). The caret is pinned to the end: typing appends, Backspace removes
+the last character, the active cell (the focus ring) is the first empty one.
+
+| Prop | |
+|---|---|
+| `value`, `onValueChange` | Controlled. |
+| `length` | Cells, default 6. |
+| `type` | `'numeric'` (default, numeric keypad) or `'alphanumeric'`. Other characters are dropped. |
+| `onComplete` | Called once each time the value reaches `length`. |
+| `mask` | Cells show `•`; the field is `type="password"`. |
+| `disabled`, `tone`, `className` | As the other fields (`tone`: `surface` / `on-glass`). |
+| `label` | The field's accessible name (required). |
+| `labels` | `{ progress(filled, length) }` — the spoken "3 of 6 characters". |
+
+Keyboard: characters append, Backspace/Delete remove the last, Tab leaves.
+Paste replaces the value from the first cell, filtered and cut to `length`.
+
+```tsx
+const [code, setCode] = useState('');
+<PinInput label="Verification code" value={code} onValueChange={setCode}
+          onComplete={(c) => verify(c)} />
+```
 
 ### Carousel
 

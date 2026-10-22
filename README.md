@@ -1844,7 +1844,56 @@ In progress — see #177.
 
 ### Markdown
 
-In progress — see #178.
+`@andrewbehma/glass-ui/markdown` — subpath only. Needs the optional peers
+`react-markdown` and `remark-gfm`. Markdown for agent replies, issue bodies and
+release notes, rendered through the kit, so you do not need your own
+`react-markdown` setup or prose styles. It has no state and no
+`'use client'`, so a server component can render it.
+
+| Prop | What it does |
+|---|---|
+| `children` | The markdown source, a string. |
+| `components` | react-markdown overrides (`Partial<MarkdownComponents>`), merged over the kit's mapping. Yours win, element by element. |
+| `linkTarget` | `(href) => '_blank' \| undefined`, for each link's `target`. Default: no `target` (same tab). |
+| `density` | `comfortable` (default) or `compact`, for chat bubbles: tighter block gaps, and `h1` steps down to `text-section`. |
+| `labels` | `Partial<MarkdownLabels>`: `footnotes` (the visually hidden heading over GFM footnotes) and `backToReference(index, rereference)` (each footnote's back link). |
+| `className` | Added to the root. |
+
+**Mapping.** Fenced code renders as `CodeBlock` (language label, copy). Inline
+code renders as a token-styled `<code>`. Tables render through `Table` /
+`TableHead` / `TableRow` / `TableCell`, scroll horizontally, and keep GFM
+column alignment. Task items render as a disabled `Checkbox` whose
+accessible name is the item text. `hr` renders as `Separator`. Blockquotes get
+a `line-strong` rule. Headings use the type scale (`h1` `text-heading`, `h2`
+`text-section`, below that `text-body`) and get GitHub-style slug ids
+(`## Next steps` → `#next-steps`, repeats get `-1`, `-2`). No
+`@tailwindcss/typography`.
+
+**Security.** Raw HTML is never rendered: there is no `rehype-raw`, so
+`<script>` or `<img onerror>` in the source shows as literal text. Every `href`
+and `src` passes react-markdown's `defaultUrlTransform`, which allows only
+http(s), mailto, irc(s), xmpp and relative URLs. A `javascript:` or `data:`
+link renders as plain text, and a `data:` image renders nothing. Absolute links
+always get `rel="noreferrer noopener"`.
+
+**Keyboard.** Markdown adds no key handling of its own. Links and the
+`CodeBlock` copy and wrap buttons are in the tab order as usual, and a code
+block's scroll region can take focus. Task checkboxes are disabled, so Tab
+skips them.
+
+```tsx
+import { Markdown } from '@andrewbehma/glass-ui/markdown';
+import { ChatThread } from '@andrewbehma/glass-ui/chat-thread';
+
+<ChatThread
+  messages={messages}
+  renderBody={(message) => (
+    <Markdown density="compact" linkTarget={(href) => (href.startsWith('http') ? '_blank' : undefined)}>
+      {message.body}
+    </Markdown>
+  )}
+/>;
+```
 
 ### Pagination
 

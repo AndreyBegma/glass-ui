@@ -1852,7 +1852,60 @@ In progress — see #179.
 
 ### DateRangePicker
 
-In progress — see #180.
+`@andrewbehma/glass-ui/date-range-picker` — an arbitrary from–to range, for
+log and analytics filters (`PeriodSwitcher` moves one fixed period,
+`DateField` picks one day).
+
+```tsx
+import { type DateRange, DateRangePicker } from '@andrewbehma/glass-ui/date-range-picker';
+
+const [range, setRange] = useState<DateRange | null>(null);
+
+<DateRangePicker
+  value={range}
+  onValueChange={setRange}
+  max={new Date()}
+  placeholder="Any time"
+/>;
+```
+
+| Prop | Type | Default | |
+|---|---|---|---|
+| `value` | `{ start: Date; end: Date } \| null` | — | Controlled. Both ends at local midnight, `end` inclusive. Omitted → uncontrolled |
+| `onValueChange` | `(value) => void` | — | Called with the committed range |
+| `defaultValue` | `DateRange \| null` | `null` | The uncontrolled start |
+| `presets` | `{ id; label; range: () => DateRange }[]` | Today, Last 7 days, Last 30 days, This month | `range()` is read when the popover renders, so "today" is always today. This month = the 1st to today |
+| `min` / `max` | `Date` | — | Days outside are `aria-disabled`; a preset reaching outside is disabled |
+| `months` | `1 \| 2` | `2` | Two side by side from the tablet edge (640px) up, one below it |
+| `weekStartsOn` | `0 \| 1` | `1` | Monday |
+| `placeholder` | `string` | `labels.placeholder` | The trigger with no range |
+| `disabled` | `boolean` | — | |
+| `tone` | `'surface' \| 'on-glass'` | `'surface'` | The field tone, as `Input` |
+| `labels` | `Partial<DateRangePickerLabels>` | English | Every visible and announced string: `placeholder`, `dialog`, `presets`, `today`, `last7Days`, `last30Days`, `thisMonth`, `previousMonth`, `nextMonth`, `startPicked(day)`, `rangeSelected(range)`, `cancelled` |
+| `className` | `string` | — | Styles the trigger |
+
+- The trigger is a field-family button showing the range in `Intl`'s own range
+  format in the document's language (`<html lang>`, else the browser's):
+  `12–19 Oct 2026` in en-GB, `Oct 12 – 19, 2026` in en-US.
+- The popover is the glass `PopoverContent`: presets beside the months (above
+  them on a phone), and the months are `DateField`'s grid (`MonthGrid` in
+  `date-field-grid.tsx`), with the neighbouring months' days left blank so two
+  months never show one day twice.
+- First pick sets the start; the pointer, or the focused day, previews the
+  range; the second pick commits it and closes. A pick before the start
+  starts again from there; the same day twice is a one-day range. Range ends
+  are ink, the days between are tinted, and every day in the range is
+  `aria-selected` — colour is not the only signal. A polite live region
+  announces the start and the chosen range.
+
+| Key (in the grid) | |
+|---|---|
+| Arrows | A day / a week |
+| PageUp / PageDown | A month (Shift: a year); the shown months follow |
+| Home / End | The week's ends, from `weekStartsOn` |
+| Enter / Space | Pick the start, then the end |
+| Escape | Drops a pending start; with none, closes and returns focus to the trigger |
+| Tab | One day is in the tab order across both months (roving `tabIndex`) |
 
 ### Stepper
 

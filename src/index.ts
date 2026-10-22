@@ -415,3 +415,103 @@ export { TimeField, type TimeFieldProps } from './primitives/time-field';
 export { ACHIEVEMENTS_TOASTER, Toaster, toast } from './primitives/toast';
 export { Toggle } from './primitives/toggle';
 export { Tooltip } from './primitives/tooltip';
+
+/**
+ * v0.38.0 component wave (#175). Appended as one block, for the reason every
+ * block above is: the sixteen are built in parallel worktrees and the barrel is
+ * the one file they would all otherwise collide on.
+ */
+export {
+  DiffView,
+  type DiffViewLabels,
+  type DiffViewProps,
+} from './patterns/diff-view';
+export {
+  JsonInspector,
+  type JsonInspectorLabels,
+  type JsonInspectorProps,
+} from './primitives/json-inspector';
+export {
+  Markdown,
+  type MarkdownComponents,
+  type MarkdownProps,
+} from './primitives/markdown';
+export {
+  CursorPagination,
+  type CursorPaginationProps,
+  Pagination,
+  type PaginationLabels,
+  type PaginationProps,
+} from './primitives/pagination';
+export {
+  type DateRange,
+  DateRangePicker,
+  type DateRangePickerLabels,
+  type DateRangePickerProps,
+  type DateRangePreset,
+} from './primitives/date-range-picker';
+export {
+  type Step,
+  Stepper,
+  type StepperLabels,
+  type StepperProps,
+  Wizard,
+  type WizardProps,
+} from './patterns/stepper';
+export {
+  ErrorSummary,
+  type ErrorSummaryItem,
+  type ErrorSummaryLabels,
+  type ErrorSummaryProps,
+  Fieldset,
+  type FieldsetProps,
+  FormSection,
+  type FormSectionProps,
+} from './primitives/fieldset';
+export {
+  TagInput,
+  type TagInputLabels,
+  type TagInputProps,
+} from './primitives/tag-input';
+export {
+  HoverCard,
+  HoverCardContent,
+  type HoverCardContentProps,
+  type HoverCardProps,
+  HoverCardTrigger,
+} from './patterns/hover-card';
+export { Meter, type MeterProps } from './primitives/meter';
+export {
+  ActivityHeatmap,
+  type ActivityHeatmapDatum,
+  type ActivityHeatmapLabels,
+  type ActivityHeatmapProps,
+} from './patterns/activity-heatmap';
+export {
+  PinInput,
+  type PinInputLabels,
+  type PinInputProps,
+} from './primitives/pin-input';
+export {
+  Carousel,
+  type CarouselLabels,
+  type CarouselProps,
+  CarouselSlide,
+  type CarouselSlideProps,
+} from './patterns/carousel';
+export {
+  Rating,
+  type RatingLabels,
+  type RatingProps,
+} from './primitives/rating';
+export {
+  ColorPicker,
+  type ColorPickerLabels,
+  type ColorPickerProps,
+} from './primitives/color-picker';
+export {
+  Tour,
+  type TourLabels,
+  type TourProps,
+  type TourStep,
+} from './patterns/tour';

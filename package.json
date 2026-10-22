@@ -419,6 +419,70 @@
       "types": "./dist/patterns/list-detail.d.ts",
       "import": "./dist/patterns/list-detail.js"
     },
+    "./diff-view": {
+      "types": "./dist/patterns/diff-view.d.ts",
+      "import": "./dist/patterns/diff-view.js"
+    },
+    "./json-inspector": {
+      "types": "./dist/primitives/json-inspector.d.ts",
+      "import": "./dist/primitives/json-inspector.js"
+    },
+    "./markdown": {
+      "types": "./dist/primitives/markdown.d.ts",
+      "import": "./dist/primitives/markdown.js"
+    },
+    "./pagination": {
+      "types": "./dist/primitives/pagination.d.ts",
+      "import": "./dist/primitives/pagination.js"
+    },
+    "./date-range-picker": {
+      "types": "./dist/primitives/date-range-picker.d.ts",
+      "import": "./dist/primitives/date-range-picker.js"
+    },
+    "./stepper": {
+      "types": "./dist/patterns/stepper.d.ts",
+      "import": "./dist/patterns/stepper.js"
+    },
+    "./fieldset": {
+      "types": "./dist/primitives/fieldset.d.ts",
+      "import": "./dist/primitives/fieldset.js"
+    },
+    "./tag-input": {
+      "types": "./dist/primitives/tag-input.d.ts",
+      "import": "./dist/primitives/tag-input.js"
+    },
+    "./hover-card": {
+      "types": "./dist/patterns/hover-card.d.ts",
+      "import": "./dist/patterns/hover-card.js"
+    },
+    "./meter": {
+      "types": "./dist/primitives/meter.d.ts",
+      "import": "./dist/primitives/meter.js"
+    },
+    "./activity-heatmap": {
+      "types": "./dist/patterns/activity-heatmap.d.ts",
+      "import": "./dist/patterns/activity-heatmap.js"
+    },
+    "./pin-input": {
+      "types": "./dist/primitives/pin-input.d.ts",
+      "import": "./dist/primitives/pin-input.js"
+    },
+    "./carousel": {
+      "types": "./dist/patterns/carousel.d.ts",
+      "import": "./dist/patterns/carousel.js"
+    },
+    "./rating": {
+      "types": "./dist/primitives/rating.d.ts",
+      "import": "./dist/primitives/rating.js"
+    },
+    "./color-picker": {
+      "types": "./dist/primitives/color-picker.d.ts",
+      "import": "./dist/primitives/color-picker.js"
+    },
+    "./tour": {
+      "types": "./dist/patterns/tour.d.ts",
+      "import": "./dist/patterns/tour.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -458,7 +522,11 @@
     "cron-parser": ">=5.0.0",
     "cronstrue": ">=3.0.0",
     "@xyflow/react": ">=12.0.0",
-    "@dagrejs/dagre": ">=3.0.0"
+    "@dagrejs/dagre": ">=3.0.0",
+    "react-markdown": ">=9.0.0",
+    "remark-gfm": ">=4.0.0",
+    "diff": ">=7.0.0",
+    "@radix-ui/react-hover-card": ">=1.1.0"
   },
   "peerDependenciesMeta": {
     "@xterm/addon-fit": { "optional": true },
@@ -466,7 +534,11 @@
     "cron-parser": { "optional": true },
     "cronstrue": { "optional": true },
     "@xyflow/react": { "optional": true },
-    "@dagrejs/dagre": { "optional": true }
+    "@dagrejs/dagre": { "optional": true },
+    "react-markdown": { "optional": true },
+    "remark-gfm": { "optional": true },
+    "diff": { "optional": true },
+    "@radix-ui/react-hover-card": { "optional": true }
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
@@ -482,6 +554,10 @@
     "cron-parser": "^5.0.0",
     "cronstrue": "^3.0.0",
     "@xyflow/react": "12.12.0",
-    "@dagrejs/dagre": "3.1.1"
+    "@dagrejs/dagre": "3.1.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "diff": "^9.0.0",
+    "@radix-ui/react-hover-card": "^1.2.1"
   }
 }

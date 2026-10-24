@@ -2542,6 +2542,14 @@ would see it:
 Woodpecker runs lint, test, build and smoke on every pull request and every
 push to `develop` and `main` (`.woodpecker/ci.yml`).
 
+### Demo videos
+
+This repository has no app to serve: it builds a package and nothing else.
+Demo videos of components (DemoFlow, recorded by Nautelle) belong in
+[glass-ui-showcase](https://github.com/AndreyBegma/glass-ui-showcase), which
+renders every component. That is why there is no `demoflow.config.json` here.
+Record a demo there, once the showcase uses the released version.
+
 ## Releasing
 
 The version in `package.json` is the release. Merging a version bump into

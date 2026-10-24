@@ -1,26 +1,33 @@
 import { extendTailwindMerge } from 'tailwind-merge';
 
-
 /**
- * #123 - tailwind-merge assumes every `text-*` it cannot resolve is a text
- * colour. The token type scale (`text-display`, `text-heading`, `text-section`,
- * `text-body`, `text-label`) resolves to nothing it knows, so a size merged
- * through `cn` next to a colour was silently dropped:
+ * #123 — tailwind-merge files every `text-*` it cannot resolve under text
+ * colour. The token type scale resolves to nothing it knows, so a size merged
+ * next to a colour was silently dropped:
  *
  *     twMerge('px-2 text-body text-ink-2')   // -> 'px-2 text-ink-2'
  *
  * Registering the scale in the font-size group makes size and colour
- * orthogonal: `cn('text-body', 'text-ink-2')` keeps both, in either order,
- * while two sizes still settle last-wins. Kept in sync with the `--text-*`
- * definitions in `src/tokens.css`.
+ * orthogonal: both survive in either order, while two sizes still settle
+ * last-wins. The steps are the `--text-*` entries in `src/tokens.css`, and
+ * `cn.test.ts` fails if the two drift apart.
+ *
+ * Exported because `tv` (`lib/tv.ts`) runs its own merger and needs the same
+ * extension — without it a variant's `text-section` drops the base's
+ * `text-ink`, and a base of `text-body text-ink` loses the size.
  */
-const merge = extendTailwindMerge({
+export const TYPE_SCALE = ['display', 'heading', 'section', 'body', 'label'];
+
+export const twMergeConfig = {
   extend: {
     classGroups: {
-      'font-size': [{ text: ['display', 'heading', 'section', 'body', 'label'] }],
+      'font-size': [{ text: TYPE_SCALE }],
     },
   },
-});
+};
+
+const merge = extendTailwindMerge(twMergeConfig);
+
 /**
  * FEAT-20260823-362 — join class names and let the last one win.
  *

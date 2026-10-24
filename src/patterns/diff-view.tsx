@@ -2,7 +2,7 @@
 
 import { Check, Copy } from 'lucide-react';
 import { Fragment, type ReactNode, useId, useMemo, useState } from 'react';
-import { tv } from 'tailwind-variants';
+import { tv } from '../lib/tv';
 import { useBreakpoint } from '../hooks/use-breakpoint';
 import { cn } from '../lib/cn';
 import { Button } from '../primitives/button';

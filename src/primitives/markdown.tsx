@@ -1,7 +1,7 @@
 import { Children, type ComponentProps, isValidElement, type ReactElement, type ReactNode } from 'react';
 import ReactMarkdown, { type Components, defaultUrlTransform, type ExtraProps } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { tv } from 'tailwind-variants';
+import { tv } from '../lib/tv';
 import { cn } from '../lib/cn';
 import { Checkbox } from './checkbox';
 import { CodeBlock } from './code-block';

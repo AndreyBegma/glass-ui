@@ -1,6 +1,6 @@
 import { AlertTriangle, CheckCircle2, Info, OctagonAlert, X } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { tv } from 'tailwind-variants';
+import { tv } from '../lib/tv';
 import { cn } from '../lib/cn';
 
 /**

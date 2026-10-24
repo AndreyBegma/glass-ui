@@ -18,7 +18,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { tv } from 'tailwind-variants';
+import { tv } from '../lib/tv';
 import { cn } from '../lib/cn';
 
 /**

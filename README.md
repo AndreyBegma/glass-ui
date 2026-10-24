@@ -1827,6 +1827,698 @@ Only `transparent`, only tokens every flat route already sets to
 transparency in any order; no colour of the palette moves. Without navy nothing
 changes. `calm.spec.ts` holds the block to exactly that.
 
+## v0.38.0 wave
+
+Sixteen components, scaffolded in `#175` and filled one slot each. Four new
+optional peers carry the heavy parts: `react-markdown` and `remark-gfm`
+(`Markdown`), `diff` (`DiffView`) and `@radix-ui/react-hover-card`
+(`HoverCard`).
+
+### DiffView
+
+`@andrewbehma/glass-ui/diff-view` — subpath only, never the barrel: it needs
+the optional peer `diff` (jsdiff, >=7). A line diff of two texts, or a rendered
+unified patch, on a solid surface: for pull requests, config changes and agent
+reviews.
+
+```tsx
+import { DiffView } from '@andrewbehma/glass-ui/diff-view';
+
+<DiffView
+  fileName="config.yaml"
+  language="yaml"
+  oldText={before}
+  newText={after}
+  defaultMode="split"
+  maxHeight={480}
+/>;
+```
+
+| Prop | Default | |
+|---|---|---|
+| `oldText`, `newText` | — | The two texts, diffed by line (`diffLines`). |
+| `patch` | — | A unified diff (`parsePatch`); when given, the texts are ignored. A multi-file patch renders its first file. |
+| `mode` / `defaultMode` / `onModeChange` | `'unified'` | `'unified'` or `'split'`, controlled or not. Below the tablet edge it renders unified and the switch is hidden. |
+| `fileName` | — | Header label. |
+| `language` | — | Header label only, no highlighting. |
+| `context` | `3` | Unchanged lines kept around a change; longer runs fold into an "N unchanged lines" button that expands in place. |
+| `wrap` | `false` | Wrap long lines instead of scrolling sideways. |
+| `maxHeight` | — | px; the rows scroll inside it. |
+| `labels` | English | Every visible and spoken string: `noChanges`, `unified`, `split`, `viewMode`, `copy`, `copied`, `table`, `unchangedLines(n)`, `added(line)`, `removed(line)`, `unchanged(line)`, `counts(a, d)`. |
+
+Added and removed lines get an `ok` / `danger` tint **and** a `+` / `−` sign.
+In a modified pair the words that changed are also marked (`diffWordsWithSpace`).
+The header shows `+a −d` and a copy-new-text button (not shown for a `patch`,
+which does not hold the whole new text). Between the hunks of a patch, the lines
+are not known, so that gap shows its count and cannot be expanded.
+
+The rows are a `<table>` (APG Table). Gutters and signs are hidden from
+assistive technology. Each line is read as "added line 12: …", "removed line
+9: …" or "line 4: …", and an unchanged pair in split mode is read once.
+
+| Key | |
+|---|---|
+| `Tab` | Moves through the mode switch, the copy button, the scroll region and each "N unchanged lines" button. |
+| `Enter` / `Space` | Activates the focused switch segment, copy, or expand button. |
+| Arrow keys | Scroll the focused rows region. |
+
+### JsonInspector
+
+`glass-ui/json-inspector` — a collapsible viewer for JSON-like values: event
+payloads, MCP responses, log fields. `Tree` is for navigation; this is for
+data. A solid surface, never glass.
+
+```tsx
+import { JsonInspector } from 'glass-ui/json-inspector';
+
+<JsonInspector
+  value={event.payload}
+  rootLabel="payload"
+  defaultExpandDepth={2}
+  sortKeys
+  copyable
+/>;
+```
+
+| Prop | Meaning |
+|---|---|
+| `value` | Any value. `Date`, `Map`, `Set`, `bigint` and circular references are handled; a cycle renders as `[Circular]` and is never followed. |
+| `expanded` / `onExpandedChange` | Controlled set of open paths (`$`, `$.items[3].id`, `$["odd key"]`; `Map`/`Set` entries by position, `$.tags[0]`). Without `expanded` the viewer keeps its own. |
+| `defaultExpandDepth` | Containers shallower than this start open. Default `1` (the root). |
+| `rootLabel` | The root row's key. |
+| `sortKeys` | Sort object keys. |
+| `maxStringLength` | Longer strings truncate with a show-full control. Default `120`. |
+| `copyable` | Copy value / copy path per row, with the inline "Copied" confirmation. |
+| `labels` | Every visible English string: `tree`, `copyValue`, `copyPath`, `copied`, `showFullString`, `showLessString`, `showMore(count)`, `circular`. |
+
+A container with more than 100 children renders the first 100 and a
+"Show N more" row. Types are told by shape and colour: strings are quoted,
+`null`/`undefined` are italic, numbers are `tabular-nums`, a `bigint` ends in `n`.
+
+Keyboard (WAI-ARIA `tree`, one tab stop): <kbd>↑</kbd> <kbd>↓</kbd> move,
+<kbd>→</kbd> opens or enters, <kbd>←</kbd> closes or goes to the parent,
+<kbd>Home</kbd> / <kbd>End</kbd> jump, <kbd>*</kbd> opens the siblings,
+<kbd>Enter</kbd> / <kbd>Space</kbd> toggle (and unfold a truncated string or show
+more). With `copyable`: <kbd>c</kbd> copies the value, <kbd>p</kbd> the path.
+
+### Markdown
+
+`@andrewbehma/glass-ui/markdown` — subpath only. Needs the optional peers
+`react-markdown` and `remark-gfm`. Markdown for agent replies, issue bodies and
+release notes, rendered through the kit, so you do not need your own
+`react-markdown` setup or prose styles. It has no state and no
+`'use client'`, so a server component can render it.
+
+| Prop | What it does |
+|---|---|
+| `children` | The markdown source, a string. |
+| `components` | react-markdown overrides (`Partial<MarkdownComponents>`), merged over the kit's mapping. Yours win, element by element. |
+| `linkTarget` | `(href) => '_blank' \| undefined`, for each link's `target`. Default: no `target` (same tab). |
+| `density` | `comfortable` (default) or `compact`, for chat bubbles: tighter block gaps, and `h1` steps down to `text-section`. |
+| `labels` | `Partial<MarkdownLabels>`: `footnotes` (the visually hidden heading over GFM footnotes) and `backToReference(index, rereference)` (each footnote's back link). |
+| `className` | Added to the root. |
+
+**Mapping.** Fenced code renders as `CodeBlock` (language label, copy). Inline
+code renders as a token-styled `<code>`. Tables render through `Table` /
+`TableHead` / `TableRow` / `TableCell`, scroll horizontally, and keep GFM
+column alignment. Task items render as a disabled `Checkbox` whose
+accessible name is the item text. `hr` renders as `Separator`. Blockquotes get
+a `line-strong` rule. Headings use the type scale (`h1` `text-heading`, `h2`
+`text-section`, below that `text-body`) and get GitHub-style slug ids
+(`## Next steps` → `#next-steps`, repeats get `-1`, `-2`). No
+`@tailwindcss/typography`.
+
+**Security.** Raw HTML is never rendered: there is no `rehype-raw`, so
+`<script>` or `<img onerror>` in the source shows as literal text. Every `href`
+and `src` passes react-markdown's `defaultUrlTransform`, which allows only
+http(s), mailto, irc(s), xmpp and relative URLs. A `javascript:` or `data:`
+link renders as plain text, and a `data:` image renders nothing. Absolute links
+always get `rel="noreferrer noopener"`.
+
+**Keyboard.** Markdown adds no key handling of its own. Links and the
+`CodeBlock` copy and wrap buttons are in the tab order as usual, and a code
+block's scroll region can take focus. Task checkboxes are disabled, so Tab
+skips them.
+
+```tsx
+import { Markdown } from '@andrewbehma/glass-ui/markdown';
+import { ChatThread } from '@andrewbehma/glass-ui/chat-thread';
+
+<ChatThread
+  messages={messages}
+  renderBody={(message) => (
+    <Markdown density="compact" linkTarget={(href) => (href.startsWith('http') ? '_blank' : undefined)}>
+      {message.body}
+    </Markdown>
+  )}
+/>;
+```
+
+### Pagination
+
+`glass-ui/pagination` — two forms. `Pagination` is for a list whose page count
+is known; `CursorPagination` is for cursor APIs (GitHub, Woodpecker), with no
+page numbers, only previous and next. Both are controlled: the page, the page
+size and `loading` are the caller's, nothing is held inside.
+
+```tsx
+import { CursorPagination, Pagination } from '@andrewbehma/glass-ui/pagination';
+
+<Pagination
+  page={page}
+  pageCount={Math.ceil(total / pageSize)}
+  onPageChange={setPage}
+  pageSize={pageSize}
+  pageSizeOptions={[10, 25, 50]}
+  onPageSizeChange={setPageSize}
+  total={total}
+/>;
+
+<CursorPagination
+  hasPrevious={Boolean(prevCursor)}
+  hasNext={Boolean(nextCursor)}
+  onPrevious={() => load(prevCursor)}
+  onNext={() => load(nextCursor)}
+  loading={isFetching}
+  summary="1–20"
+/>;
+```
+
+| `Pagination` prop | |
+|---|---|
+| `page`, `pageCount`, `onPageChange` | Current page (1-based), how many, and the change handler |
+| `siblingCount`, `boundaryCount` | Pages kept either side of the current one (1) and at each end (1) |
+| `pageSize`, `pageSizeOptions`, `onPageSizeChange` | With options and a handler, a "rows per page" select |
+| `total` | With `pageSize`, the "1–25 of 312" summary |
+| `labels`, `className` | Every visible string is overridable: `nav`, `previous`, `next`, `page(n)`, `pageOf(n, m)`, `range(from, to, total)`, `pageSize`, `pageSizeOption(size)` |
+
+`CursorPagination` takes `hasPrevious`, `hasNext`, `onPrevious`, `onNext`,
+`loading` (disables both buttons and sets `aria-busy`), `summary`, `className`
+and `labels` (`nav`, `previous`, `next`).
+
+`pageRange(page, pageCount, siblingCount?, boundaryCount?)` is exported from
+the same subpath: the page numbers and `'ellipsis-start'` / `'ellipsis-end'`
+markers, at a constant length as the page moves.
+
+Below the tablet breakpoint the numbered row collapses to "‹ Page 3 of 12 ›".
+
+Keyboard: the control is a `<nav>` of native buttons, as the APG pagination
+pattern has it. <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd> move between them,
+<kbd>Enter</kbd> or <kbd>Space</kbd> presses. The current page carries
+`aria-current="page"`; ellipses are not focusable; previous and next are
+disabled at the ends.
+
+### DateRangePicker
+
+`@andrewbehma/glass-ui/date-range-picker` — an arbitrary from–to range, for
+log and analytics filters (`PeriodSwitcher` moves one fixed period,
+`DateField` picks one day).
+
+```tsx
+import { type DateRange, DateRangePicker } from '@andrewbehma/glass-ui/date-range-picker';
+
+const [range, setRange] = useState<DateRange | null>(null);
+
+<DateRangePicker
+  value={range}
+  onValueChange={setRange}
+  max={new Date()}
+  placeholder="Any time"
+/>;
+```
+
+| Prop | Type | Default | |
+|---|---|---|---|
+| `value` | `{ start: Date; end: Date } \| null` | — | Controlled. Both ends at local midnight, `end` inclusive. Omitted → uncontrolled |
+| `onValueChange` | `(value) => void` | — | Called with the committed range |
+| `defaultValue` | `DateRange \| null` | `null` | The uncontrolled start |
+| `presets` | `{ id; label; range: () => DateRange }[]` | Today, Last 7 days, Last 30 days, This month | `range()` is read when the popover renders, so "today" is always today. This month = the 1st to today |
+| `min` / `max` | `Date` | — | Days outside are `aria-disabled`; a preset reaching outside is disabled |
+| `months` | `1 \| 2` | `2` | Two side by side from the tablet edge (640px) up, one below it |
+| `weekStartsOn` | `0 \| 1` | `1` | Monday |
+| `placeholder` | `string` | `labels.placeholder` | The trigger with no range |
+| `disabled` | `boolean` | — | |
+| `tone` | `'surface' \| 'on-glass'` | `'surface'` | The field tone, as `Input` |
+| `labels` | `Partial<DateRangePickerLabels>` | English | Every visible and announced string: `placeholder`, `dialog`, `presets`, `today`, `last7Days`, `last30Days`, `thisMonth`, `previousMonth`, `nextMonth`, `startPicked(day)`, `rangeSelected(range)`, `cancelled` |
+| `className` | `string` | — | Styles the trigger |
+
+- The trigger is a field-family button showing the range in `Intl`'s own range
+  format in the document's language (`<html lang>`, else the browser's):
+  `12–19 Oct 2026` in en-GB, `Oct 12 – 19, 2026` in en-US.
+- The popover is the glass `PopoverContent`: presets beside the months (above
+  them on a phone), and the months are `DateField`'s grid (`MonthGrid` in
+  `date-field-grid.tsx`), with the neighbouring months' days left blank so two
+  months never show one day twice.
+- First pick sets the start; the pointer, or the focused day, previews the
+  range; the second pick commits it and closes. A pick before the start
+  starts again from there; the same day twice is a one-day range. Range ends
+  are ink, the days between are tinted, and every day in the range is
+  `aria-selected` — colour is not the only signal. A polite live region
+  announces the start and the chosen range.
+
+| Key (in the grid) | |
+|---|---|
+| Arrows | A day / a week |
+| PageUp / PageDown | A month (Shift: a year); the shown months follow |
+| Home / End | The week's ends, from `weekStartsOn` |
+| Enter / Space | Pick the start, then the end |
+| Escape | Drops a pending start; with none, closes and returns focus to the trigger |
+| Tab | One day is in the tab order across both months (roving `tabIndex`) |
+
+### Stepper
+
+`glass-ui/stepper` — steps for onboarding and multi-step forms. `Stepper` is the
+progress display; `Wizard` is `Stepper` + the current step's panel + Back / Next /
+Finish. Solid surfaces, never glass.
+
+```tsx
+import { Wizard } from 'glass-ui/stepper';
+
+const steps = [
+  { id: 'repo', label: 'Connect repository' },
+  { id: 'secrets', label: 'Secrets', optional: true },
+  { id: 'run', label: 'First run', description: 'Takes about a minute' },
+];
+
+<Wizard
+  steps={steps}
+  current={current}
+  onStepChange={setCurrent}
+  onFinish={start}
+  canAdvance={repoConnected}
+>
+  {panelFor(current)}
+</Wizard>;
+```
+
+| Prop | Meaning |
+|---|---|
+| `steps` | `{ id, label, description?, optional?, status?: 'error' }[]`. |
+| `current` / `onStepChange` | The current step id; called with the id a click, Back or Next asks for. Both controlled — the stepper keeps only focus. |
+| `completed` | `ReadonlySet<string>` of finished ids. Omitted → the steps before `current`; given → authoritative. |
+| `navigable` | `none` (default, read-only), `completed` (finished steps are buttons) or `all` (every step but the current). |
+| `orientation` | `horizontal` (default) or `vertical`, for side panels. |
+| `canAdvance` | Wizard only. `false` disables Next and Finish. |
+| `onFinish` | Wizard only. The Finish button on the last step. |
+| `labels` | Every visible English string: `steps`, `completed`, `error`, `optional`, `stepOf(index, total, label)`, `back`, `next`, `finish`. |
+
+The current step is `aria-current="step"`; completed shows a check, an error shows
+an icon and the word, so colour is never the only signal. The connector fills up to
+the current step. A horizontal stepper narrower than the `sm` container width
+collapses to "Step 2 of 4 · Secrets" (the list stays available to screen readers).
+`Wizard` moves focus to the panel heading when the step changes, not on mount.
+
+Keyboard: no WAI-ARIA pattern covers a stepper. Clickable steps and the footer
+buttons are plain buttons in the Tab order — <kbd>Tab</kbd> moves, <kbd>Enter</kbd> /
+<kbd>Space</kbd> activates.
+
+### Fieldset
+
+`glass-ui/fieldset` — grouping for long settings forms: a titled group of
+fields, a two-column settings section, and a summary of every error at the top.
+Solid surfaces, never glass.
+
+```tsx
+import { ErrorSummary, Fieldset, FormSection } from 'glass-ui/fieldset';
+
+<ErrorSummary errors={[{ fieldId: 'email', message: 'Email is required' }]} />
+<FormSection title="Profile" description="Shown on your public page.">
+  <Fieldset legend="Contact" description="How we reach you." error={contactError}>
+    <Input id="email" />
+  </Fieldset>
+</FormSection>;
+```
+
+| Component | Props |
+|---|---|
+| `Fieldset` | `legend`, `description`, `error`, `disabled`, `className`. A real `<fieldset>`/`<legend>`: `disabled` disables every native control inside. `description` and `error` are both in `aria-describedby`; the error is danger-coloured with an icon. |
+| `FormSection` | `title`, `description`, `aside` (beside the copy, e.g. a help link), `className`. Copy left, fields right; stacks below `md`; a `Separator` above every section but the first. |
+| `ErrorSummary` | `errors: { fieldId, message }[]`, `title`, `labels`, `className`. `role="alert"`; focuses itself when errors appear or change (once per change). Renders nothing when empty. `labels`: `title` ("There is a problem"), `list` ("Errors"). |
+
+Keyboard: the summary is focusable programmatically (`tabIndex={-1}`, not a tab
+stop); each item is a link — <kbd>Enter</kbd> focuses the field with that id and
+scrolls it into view (without animation under reduced motion). Inside a disabled
+`Fieldset`, nothing takes focus.
+
+### TagInput
+
+`@andrewbehma/glass-ui/tag-input` — free-form values as chips: labels, env
+keys, emails. `Combobox multiple` only picks from a list; this takes whatever is
+typed. It looks like the field family, with the chips inline before the text
+input, wrapping onto more lines.
+
+```tsx
+import { TagInput } from '@andrewbehma/glass-ui/tag-input';
+
+const [emails, setEmails] = useState<string[]>([]);
+
+<TagInput
+  aria-label="Invite by email"
+  value={emails}
+  onValueChange={setEmails}
+  placeholder="name@example.com"
+  validate={(tag) => (/^\S+@\S+\.\S+$/.test(tag) ? null : 'Not an email address')}
+  suggestions={['ada@example.com', 'alan@example.com']}
+  max={10}
+/>;
+```
+
+| Prop | Default | |
+|---|---|---|
+| `value` / `onValueChange` / `defaultValue` | — | The tags, controlled; or `defaultValue` alone for the uncontrolled form. |
+| `separators` | `[',', 'Enter']` | Key names (`'Enter'`, `'Tab'`) or single characters (`','`, `' '`, `';'`). A character splits whatever it arrives in, typed or pasted. |
+| `validate` | — | `(tag) => message \| null`. |
+| `suggestions` | — | A filtered listbox under the input (Combobox styling); tags already added are not offered. |
+| `max` | — | No more tags past it. |
+| `allowDuplicates` | `false` | Otherwise a repeat is rejected like an invalid tag. |
+| `placeholder` | — | Shown while there are no tags. |
+| `tone` | `'surface'` | The field family's `surface` / `on-glass`. |
+| `disabled` | `false` | |
+| `id`, `aria-label` | — | For a `<label htmlFor>`, or a name when there is no visible label. |
+| `labels` | English | Every visible and spoken string: `tags`, `input`, `remove(tag)`, `added(tag)`, `removed(tag)`, `duplicate(tag)`, `maxReached(max)`, `suggestions`, `matches(n)`. |
+
+An entry that is rejected — invalid, a duplicate, past `max` — stays in the input
+with its message below (danger token, an icon and the words), never dropped. A
+paste commits every piece it can and leaves the rest in the input.
+
+| Key | |
+|---|---|
+| a separator | Commits the text. With an empty input `Enter` / `Tab` do what they always do. |
+| `Backspace` (empty input) | Selects the last chip; a second `Backspace` removes it. |
+| `ArrowLeft` (caret at start) | Enters the chips; `ArrowLeft` / `ArrowRight` move between them, `ArrowRight` off the last returns to the input. |
+| `Delete` / `Backspace` (on a chip) | Removes it; focus goes to its neighbour, else the input. |
+| `ArrowDown` / `ArrowUp` | Moves through the suggestions (APG Combobox, listbox popup, `aria-activedescendant`); nothing is highlighted until then, so `Enter` commits what was typed. |
+| `Enter` (suggestion highlighted) | Commits the suggestion. `Escape` closes the list. |
+
+Each chip's remove button is named "Remove <tag>" and is out of the Tab order —
+the keyboard removes with `Delete`. Adds and removals are announced politely.
+
+### HoverCard
+
+`@andrewbehma/glass-ui/hover-card` — a rich preview on hover: a user, a commit,
+an issue. `Tooltip` is too small for it and `Popover` opens on click. Built on
+`@radix-ui/react-hover-card`; the card has `PopoverContent`'s glass surface,
+radius and motion (still under reduced motion).
+
+| Part | Props |
+|---|---|
+| `HoverCard` | `openDelay` (500 ms), `closeDelay` (150 ms), `open`, `defaultOpen`, `onOpenChange` |
+| `HoverCardTrigger` | Radix `Trigger`; use `asChild` on a link |
+| `HoverCardContent` | `side` (`bottom`), `align` (`center`), `sideOffset`, `className`, `container` |
+
+Keyboard: focusing the trigger opens the card, blurring or `Escape` closes it.
+Touch: a tap does not open it — the link navigates. The card is never the only
+route to its information, so the trigger must be a link to the same thing. It
+takes no focus and has no visible English strings, so there are no `labels`.
+
+```tsx
+<HoverCard>
+  <HoverCardTrigger asChild>
+    <a href="/users/ada">Ada Lovelace</a>
+  </HoverCardTrigger>
+  <HoverCardContent side="top">
+    <p className="font-semibold">Ada Lovelace</p>
+    <p className="text-ink-2">Joined 2024 · 42 commits</p>
+  </HoverCardContent>
+</HoverCard>
+```
+
+### Meter
+
+How full something is — budget, quota, limits. `Progress` is task progress;
+`Meter` is a level, with `role="meter"`.
+
+| Prop | |
+|---|---|
+| `value` | Clamped to `min`..`max` |
+| `min` / `max` | `0` / `100` |
+| `low` / `high` / `optimum` | The HTML `<meter>` thresholds; they choose the tone `ok` / `warn` / `danger` |
+| `label` | Required, the accessible name |
+| `valueText` | Visible and spoken value, defaults to the clamped value |
+| `variant` | `bar` (default, with ticks at `low` / `high`) or `gauge` (240° arc, fits `StatTile`) |
+| `size` | `sm` / `md` / `lg` |
+| `labels` | `{ ok, warn, danger }` — the tone words, `OK` / `Warning` / `Critical` |
+
+Colour is never the only signal: the tone word is drawn and is part of
+`aria-valuetext`. The fill animates with `--dur-base` under `motion-safe` only.
+It is a readout, not an input: it takes no focus and has no keyboard map.
+
+```tsx
+<Meter
+  label="Storage"
+  value={86}
+  low={50}
+  high={80}
+  optimum={20}
+  valueText="86 of 100 GB"
+/>
+<Meter variant="gauge" label="CPU" value={42} valueText="42%" />
+```
+
+### ActivityHeatmap
+
+`glass-ui/activity-heatmap` — a calendar of activity, a week to a column and a
+weekday to a row, with the month above and every other weekday beside. A solid
+surface; only the hover readout is glass.
+
+| Prop | |
+|---|---|
+| `data` | `{ date: 'YYYY-MM-DD', value }[]`; duplicate dates are summed, days outside the range and values `<= 0` are ignored |
+| `start`, `end` | the range; default the 52 weeks up to today |
+| `weekStartsOn` | `0` (Sunday, default) or `1` (Monday) |
+| `levels` | shades **including** the empty one, default `5` (the hairline and four shades), minimum `2` |
+| `tone` | an identity hue (`1`–`8`) instead of the accent |
+| `onDayClick` | `(day: { date, value }) => void`; an empty day has `value: 0` |
+| `formatValue` | `(value) => string`, default compact (`1.2K`); supplies the unit in a day's name |
+| `labels` | every visible string: `grid`, `less`, `more`, `day`, `none`, `date`, `month`, `weekday`, `summary`, `tableDate`, `tableValue`, `tableEmpty` |
+
+Levels are quantiles of the non-zero values, so the busiest day is always the
+top shade and one outlier does not flatten the rest; equal values share a level.
+The shade is the accent (or `tone`) at a stepped opacity, zero is the surface
+hairline. Colour is never the only signal: each day is named ("3 runs on 12
+October 2026" when `formatValue` returns "3 runs"), the readout prints the
+same, and a visually hidden table lists the days with activity. The box scrolls
+horizontally on narrow widths and opens on the newest week.
+
+Keyboard (ARIA grid, one tab stop — the day last focused, else the newest):
+`←` `→` a week, `↑` `↓` a day (no wrap), `Home` `End` the ends of the row,
+`Ctrl`+`Home`/`End` the first and last day, `Enter` / `Space` `onDayClick`,
+`Escape` hides the readout. Focus shows what hover shows.
+
+```tsx
+<ActivityHeatmap
+  data={runs}                       // [{ date: '2026-10-12', value: 3 }, …]
+  weekStartsOn={1}
+  formatValue={(n) => `${n} ${n === 1 ? 'run' : 'runs'}`}
+  onDayClick={(day) => router.push(`/runs?date=${day.date}`)}
+/>
+```
+
+### PinInput
+
+`glass-ui/pin-input` — one-time codes and PINs.
+
+**One real input, N drawn cells.** The cells are `aria-hidden`; a single
+transparent `<input autocomplete="one-time-code">` lies over them, so SMS
+autofill and paste work and a screen reader hears one labelled field (not
+N boxes). The caret is pinned to the end: typing appends, Backspace removes
+the last character, the active cell (the focus ring) is the first empty one.
+
+| Prop | |
+|---|---|
+| `value`, `onValueChange` | Controlled. |
+| `length` | Cells, default 6. |
+| `type` | `'numeric'` (default, numeric keypad) or `'alphanumeric'`. Other characters are dropped. |
+| `onComplete` | Called once each time the value reaches `length`. |
+| `mask` | Cells show `•`; the field is `type="password"`. |
+| `disabled`, `tone`, `className` | As the other fields (`tone`: `surface` / `on-glass`). |
+| `label` | The field's accessible name (required). |
+| `labels` | `{ progress(filled, length) }` — the spoken "3 of 6 characters". |
+
+Keyboard: characters append, Backspace/Delete remove the last, Tab leaves.
+Paste replaces the value from the first cell, filtered and cut to `length`.
+
+```tsx
+const [code, setCode] = useState('');
+<PinInput label="Verification code" value={code} onValueChange={setCode}
+          onComplete={(c) => verify(c)} />
+```
+
+### Carousel
+
+`glass-ui/carousel` — galleries and onboarding slides on native scroll-snap:
+touch and trackpad work without script; the buttons and dots call `scrollTo`,
+and the index follows wherever the row actually rests.
+
+| Prop | Meaning |
+|---|---|
+| `label` | Accessible name of the region (required). |
+| `slidesPerView` | `number` (default `1`) or `'auto'` (each slide keeps its own width). |
+| `gap` | Between slides, in px. Default `16`. |
+| `loop` | Next on the last slide goes to the first, and back. Default off (buttons disable at the ends). |
+| `autoplay` | Milliseconds between slides. Off by default. |
+| `index` / `onIndexChange` | Controlled first visible slide (0-based). Omit `index` and it keeps its own. |
+| `labels` | Overrides for `previous`, `next`, `goTo(n)`, `dots`, `pause`, `play`, `slide(n, total)`. |
+
+Children must be `CarouselSlide`s written directly inside `Carousel` (a
+component that returns several slides counts as one). Each slide is named
+"3 of 7".
+
+**Autoplay** pauses while the pointer is over the carousel, while focus is
+inside it, and while the page is hidden. A visible pause button stops it until
+pressed again. Under `prefers-reduced-motion` it never runs, no pause button is
+drawn, and buttons scroll instantly.
+
+**Keyboard** (APG carousel): every control is a button in the tab order —
+previous, one per position, next, pause — and activated with `Enter` / `Space`.
+Slide content that takes focus is scrolled into view by the browser. The current
+dot is wider as well as filled.
+
+```tsx
+import { Carousel, CarouselSlide } from 'glass-ui/carousel';
+
+<Carousel label="Highlights" slidesPerView={2} loop autoplay={5000}>
+  <CarouselSlide>One</CarouselSlide>
+  <CarouselSlide>Two</CarouselSlide>
+  <CarouselSlide>Three</CarouselSlide>
+</Carousel>;
+```
+
+### Rating
+
+`glass-ui/rating` — a star (or icon) rating, as an input or a display.
+
+| Prop | Meaning |
+|---|---|
+| `value` / `onValueChange` / `defaultValue` | The rating; `0` is "none". Controlled, or uncontrolled with `defaultValue`. |
+| `max` | Number of icons. Default `5`. |
+| `allowHalf` | Half steps: each icon takes two half-width radios, the filled layer is clipped. |
+| `allowClear` | Clicking the current value clears it to `0`. Default `true`. |
+| `readOnly` | One `role="img"` named "`label`, 4.5 out of 5". |
+| `icon` | A `LucideIcon`. Default `Star`. |
+| `size` | `sm` · `md` · `lg`. |
+| `label` | The accessible name (required). |
+| `labels` | `{ value(value, max) }` — the step names and the read-only text. |
+
+Interactive, it is the APG radio group: one tab stop (the checked step, else
+the first), hover previews without committing.
+
+| Key | Action |
+|---|---|
+| `→` `↑` | Next step, and select it |
+| `←` `↓` | Previous step, and select it |
+| `Home` / `End` | First step / `max` |
+| `Space` `Enter` | Select the focused step; on the current one, clear |
+
+```tsx
+<Rating label="Quality" value={score} onValueChange={setScore} allowHalf />
+<Rating label="Quality" value={4.5} allowHalf readOnly />
+```
+
+### ColorPicker
+
+`@andrewbehma/glass-ui/color-picker` — a colour input for themes, labels and
+hues. A swatch button (or a text field with a swatch in it) opens a
+`PopoverContent` with a saturation × brightness area, a hue `Slider`, an
+optional opacity `Slider`, a text input and your swatches. The value is a
+string: `#rrggbb` (`#rrggbbaa` with alpha) or `oklch(L C H[ / A])`.
+
+```tsx
+import { ColorPicker } from '@andrewbehma/glass-ui/color-picker';
+
+const [accent, setAccent] = useState('oklch(0.62 0.19 255)');
+
+<ColorPicker
+  value={accent}
+  onValueChange={setAccent}
+  swatches={['oklch(0.62 0.19 255)', 'oklch(0.7 0.17 150)', '#e5484d']}
+  alpha
+/>;
+```
+
+| Prop | Default | |
+|---|---|---|
+| `value` / `onValueChange` / `defaultValue` | — | The colour, controlled; or `defaultValue` alone for the uncontrolled form. |
+| `format` | the value's own | `'hex'` or `'oklch'` — what is written back. Omitted, an `oklch()` value comes back as `oklch()` and anything else as hex; a typed colour or a swatch carries its own format the same way. |
+| `swatches` | — | Colours offered as buttons. One that does not parse is shown disabled. |
+| `alpha` | `false` | Adds the opacity slider. Without it the output is always opaque. |
+| `trigger` | `'swatch'` | `'swatch'`: a button; the text input is in the popover. `'field'`: a text field with the swatch button inside it. |
+| `disabled` | `false` | |
+| `className` | — | On the outer element. |
+| `labels` | English | `trigger(value)`, `title`, `area`, `areaRole`, `areaValue(s, v, colour)`, `hue`, `alpha`, `input`, `invalid`, `swatches`, `swatch(value)`. |
+
+The text input accepts `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa` and
+`oklch(L C H [/ A])` (percentages and `deg` allowed) and commits on `Enter` or
+blur. Anything else stays in the input, marked invalid, with the message
+under it (danger token, an icon and the words) — nothing is called. An
+`oklch()` outside sRGB is accepted and brought in by reducing its chroma at the
+same lightness and hue. The picker keeps its own hue across greys, so dragging
+to black and back does not lose it.
+
+| Key (on the area) | |
+|---|---|
+| `ArrowLeft` / `ArrowRight` | Saturation −1 / +1. With `Shift`, ×10. |
+| `ArrowDown` / `ArrowUp` | Brightness −1 / +1. With `Shift`, ×10. |
+| `Home` / `End` | Saturation 0 / 100. |
+| `PageDown` / `PageUp` | Brightness −10 / +10. |
+
+The area is one `role="slider"` (APG Slider, on two axes) with
+`aria-roledescription="2D slider"` and an `aria-valuetext` naming both axes and
+the colour; the hue and opacity sliders are native range inputs. Swatches are a
+named group of buttons, each named by its value, the current one
+`aria-pressed` — colour is never the only signal.
+
+The colour maths is exported from the same subpath, pure and dependency-free:
+`parseColor`, `formatColor`, `hexToRgb` / `rgbToHex`, `rgbToHsv` /
+`hsvToRgb`, `rgbToOklch` / `oklchToRgb` (gamut-mapped) and `isInSrgb`.
+
+### Tour
+
+`glass-ui/tour` — a guided tour: a sequence of coachmarks, each anchored to
+an element already on the page.
+
+**A popover with no trigger.** Each step is a `PopoverContent` card anchored
+to a virtual element whose rectangle is the target's, so it re-anchors on
+scroll and resize. The target is scrolled to the centre of the viewport
+(instantly under reduced motion). The spotlight dims the page with
+`--color-scrim` around a cut-out over the target and blocks clicks on
+everything but the card. A step whose target is not on the page is skipped,
+in the direction of travel, with a warning in development; "2 of 5" counts
+only the steps that resolve, and with none at all the tour closes.
+
+**Non-modal dialog.** `role="dialog"`, named by the step's title and
+described by the count and the body. Focus moves to the card on each step and
+returns to whatever had it before the tour opened. Tab is not fenced. A click
+or focus outside does not close it.
+
+| Prop | |
+|---|---|
+| `steps` | `{ id, target, title, body?, side? }[]`. `target` is a selector or `() => Element \| null`; `side` is `'top' \| 'right' \| 'bottom' \| 'left'` (default `bottom`). |
+| `open`, `onOpenChange` | Controlled. Skip, Escape and Done all call `onOpenChange(false)`. |
+| `step`, `onStepChange` | The current step's id. Omit `step` and the tour keeps its own, from the first step on every open; `onStepChange` fires either way, including when a missing target is skipped. |
+| `onFinish` | Done on the last step, once per opening. Not Skip, not Escape. |
+| `spotlight` | Default `true`. `false` leaves the page visible and clickable. |
+| `labels` | `{ tour, back, next, done, skip, progress(current, total) }` — `tour` is the card's hidden heading. |
+
+| Key | |
+|---|---|
+| `→` / `←` | Next / previous step (not on the last / first; never finishes). |
+| `Escape` | Close. |
+| `Tab` | Through the card's buttons, and out of it. |
+
+```tsx
+const [open, setOpen] = useState(false);
+<Tour
+  open={open}
+  onOpenChange={setOpen}
+  onFinish={() => markTourSeen()}
+  steps={[
+    { id: 'search', target: '#search', title: 'Search', body: 'Find anything from here.' },
+    { id: 'new', target: () => newButton.current, title: 'Create', side: 'left' },
+  ]}
+/>
+```
+
 ## Developing
 
 ```sh
@@ -1849,6 +2541,14 @@ would see it:
 
 Woodpecker runs lint, test, build and smoke on every pull request and every
 push to `develop` and `main` (`.woodpecker/ci.yml`).
+
+### Demo videos
+
+This repository has no app to serve: it builds a package and nothing else.
+Demo videos of components (DemoFlow, recorded by Nautelle) belong in
+[glass-ui-showcase](https://github.com/AndreyBegma/glass-ui-showcase), which
+renders every component. That is why there is no `demoflow.config.json` here.
+Record a demo there, once the showcase uses the released version.
 
 ## Releasing
 

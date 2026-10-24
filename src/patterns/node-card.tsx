@@ -2,7 +2,7 @@
 
 import { EllipsisVertical, type LucideIcon } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
-import { tv, type VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from '../lib/tv';
 import { cn } from '../lib/cn';
 import { type Hue, hueClasses } from '../lib/hue';
 import { Button } from '../primitives/button';

@@ -50,6 +50,29 @@ const ALLOWED: Record<string, string[]> = {
   'primitives/sheet.tsx': ['bg-white/25'],
 };
 
+/**
+ * #190 — files that may write a colour literal, each with the reason.
+ *
+ * `ColorPicker` handles colour *values* by nature: its tests have to say which
+ * colour went in and which came out, and a hex string is the only honest way
+ * to say it. That is data, not style, and it is the whole of the exemption —
+ * the component and its maths are not on this list, because they spell no
+ * literal: a preview draws the caller's value, and every gradient is computed.
+ *
+ * The other two checks still run on these files, and the list cannot rot: a
+ * file named here must exist, must still need the exemption, and must not put
+ * a literal on a line that styles anything.
+ */
+const LITERAL_EXEMPT: Record<string, string> = {
+  'primitives/color-picker.test.tsx':
+    'asserts the hex values the picker reads and writes',
+  'primitives/color-picker-color.test.ts':
+    'round-trips and reference values for the colour conversions',
+};
+
+/** A line that styles something: a class list or an inline style. */
+const STYLING = /\b(?:className|class|style)\s*[=:]|\bcn\(|\btv\(/;
+
 const MONOCHROME =
   /\b(?:bg|text|border|from|via|to|fill|stroke|ring|outline)-(?:black|white)(?:\/\d+)?\b/g;
 
@@ -88,8 +111,27 @@ describe('the palette is spelled once', () => {
 
   test.each(
     files.map((f) => [f.name, f.body] as const),
-  )('%s writes no colour literal', (_name, body) => {
+  )('%s writes no colour literal', (name, body) => {
+    if (name in LITERAL_EXEMPT) return;
     expect(body.match(LITERAL) ?? []).toEqual([]);
+  });
+
+  test.each(
+    Object.keys(LITERAL_EXEMPT),
+  )('%s is exempt from the literal rule only while it needs to be', (name) => {
+    const file = files.find((f) => f.name === name);
+    expect(file).toBeDefined();
+    expect((file?.body.match(LITERAL) ?? []).length).toBeGreaterThan(0);
+  });
+
+  test.each(
+    Object.keys(LITERAL_EXEMPT),
+  )('%s styles nothing with a literal', (name) => {
+    const body = files.find((f) => f.name === name)?.body ?? '';
+    const styled = body
+      .split('\n')
+      .filter((line) => STYLING.test(line) && line.match(LITERAL));
+    expect(styled).toEqual([]);
   });
 
   test.each(

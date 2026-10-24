@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useRef, useState, type ClipboardEvent, type ChangeEvent } from 'react';
-import { tv } from 'tailwind-variants';
+import { tv } from '../lib/tv';
 import { cn } from '../lib/cn';
 import type { FieldTone } from './field';
 

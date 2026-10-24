@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { tv, type VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from '../lib/tv';
 import { cn } from '../lib/cn';
 
 /**
